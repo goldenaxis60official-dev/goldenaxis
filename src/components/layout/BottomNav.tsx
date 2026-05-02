@@ -1,8 +1,10 @@
+//src>components>layout>BottomNav.tsx
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, PlayCircle, User } from "lucide-react";
+import { Home, Gem, User } from "lucide-react";
 
 const navItems = [
   {
@@ -13,7 +15,8 @@ const navItems = [
   {
     label: "Missions",
     href: "/missions",
-    icon: PlayCircle,
+    icon: Gem,
+    premium: true,
   },
   {
     label: "Profile",
@@ -40,14 +43,27 @@ export default function BottomNav() {
                 key={item.href}
                 href={item.href}
                 className={[
-                  "flex flex-col items-center justify-center gap-1 rounded-[1.35rem] px-3 py-3 transition active:scale-[0.96]",
+                  "relative flex flex-col items-center justify-center gap-1 rounded-[1.35rem] px-3 py-3 transition active:scale-[0.96]",
                   active
-                    ? "bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_0_26px_rgba(234,179,8,0.32)]"
+                    ? "bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_0_30px_rgba(234,179,8,0.4)]"
+                    : item.premium
+                    ? "border border-yellow-400/20 bg-yellow-400/[0.06] text-yellow-200/70 hover:bg-yellow-400/10 hover:text-yellow-200"
                     : "text-white/45 hover:bg-white/[0.06] hover:text-white/80",
                 ].join(" ")}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-[11px] font-black tracking-tight">
+                {item.premium && active && (
+                  <span className="absolute inset-0 rounded-[1.35rem] bg-yellow-300/20 blur-xl" />
+                )}
+
+                <Icon
+                  className={[
+                    "relative z-10",
+                    item.premium ? "h-6 w-6" : "h-5 w-5",
+                    active && item.premium ? "drop-shadow-[0_0_8px_rgba(0,0,0,0.35)]" : "",
+                  ].join(" ")}
+                />
+
+                <span className="relative z-10 text-[11px] font-black tracking-tight">
                   {item.label}
                 </span>
               </Link>
