@@ -1,3 +1,5 @@
+//app>missions>page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -36,6 +38,30 @@ export default function MissionsPage() {
   );
 }
 
+function RatingStars({ rating }: { rating: number }) {
+  const safeRating = Math.min(Math.max(rating, 0), 5);
+  const fillWidth = `${(safeRating / 5) * 100}%`;
+
+  return (
+    <div className="relative inline-flex">
+      <div className="flex gap-0.5 text-white/20">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star key={star} className="h-4 w-4" />
+        ))}
+      </div>
+
+      <div
+        className="absolute left-0 top-0 flex gap-0.5 overflow-hidden text-yellow-300"
+        style={{ width: fillWidth }}
+      >
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star key={star} className="h-4 w-4 fill-current" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MissionContent({ profile }: { profile: Profile }) {
   const router = useRouter();
 
@@ -49,6 +75,9 @@ function MissionContent({ profile }: { profile: Profile }) {
 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [showCompletedPopup, setShowCompletedPopup] = useState(false);
+  const [finalReward, setFinalReward] = useState("0.00");
 
   const [errorText, setErrorText] = useState("");
   const [successText, setSuccessText] = useState("");
@@ -86,21 +115,14 @@ function MissionContent({ profile }: { profile: Profile }) {
 
       const rows = (data || []) as unknown as UserTaskAssignment[];
 
-      const group = Math.floor((profile.current_step - 1) / 3);
-      const startStep = group * 3 + 1;
-      const endStep = startStep + 2;
+const visibleRows = rows.filter(
+  (row) => row.assigned_step === profile.current_step && row.tasks
+);
 
-      const visibleRows = rows.filter(
-        (row) =>
-          row.assigned_step >= startStep &&
-          row.assigned_step <= endStep &&
-          row.tasks
-      );
-
-      const maxStep = rows.reduce(
-        (max, row) => Math.max(max, row.assigned_step),
-        0
-      );
+const maxStep = rows.reduce(
+  (max, row) => Math.max(max, row.assigned_step),
+  0
+);
 
       setAssignments(rows);
       setVisibleAssignments(visibleRows);
@@ -187,11 +209,19 @@ function MissionContent({ profile }: { profile: Profile }) {
     }
 
     const reward = Number(data?.commission_earned || 0).toFixed(2);
-    setSuccessText(`Mission completed. Reward $${reward} added.`);
+setFinalReward(reward);
 
-    setTimeout(() => {
-      window.location.reload();
-    }, 900);
+if (assignedStep >= maxAssignedStep) {
+  setShowCompletedPopup(true);
+  setActionLoading(false);
+  return;
+}
+
+setSuccessText(`Mission completed. Reward $${reward} added.`);
+
+setTimeout(() => {
+  window.location.reload();
+}, 900);
   }
 
   const completedCount = Math.max(profile.current_step - 1, 0);
@@ -470,12 +500,13 @@ const locked = assignment.assigned_step > profile.current_step;
                     </div>
 
                     <div className="mb-3 flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-yellow-300">
-                        <Star className="h-4 w-4 fill-current" />
-                        <span className="text-sm font-black">
-                          {productRating.toFixed(1)}
-                        </span>
-                      </div>
+                      <div className="flex items-center gap-2">
+  <RatingStars rating={productRating} />
+
+  <span className="text-sm font-black text-yellow-300">
+    {productRating.toFixed(1)}
+  </span>
+</div>
 
                       <p className="text-xs text-white/45">
                         {productReviews} reviews
@@ -642,6 +673,56 @@ const locked = assignment.assigned_step > profile.current_step;
           </div>
         </div>
       )}
+
+      {showCompletedPopup && (
+  <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/80 px-4 pb-4 backdrop-blur-md">
+    <div className="w-full max-w-md overflow-hidden rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#7a560d_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.35)]">
+      <div className="relative p-6 text-center">
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
+
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 text-black shadow-[0_0_35px_rgba(250,204,21,0.55)]">
+          <Trophy className="h-10 w-10" />
+        </div>
+
+        <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-200/70">
+          Campaign Completed
+        </p>
+
+        <h2 className="mt-2 text-3xl font-black text-white">
+          Congratulations!
+        </h2>
+
+        <p className="mt-3 text-sm leading-6 text-yellow-100/75">
+          You have successfully completed all promo boost tasks. Your campaign
+          rewards are now ready, and you can withdraw all your earnings.
+        </p>
+
+        <div className="mt-5 rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
+          <p className="text-xs text-white/45">Final Mission Reward</p>
+          <p className="mt-1 text-2xl font-black text-yellow-300">
+            ${finalReward}
+          </p>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-bold text-white/80"
+          >
+            View Status
+          </button>
+
+          <button
+            onClick={() => router.push("/withdraw")}
+            className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
+          >
+            Withdraw Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </AppShell>
   );
 }

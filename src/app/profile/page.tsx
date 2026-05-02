@@ -198,10 +198,12 @@ const [copied, setCopied] = useState(false);
   <div className="flex items-center justify-between gap-2">
     <p className="text-xs text-yellow-100/60">Team Center</p>
     {copied ? (
-      <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
-    ) : (
-      <Copy className="h-3.5 w-3.5 text-white/35" />
-    )}
+  <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
+) : teamSummary?.team_code ? (
+  <Copy className="h-3.5 w-3.5 text-white/35" />
+) : (
+  <ChevronRight className="h-3.5 w-3.5 text-yellow-200/60" />
+)}
   </div>
 
   <p className="mt-1 truncate font-black text-yellow-300">
