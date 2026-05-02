@@ -1,3 +1,5 @@
+//app>admin>users>page.tsx
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -16,9 +18,12 @@ import {
   Search,
   ShieldCheck,
   Users,
-  Wallet,
   X,
 } from "lucide-react";
+
+type ManagedUser = Profile & {
+  admin_nickname: string | null;
+};
 
 export default function AdminUsersPage() {
   return (
@@ -29,9 +34,11 @@ export default function AdminUsersPage() {
 }
 
 function AdminUsersContent({ profile }: { profile: Profile }) {
-  const [users, setUsers] = useState<Profile[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
+const [nicknameUser, setNicknameUser] = useState<ManagedUser | null>(null);
+const [nicknameValue, setNicknameValue] = useState("");
 
   const [adjustAmount, setAdjustAmount] = useState(100);
   const [adjustNote, setAdjustNote] = useState("");
@@ -45,23 +52,44 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
   const isAdmin = profile.role === "admin";
 
   async function loadUsers() {
-    setLoading(true);
-    setErrorText("");
+  setLoading(true);
+  setErrorText("");
 
-    const { data, error } = await supabase
+  const [profilesResult, notesResult] = await Promise.all([
+    supabase
       .from("profiles")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }),
 
-    if (error) {
-      setErrorText(error.message);
-      setLoading(false);
-      return;
-    }
+    supabase.from("admin_user_notes").select("user_id, nickname"),
+  ]);
 
-    setUsers((data || []) as Profile[]);
+  if (profilesResult.error) {
+    setErrorText(profilesResult.error.message);
     setLoading(false);
+    return;
   }
+
+  if (notesResult.error) {
+    setErrorText(notesResult.error.message);
+    setLoading(false);
+    return;
+  }
+
+  const noteMap = new Map(
+    ((notesResult.data || []) as { user_id: string; nickname: string | null }[]).map(
+      (note) => [note.user_id, note.nickname]
+    )
+  );
+
+  const mergedUsers = ((profilesResult.data || []) as Profile[]).map((user) => ({
+    ...user,
+    admin_nickname: noteMap.get(user.id) || null,
+  }));
+
+  setUsers(mergedUsers);
+  setLoading(false);
+}
 
   useEffect(() => {
     if (isAdmin) {
@@ -79,9 +107,10 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
     return users.filter((user) => {
       return (
         user.display_name?.toLowerCase().includes(keyword) ||
-        user.email?.toLowerCase().includes(keyword) ||
-        user.referral_code?.toLowerCase().includes(keyword) ||
-        user.id.toLowerCase().includes(keyword)
+user.email?.toLowerCase().includes(keyword) ||
+user.admin_nickname?.toLowerCase().includes(keyword) ||
+user.referral_code?.toLowerCase().includes(keyword) ||
+user.id.toLowerCase().includes(keyword)
       );
     });
   }, [users, searchText]);
@@ -119,6 +148,47 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
     setActionLoading(false);
     loadUsers();
   }
+
+  async function handleSaveNickname() {
+  if (!nicknameUser) return;
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const cleanNickname = nicknameValue.trim();
+
+  const { error } = await supabase.from("admin_user_notes").upsert(
+    {
+      user_id: nicknameUser.id,
+      nickname: cleanNickname || null,
+      updated_by: profile.id,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "user_id",
+    }
+  );
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  setUsers((currentUsers) =>
+    currentUsers.map((user) =>
+      user.id === nicknameUser.id
+        ? { ...user, admin_nickname: cleanNickname || null }
+        : user
+    )
+  );
+
+  setSuccessText("Admin nickname saved successfully.");
+  setNicknameUser(null);
+  setNicknameValue("");
+  setActionLoading(false);
+}
 
   if (!isAdmin) {
     return (
@@ -193,7 +263,7 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
               <input
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search name, email, invite code, ID..."
+                placeholder="Search name, email, nickname, invite code, ID..."
                 className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
               />
             </div>
@@ -216,12 +286,13 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
           )}
 
           {!loading && filteredUsers.length > 0 && (
-            <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto rounded-[1.5rem] border border-white/10">
+  <table className="min-w-[1150px] w-full text-left text-sm">
                 <thead className="bg-white/[0.06] text-xs uppercase tracking-wide text-white/45">
                   <tr>
                     <th className="px-4 py-3">User</th>
-                    <th className="px-4 py-3">Role</th>
+<th className="px-4 py-3">Admin Nickname</th>
+<th className="px-4 py-3">Role</th>
                     <th className="px-4 py-3">Balance</th>
                     <th className="px-4 py-3">Today</th>
                     <th className="px-4 py-3">Step</th>
@@ -266,6 +337,31 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
                             </div>
                           </div>
                         </td>
+
+                        <td className="px-4 py-4">
+  <div className="min-w-[170px]">
+    {user.admin_nickname ? (
+      <p className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-200">
+        {user.admin_nickname}
+      </p>
+    ) : (
+      <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/35">
+        No nickname
+      </p>
+    )}
+
+    <button
+      onClick={() => {
+        setNicknameUser(user);
+        setNicknameValue(user.admin_nickname || "");
+      }}
+      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-white/45 hover:text-yellow-300"
+    >
+      <Pencil className="h-3 w-3" />
+      Edit
+    </button>
+  </div>
+</td>
 
                         <td className="px-4 py-4">
                           <span
@@ -413,6 +509,68 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
             </div>
           </div>
         )}
+
+        {nicknameUser && (
+  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
+    <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <p className="text-sm text-yellow-200/80">Private Admin Label</p>
+          <h2 className="text-2xl font-black">Edit Admin Nickname</h2>
+        </div>
+
+        <button
+          onClick={() => {
+            setNicknameUser(null);
+            setNicknameValue("");
+          }}
+          className="rounded-2xl bg-white/10 p-3 text-white/70"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <MiniBox
+          label="User"
+          value={nicknameUser.display_name || "Gold Member"}
+        />
+        <MiniBox
+          label="Email"
+          value={nicknameUser.email || "No email"}
+          color="gold"
+        />
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-bold text-white/80">
+          Admin Nickname
+        </p>
+
+        <input
+          value={nicknameValue}
+          onChange={(event) => setNicknameValue(event.target.value)}
+          placeholder="Example: John's friend / VIP user / Telegram A"
+          className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+        />
+
+        <p className="mt-2 text-xs text-white/45">
+          This nickname is private for admin control only. Normal users cannot
+          see this label.
+        </p>
+      </div>
+
+      <button
+        onClick={handleSaveNickname}
+        disabled={actionLoading}
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
+      >
+        <Save className="h-5 w-5" />
+        {actionLoading ? "Saving..." : "Save Nickname"}
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </main>
   );
