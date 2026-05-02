@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -66,7 +65,10 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
 
   const [uploading, setUploading] = useState(false);
   const [errorText, setErrorText] = useState("");
-  const [successText, setSuccessText] = useState("");
+const [successText, setSuccessText] = useState("");
+
+const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+const [deleting, setDeleting] = useState(false);
 
   const activeProducts = useMemo(
     () => products.filter((product) => product.is_active).length,
@@ -274,13 +276,12 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
     loadProducts();
   }
 
-  async function deleteProduct(product: Product) {
-  const confirmed = window.confirm(
-    `Delete "${product.name}" permanently? This cannot be undone.`
-  );
+  async function confirmDeleteProduct() {
+  if (!deleteTarget) return;
 
-  if (!confirmed) return;
+  const product = deleteTarget;
 
+  setDeleting(true);
   setErrorText("");
   setSuccessText("");
 
@@ -292,6 +293,7 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
 
   if (linkedError) {
     setErrorText(linkedError.message);
+    setDeleting(false);
     return;
   }
 
@@ -299,6 +301,8 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
     setErrorText(
       `This product is connected to Task Step ${linkedTasks[0].step_number}. Hide it instead, or remove the product connection from Task Library first.`
     );
+    setDeleting(false);
+    setDeleteTarget(null);
     return;
   }
 
@@ -309,6 +313,7 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
 
   if (error) {
     setErrorText(error.message);
+    setDeleting(false);
     return;
   }
 
@@ -316,6 +321,8 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
     resetForm();
   }
 
+  setDeleteTarget(null);
+  setDeleting(false);
   setSuccessText("Product deleted successfully.");
   loadProducts();
 }
@@ -339,36 +346,22 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
     <div className="mx-auto max-w-7xl px-6 py-8">
       <AdminNav />
 
-      <div className="mb-8 flex items-center justify-between gap-5">
-          <div>
-            <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Product Customization</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Manage gold and jewel campaign products, gallery photos, product
-              value, rating stars, reviews, and descriptions.
-            </p>
-          </div>
+      <div className="mb-8 max-w-3xl">
+  <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">
+    Admin Control
+  </p>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/tasks"
-              className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-bold text-white/70 hover:bg-white/[0.1]"
-            >
-              Task Manager
-            </Link>
+  <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
+    Product Customization
+  </h1>
 
-            <button
-              onClick={resetForm}
-              className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
-            >
-              New Product
-            </button>
-          </div>
-        </div>
+  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
+    Manage gold and jewel campaign products, gallery photos, product value,
+    rating stars, reviews, descriptions, and product visibility.
+  </p>
+</div>
 
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Total Products" value={String(products.length)} />
           <StatCard label="Active" value={String(activeProducts)} />
           <StatCard
@@ -392,7 +385,88 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
           </div>
         )}
 
-        <div className="grid grid-cols-[420px_1fr] gap-6">
+        {deleteTarget && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-md"
+    onClick={() => {
+      if (!deleting) setDeleteTarget(null);
+    }}
+  >
+    <div
+      className="w-full max-w-md overflow-hidden rounded-[2rem] border border-red-400/25 bg-[#090909] shadow-[0_0_90px_rgba(239,68,68,0.18)]"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="border-b border-white/10 bg-gradient-to-br from-red-500/15 via-white/[0.04] to-yellow-400/10 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-red-400/30 bg-red-500/15">
+              <Trash2 className="h-7 w-7 text-red-300" />
+            </div>
+
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-red-300/80">
+                Confirm Delete
+              </p>
+              <h3 className="mt-1 text-xl font-black text-white">
+                Delete Product?
+              </h3>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={() => setDeleteTarget(null)}
+            className="rounded-full border border-white/10 bg-white/[0.06] p-2 text-white/60 hover:bg-white/[0.1] hover:text-white disabled:opacity-40"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-5 p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-white/40">
+            Product Name
+          </p>
+          <p className="mt-1 text-lg font-black text-yellow-300">
+            {deleteTarget.name}
+          </p>
+        </div>
+
+        <div className="flex gap-3 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm leading-6 text-red-100/80">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+          <p>
+            This will permanently remove the product from the catalog. If this
+            product is connected to a task, deletion will be blocked for safety.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={() => setDeleteTarget(null)}
+            className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-black text-white/70 hover:bg-white/[0.1] disabled:opacity-40"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={confirmDeleteProduct}
+            className="rounded-2xl border border-red-400/40 bg-red-500/20 px-5 py-3 text-sm font-black text-red-200 hover:bg-red-500/30 disabled:opacity-40"
+          >
+            {deleting ? "Deleting..." : "Delete Permanently"}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
           <section className="rounded-[2rem] border border-yellow-400/20 bg-white/[0.045] p-5 shadow-[0_0_45px_rgba(212,175,55,0.08)]">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -575,8 +649,8 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
             )}
 
             {!loading && products.length > 0 && (
-              <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
-                <table className="w-full text-left text-sm">
+              <div className="overflow-x-auto rounded-[1.5rem] border border-white/10">
+  <table className="min-w-[820px] w-full text-left text-sm">
                   <thead className="bg-white/[0.06] text-xs uppercase tracking-wide text-white/45">
                     <tr>
                       <th className="px-4 py-3">Product</th>
@@ -673,7 +747,7 @@ function AdminProductsContent({ profile }: { profile: Profile }) {
 
   <button
     type="button"
-    onClick={() => deleteProduct(product)}
+    onClick={() => setDeleteTarget(product)}
     className="flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 hover:bg-red-500/15"
     title="Delete product"
   >
