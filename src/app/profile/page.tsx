@@ -35,6 +35,7 @@ type TeamSummary = {
 };
 
 const menuItems = [
+  { label: "Team Center", icon: Users, href: "/team", featured: true },
   { label: "Deposit Credits", icon: Upload, href: "/deposit" },
   { label: "Withdraw Request", icon: Download, href: "/withdraw" },
   {
@@ -49,7 +50,6 @@ const menuItems = [
   },
   { label: "Task History", icon: History, href: "/history" },
   { label: "Transaction Details", icon: History, href: "/transactions" },
-  { label: "Team Center", icon: Users, href: "/team" },
   { label: "Customer Support", icon: Headphones, href: "/support" },
   { label: "Terms & Security", icon: ShieldCheck, href: "/terms" },
   { label: "Logout", icon: LogOut, href: "/login", danger: true },
@@ -186,12 +186,17 @@ const [copied, setCopied] = useState(false);
           <div className="grid grid-cols-3 gap-3 text-center">
             <button
   type="button"
-  onClick={copyTeamCode}
-  disabled={!teamSummary?.team_code}
-  className="rounded-2xl bg-black/30 p-3 text-left disabled:opacity-50"
+  onClick={() => {
+    if (teamSummary?.team_code) {
+      copyTeamCode();
+    } else {
+      router.push("/team");
+    }
+  }}
+  className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 text-left"
 >
   <div className="flex items-center justify-between gap-2">
-    <p className="text-xs text-white/45">Team Code</p>
+    <p className="text-xs text-yellow-100/60">Team Center</p>
     {copied ? (
       <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
     ) : (
@@ -248,28 +253,46 @@ const [copied, setCopied] = useState(false);
 
             return (
               <button
-                key={item.label}
-                onClick={() => handleMenuClick(item)}
-                className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4 last:border-b-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
-                      item.danger
-                        ? "bg-red-500/10 text-red-300"
-                        : "bg-yellow-400/10 text-yellow-300"
-                    }`}
-                  >
+  key={item.label}
+  onClick={() => handleMenuClick(item)}
+  className={`flex w-full items-center justify-between border-b border-white/10 px-5 py-4 last:border-b-0 ${
+    item.featured
+      ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
+      : ""
+  }`}
+>
+  <div className="flex items-center gap-3">
+  <div
+  className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+    item.danger
+      ? "bg-red-500/10 text-red-300"
+      : item.featured
+      ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
+      : "bg-yellow-400/10 text-yellow-300"
+  }`}
+>
                     <Icon className="h-5 w-5" />
                   </div>
 
-                  <span
-                    className={`font-medium ${
-                      item.danger ? "text-red-200" : "text-white/80"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                  <div className="text-left">
+  <span
+    className={`font-medium ${
+      item.danger
+        ? "text-red-200"
+        : item.featured
+        ? "font-black text-yellow-200"
+        : "text-white/80"
+    }`}
+  >
+    {item.label}
+  </span>
+
+  {item.featured && (
+    <p className="mt-0.5 text-xs text-yellow-100/55">
+      Create or join team code
+    </p>
+  )}
+</div>
                 </div>
 
                 <ChevronRight className="h-5 w-5 text-white/35" />
