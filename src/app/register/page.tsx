@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Gem } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { generateReferralCode } from "@/lib/referral";
+import { generateTeamCode } from "@/lib/referral";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
+  const [teamCode, setTeamCode] = useState("");
   const [accepted, setAccepted] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -29,27 +29,27 @@ export default function RegisterPage() {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-const cleanDisplayName = displayName.trim() || "Gold Member";
-const cleanInviteCode = inviteCode.trim().toUpperCase();
+    const cleanDisplayName = displayName.trim() || "Gold Member";
+    const cleanTeamCode = teamCode.trim().toUpperCase();
 
-if (!cleanEmail || !password) {
-  setErrorText("Email and password are required.");
-  return;
-}
+    if (!cleanEmail || !password) {
+      setErrorText("Email and password are required.");
+      return;
+    }
 
-if (password.length < 6) {
-  setErrorText("Password must be at least 6 characters.");
-  return;
-}
+    if (password.length < 6) {
+      setErrorText("Password must be at least 6 characters.");
+      return;
+    }
 
     setLoading(true);
 
     try {
       const { data: signUpData, error: signUpError } =
         await supabase.auth.signUp({
-  email: cleanEmail,
-  password,
-});
+          email: cleanEmail,
+          password,
+        });
 
       if (signUpError) throw signUpError;
 
@@ -59,33 +59,16 @@ if (password.length < 6) {
         throw new Error("Signup succeeded, but user session was not created.");
       }
 
-      let referredBy: string | null = null;
-
-      if (cleanInviteCode) {
-        const { data: referrerId, error: refError } = await supabase.rpc(
-          "resolve_referral_code",
-          {
-            input_code: cleanInviteCode,
-          }
-        );
-
-        if (refError) throw refError;
-
-        if (!referrerId) {
-          throw new Error("Invalid invite code.");
-        }
-
-        referredBy = referrerId;
-      }
-
-      const myReferralCode = generateReferralCode();
+      // Keep legacy referral_code filled only to avoid old DB column issues.
+      // New system uses teams/team_members/team_rewards.
+      const legacyCode = generateTeamCode();
 
       const { error: profileError } = await supabase.from("profiles").insert({
         id: user.id,
         email: cleanEmail,
         display_name: cleanDisplayName,
-        referral_code: myReferralCode,
-        referred_by: referredBy,
+        referral_code: legacyCode,
+        referred_by: null,
         terms_accepted: true,
         role: "user",
         balance: 0,
@@ -97,6 +80,16 @@ if (password.length < 6) {
       });
 
       if (profileError) throw profileError;
+
+      if (cleanTeamCode) {
+        const { error: joinError } = await supabase.rpc("join_team_by_code", {
+          _team_code: cleanTeamCode,
+        });
+
+        if (joinError) {
+          throw new Error(joinError.message || "Team code not found.");
+        }
+      }
 
       router.replace("/");
     } catch (err) {
@@ -151,9 +144,9 @@ if (password.length < 6) {
             />
 
             <input
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              placeholder="Invite code optional"
+              value={teamCode}
+              onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
+              placeholder="Team code optional"
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 uppercase outline-none placeholder:normal-case placeholder:text-white/35 focus:border-yellow-400/50"
             />
 

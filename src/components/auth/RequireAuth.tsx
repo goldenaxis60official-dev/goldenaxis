@@ -19,10 +19,12 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     async function loadProfile() {
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/login");
+      if (userError || !user) {
+        console.error(userError);
+        router.replace("/login");
         return;
       }
 
@@ -34,7 +36,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
       if (error || !data) {
         console.error(error);
-        router.push("/login");
+        router.replace("/login");
         return;
       }
 

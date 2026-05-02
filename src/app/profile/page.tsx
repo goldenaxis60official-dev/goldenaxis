@@ -1,3 +1,5 @@
+//app>profile>page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,6 +25,15 @@ import {
   Gem,
 } from "lucide-react";
 
+type TeamSummary = {
+  team_id: string;
+  team_code: string;
+  team_name: string | null;
+  team_count: number;
+  total_reward: number;
+  user_role: string;
+};
+
 const menuItems = [
   { label: "Deposit Credits", icon: Upload, href: "/deposit" },
   { label: "Withdraw Request", icon: Download, href: "/withdraw" },
@@ -38,7 +49,7 @@ const menuItems = [
   },
   { label: "Task History", icon: History, href: "/history" },
   { label: "Transaction Details", icon: History, href: "/transactions" },
-  { label: "Team Invite", icon: Users, href: "/team" },
+  { label: "Team Center", icon: Users, href: "/team" },
   { label: "Customer Support", icon: Headphones, href: "/support" },
   { label: "Terms & Security", icon: ShieldCheck, href: "/terms" },
   { label: "Logout", icon: LogOut, href: "/login", danger: true },
@@ -56,7 +67,8 @@ function ProfileContent({ profile }: { profile: Profile }) {
   const router = useRouter();
 
   const [assignedTotal, setAssignedTotal] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
+const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (profile.role === "admin") {
@@ -80,6 +92,25 @@ function ProfileContent({ profile }: { profile: Profile }) {
     }
   }, [profile.id, profile.role]);
 
+  useEffect(() => {
+  async function loadTeamSummary() {
+    const { data, error } = await supabase.rpc("get_my_team_summary");
+
+    if (error) {
+      console.error(error.message);
+      setTeamSummary(null);
+      return;
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    setTeamSummary((row || null) as TeamSummary | null);
+  }
+
+  if (profile.role === "user") {
+    loadTeamSummary();
+  }
+}, [profile.id, profile.role]);
+
   async function handleMenuClick(item: (typeof menuItems)[number]) {
     if (item.label === "Logout") {
       await supabase.auth.signOut();
@@ -90,16 +121,16 @@ function ProfileContent({ profile }: { profile: Profile }) {
     router.push(item.href);
   }
 
-  async function copyInviteCode() {
-    if (!profile.referral_code) return;
+  async function copyTeamCode() {
+  if (!teamSummary?.team_code) return;
 
-    await navigator.clipboard.writeText(profile.referral_code);
-    setCopied(true);
+  await navigator.clipboard.writeText(teamSummary.team_code);
+  setCopied(true);
 
-    setTimeout(() => {
-      setCopied(false);
-    }, 1500);
-  }
+  setTimeout(() => {
+    setCopied(false);
+  }, 1500);
+}
 
   if (profile.role === "admin") {
     return (
@@ -154,23 +185,24 @@ function ProfileContent({ profile }: { profile: Profile }) {
 
           <div className="grid grid-cols-3 gap-3 text-center">
             <button
-              type="button"
-              onClick={copyInviteCode}
-              className="rounded-2xl bg-black/30 p-3 text-left"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs text-white/45">Invite Code</p>
-                {copied ? (
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5 text-white/35" />
-                )}
-              </div>
+  type="button"
+  onClick={copyTeamCode}
+  disabled={!teamSummary?.team_code}
+  className="rounded-2xl bg-black/30 p-3 text-left disabled:opacity-50"
+>
+  <div className="flex items-center justify-between gap-2">
+    <p className="text-xs text-white/45">Team Code</p>
+    {copied ? (
+      <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
+    ) : (
+      <Copy className="h-3.5 w-3.5 text-white/35" />
+    )}
+  </div>
 
-              <p className="mt-1 truncate font-black text-yellow-300">
-                {profile.referral_code}
-              </p>
-            </button>
+  <p className="mt-1 truncate font-black text-yellow-300">
+    {teamSummary?.team_code || "No Team"}
+  </p>
+</button>
 
             <div className="rounded-2xl bg-black/30 p-3">
               <p className="text-xs text-white/45">Today</p>
@@ -189,7 +221,7 @@ function ProfileContent({ profile }: { profile: Profile }) {
 
           {copied && (
             <p className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-200">
-              Invite code copied.
+              Team code copied.
             </p>
           )}
         </div>
