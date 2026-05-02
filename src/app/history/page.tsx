@@ -73,7 +73,7 @@ function HistoryContent() {
         return;
       }
 
-      setHistory((data || []) as HistoryRow[]);
+      setHistory((data || []) as unknown as HistoryRow[]);
       setLoading(false);
     }
 
