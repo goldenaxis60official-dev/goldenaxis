@@ -326,7 +326,7 @@ function MissionContent({ profile }: { profile: Profile }) {
               const productDescription =
                 product?.description || task.description || "";
               const productCurrency = product?.currency || "USD";
-              const productPrice = Number(product?.price || task.price);
+              const productPrice = Number(task.price);
               const productRating = Number(product?.rating || 4.8);
               const productReviews = Number(product?.reviews_count || 0);
 

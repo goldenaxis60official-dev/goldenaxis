@@ -28,19 +28,28 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!email || !password) {
-      setErrorText("Email and password are required.");
-      return;
-    }
+    const cleanEmail = email.trim().toLowerCase();
+const cleanDisplayName = displayName.trim() || "Gold Member";
+const cleanInviteCode = inviteCode.trim().toUpperCase();
+
+if (!cleanEmail || !password) {
+  setErrorText("Email and password are required.");
+  return;
+}
+
+if (password.length < 6) {
+  setErrorText("Password must be at least 6 characters.");
+  return;
+}
 
     setLoading(true);
 
     try {
       const { data: signUpData, error: signUpError } =
         await supabase.auth.signUp({
-          email,
-          password,
-        });
+  email: cleanEmail,
+  password,
+});
 
       if (signUpError) throw signUpError;
 
@@ -52,11 +61,11 @@ export default function RegisterPage() {
 
       let referredBy: string | null = null;
 
-      if (inviteCode.trim()) {
+      if (cleanInviteCode) {
         const { data: referrerId, error: refError } = await supabase.rpc(
           "resolve_referral_code",
           {
-            input_code: inviteCode.trim(),
+            input_code: cleanInviteCode,
           }
         );
 
@@ -73,8 +82,8 @@ export default function RegisterPage() {
 
       const { error: profileError } = await supabase.from("profiles").insert({
         id: user.id,
-        email,
-        display_name: displayName || "Gold Member",
+        email: cleanEmail,
+        display_name: cleanDisplayName,
         referral_code: myReferralCode,
         referred_by: referredBy,
         terms_accepted: true,
@@ -89,7 +98,7 @@ export default function RegisterPage() {
 
       if (profileError) throw profileError;
 
-      router.push("/");
+      router.replace("/");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";

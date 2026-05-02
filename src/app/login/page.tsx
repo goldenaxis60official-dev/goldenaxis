@@ -16,49 +16,57 @@ export default function LoginPage() {
   const [errorText, setErrorText] = useState("");
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorText("");
-    setLoading(true);
+  e.preventDefault();
+  setErrorText("");
+  setLoading(true);
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  const cleanEmail = email.trim().toLowerCase();
 
-      if (error) throw error;
-
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-if (!user) {
-  throw new Error("Login succeeded, but user session was not found.");
-}
-
-const { data: profileData, error: profileError } = await supabase
-  .from("profiles")
-  .select("role")
-  .eq("id", user.id)
-  .single();
-
-if (profileError || !profileData) {
-  throw new Error("Profile not found.");
-}
-
-if (profileData.role === "admin") {
-  router.push("/admin");
-} else {
-  router.push("/");
-}
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong.";
-      setErrorText(message);
-    } finally {
-      setLoading(false);
-    }
+  if (!cleanEmail || !password) {
+    setErrorText("Email and password are required.");
+    setLoading(false);
+    return;
   }
+
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password,
+    });
+
+    if (error) throw error;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Login succeeded, but user session was not found.");
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profileData) {
+      throw new Error("Profile not found.");
+    }
+
+    if (profileData.role === "admin") {
+      router.replace("/admin");
+    } else {
+      router.replace("/");
+    }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+    setErrorText(message);
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <main className="min-h-screen bg-[#050505] text-white">
