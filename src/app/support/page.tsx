@@ -146,8 +146,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
           <p className="text-sm leading-6 text-white/60">
             Send a support request about missions, wallet records, account
-            access, or campaign-credit questions. Admin replies will appear in
-            your support history.
+            access, or campaign-credit questions.
           </p>
 
           <div className="mt-4 grid grid-cols-3 gap-3">

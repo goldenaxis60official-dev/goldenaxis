@@ -77,7 +77,7 @@ const adminCards = [
   {
     title: "Support Messages",
     description:
-      "Read user support tickets and send admin replies from the control panel.",
+      "Read user support tickets",
     href: "/admin/support",
     icon: Headphones,
     tag: "Support",

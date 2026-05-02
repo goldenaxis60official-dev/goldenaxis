@@ -37,12 +37,12 @@ const sections = [
   {
     title: "Wallet Request Rule",
     icon: Wallet,
-    text: "Deposit-credit and withdrawal requests require admin review. A request status can be pending, approved, or rejected. Approved balance changes are recorded in the transaction ledger.",
+    text: "Deposit-credit and withdrawal. Balance update are recorded in the transaction ledger.",
   },
   {
     title: "Withdrawal Rule",
     icon: ShieldCheck,
-    text: "Withdrawal requests become available only after the user completes all assigned active campaign missions. Requests are still subject to admin review and platform approval.",
+    text: "Withdrawal requests become available only after the user completes all assigned active campaign missions.",
   },
   {
     title: "Referral Rule",
@@ -52,7 +52,7 @@ const sections = [
   {
     title: "Account Security",
     icon: Lock,
-    text: "Users are responsible for protecting their login information. Admin actions, balance changes, wallet approvals, and support replies may be recorded for transparency and audit history.",
+    text: "Users are responsible for protecting their login information. balance update, wallet history, and support replies may be recorded for transparency and audit history.",
   },
 ];
 

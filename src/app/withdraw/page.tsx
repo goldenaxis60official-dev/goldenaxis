@@ -134,7 +134,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText("Withdrawal request submitted for admin review.");
+    setSuccessText("Withdrawal submitted");
     setNote("");
     setLoading(false);
   }
@@ -209,8 +209,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="mt-4 flex gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100/80">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
               <p>
-                Your assigned campaign sequence is complete. You can submit a
-                withdrawal request for admin review.
+                Your assigned campaign sequence is complete. You can
+                withdrawal earn.
               </p>
             </div>
           )}

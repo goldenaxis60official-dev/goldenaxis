@@ -268,7 +268,6 @@ function HomeContent({ profile }: { profile: Profile }) {
             <h4 className="font-black">Campaign List Preparing</h4>
             <p className="mt-2 text-sm leading-6 text-white/55">
               Your personalized campaign task list has not been assigned yet.
-              Please wait for admin review.
             </p>
           </LuxuryCard>
         )}

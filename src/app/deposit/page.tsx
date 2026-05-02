@@ -69,7 +69,7 @@ function DepositContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText("Credit request submitted. Please wait for admin review.");
+    setSuccessText("Credit request submitted.");
     setNote("");
     setCustomAmount("");
     setLoading(false);
@@ -106,8 +106,7 @@ function DepositContent({ profile }: { profile: Profile }) {
           <div className="flex items-start gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
             <p className="text-sm leading-6 text-yellow-100/80">
-              Deposit requests are reviewed by admin before credits are added to
-              your campaign balance.
+              Deposit requests are pending
             </p>
           </div>
         </div>
@@ -177,7 +176,7 @@ function DepositContent({ profile }: { profile: Profile }) {
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="Write note for admin..."
+              placeholder="Write note ..."
               className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
           </div>

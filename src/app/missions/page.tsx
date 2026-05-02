@@ -309,7 +309,7 @@ setTimeout(() => {
             <h2 className="text-xl font-black">Campaign List Preparing</h2>
             <p className="mt-2 text-sm leading-6 text-yellow-100/70">
               Your personalized product campaign list has not been assigned yet.
-              Please wait for admin review or contact support.
+              or contact support.
             </p>
           </div>
         )}
