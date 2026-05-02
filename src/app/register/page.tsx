@@ -269,7 +269,7 @@ export default function RegisterPage() {
                   />
                   <span className="leading-5">
                     I agree this platform uses promotional campaign credits and
-                    simulation rewards.
+                   rewards.
                   </span>
                 </label>
 

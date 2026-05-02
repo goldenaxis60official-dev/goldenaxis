@@ -65,9 +65,9 @@ const trustBadges = [
 
 const sections = [
   {
-    title: "Promotional Credit Simulation",
+    title: "Promotional Credit",
     icon: Gem,
-    text: "Golden Axis 60 uses campaign credits and simulation rewards inside the platform. Displayed balances, product values, and rewards are part of the promotional task experience unless officially reviewed and approved by the platform.",
+    text: "Golden Axis 60 uses campaign credits and rewards. Displayed balances, product values, and rewards are part of the promotional task experience unless officially reviewed and approved by the platform.",
   },
   {
     title: "Assigned Mission Rule",
@@ -230,7 +230,7 @@ export default function TermsPage() {
               </div>
 
               <p className="text-sm leading-6 text-white/65">
-                This platform is designed as a promotional campaign simulation.
+                This platform is designed as a promotional campaign.
                 It should not be presented as guaranteed income, investment
                 profit, or risk-free earning. All wallet, reward, and withdrawal
                 requests are subject to platform review.
