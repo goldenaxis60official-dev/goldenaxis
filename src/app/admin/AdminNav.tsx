@@ -1,3 +1,5 @@
+//admin>AdminNav.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -11,6 +13,7 @@ import {
   Headphones,
   Crown,
   ClipboardList,
+  Landmark,
 } from "lucide-react";
 
 const adminLinks = [
@@ -45,6 +48,11 @@ const adminLinks = [
     icon: Wallet,
   },
   {
+  label: "Wallet Addresses",
+  href: "/admin/wallet-addresses",
+  icon: Landmark,
+  },
+  {
     label: "Support",
     href: "/admin/support",
     icon: Headphones,
@@ -68,7 +76,7 @@ export default function AdminNav() {
   <h2 className="text-lg font-black text-white">Admin Control</h2>
 </div>
 
-      <div className="grid grid-cols-4 gap-2 xl:grid-cols-8">
+      <div className="grid grid-cols-4 gap-2 xl:grid-cols-9">
         {adminLinks.map((item) => {
           const Icon = item.icon;
           const active =

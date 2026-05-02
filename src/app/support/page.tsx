@@ -1,6 +1,8 @@
+//app>support>page.tsx
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
@@ -14,6 +16,10 @@ import {
   ShieldCheck,
   Wallet,
   Gem,
+  Copy,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Coins,
 } from "lucide-react";
 
 type SupportMessage = {
@@ -26,6 +32,19 @@ type SupportMessage = {
   replied_at: string | null;
 };
 
+type WalletAsset = "USDT" | "USDC";
+type WalletNetwork = "TRC20" | "ERC20";
+type WalletAction = "deposit" | "withdraw";
+
+type WalletAddress = {
+  id: string;
+  asset: WalletAsset;
+  network: WalletNetwork;
+  address: string;
+  memo: string | null;
+  active: boolean;
+};
+
 const helpTopics = [
   {
     title: "Mission Help",
@@ -34,7 +53,7 @@ const helpTopics = [
   },
   {
     title: "Wallet Help",
-    text: "Questions about deposit-credit requests, withdrawal requests, or wallet records.",
+    text: "Deposit address guide, withdrawal network help, and wallet records.",
     icon: Wallet,
   },
   {
@@ -43,6 +62,9 @@ const helpTopics = [
     icon: ShieldCheck,
   },
 ];
+
+const assets: WalletAsset[] = ["USDT", "USDC"];
+const networks: WalletNetwork[] = ["TRC20", "ERC20"];
 
 export default function SupportPage() {
   return (
@@ -57,7 +79,16 @@ function SupportContent({ profile }: { profile: Profile }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<SupportMessage[]>([]);
 
+  const [walletAction, setWalletAction] = useState<WalletAction | null>(null);
+  const [walletAsset, setWalletAsset] = useState<WalletAsset | null>(null);
+  const [walletNetwork, setWalletNetwork] = useState<WalletNetwork | null>(
+    null
+  );
+  const [walletAddresses, setWalletAddresses] = useState<WalletAddress[]>([]);
+  const [copied, setCopied] = useState(false);
+
   const [loading, setLoading] = useState(true);
+  const [addressLoading, setAddressLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
@@ -82,9 +113,119 @@ function SupportContent({ profile }: { profile: Profile }) {
     setLoading(false);
   }
 
+  async function loadWalletAddresses() {
+    setAddressLoading(true);
+
+    const { data, error } = await supabase
+      .from("support_wallet_addresses")
+      .select("*")
+      .eq("active", true)
+      .order("asset", { ascending: true })
+      .order("network", { ascending: true });
+
+    if (!error) {
+      setWalletAddresses((data || []) as WalletAddress[]);
+    }
+
+    setAddressLoading(false);
+  }
+
   useEffect(() => {
     loadMessages();
+    loadWalletAddresses();
   }, [profile.id]);
+
+  const selectedDepositAddress = useMemo(() => {
+    if (!walletAsset || !walletNetwork) return null;
+
+    return (
+      walletAddresses.find(
+        (item) =>
+          item.asset === walletAsset &&
+          item.network === walletNetwork &&
+          item.active &&
+          item.address?.trim()
+      ) || null
+    );
+  }, [walletAddresses, walletAsset, walletNetwork]);
+
+  const walletAutoMessage = useMemo(() => {
+    if (subject !== "Wallet Help" || !walletAction || !walletAsset || !walletNetwork) {
+      return "";
+    }
+
+    if (walletAction === "deposit") {
+      if (!selectedDepositAddress) {
+        return `Deposit Help Request
+
+Asset: ${walletAsset}
+Network: ${walletNetwork}
+
+I selected ${walletAsset} deposit using ${walletNetwork}, but the deposit address is not available in support assistant right now. Please confirm the correct deposit address before I transfer.`;
+      }
+
+      return `Deposit Guide
+
+Asset: ${walletAsset}
+Network: ${walletNetwork}
+Deposit Address: ${selectedDepositAddress.address}
+
+${selectedDepositAddress.memo || "Please make sure the asset and network are correct before sending."}
+
+After transfer, please send your transaction hash or deposit proof here for support review.`;
+    }
+
+    return `Withdrawal Help Request
+
+Asset: ${walletAsset}
+Network: ${walletNetwork}
+
+Please help me with withdrawal using ${walletAsset} on ${walletNetwork} network.
+
+I will provide:
+1. Withdrawal amount
+2. My receiving wallet address
+3. Any memo/tag if required
+
+Please review my withdrawal request.`;
+  }, [
+    subject,
+    walletAction,
+    walletAsset,
+    walletNetwork,
+    selectedDepositAddress,
+  ]);
+
+  useEffect(() => {
+    if (walletAutoMessage) {
+      setMessage(walletAutoMessage);
+    }
+  }, [walletAutoMessage]);
+
+  function handleTopicSelect(nextSubject: string) {
+    setSubject(nextSubject);
+    setSuccessText("");
+    setErrorText("");
+
+    if (nextSubject !== "Wallet Help") {
+      setWalletAction(null);
+      setWalletAsset(null);
+      setWalletNetwork(null);
+      setCopied(false);
+      setMessage("");
+    }
+  }
+
+  async function handleCopyAddress() {
+    if (!selectedDepositAddress?.address) return;
+
+    await navigator.clipboard.writeText(selectedDepositAddress.address);
+    setCopied(true);
+
+    window.setTimeout(() => {
+      setCopied(false);
+    }, 1600);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,16 +234,31 @@ function SupportContent({ profile }: { profile: Profile }) {
     setSuccessText("");
     setErrorText("");
 
-    if (!message.trim()) {
+    if (subject === "Wallet Help") {
+      if (!walletAction || !walletAsset || !walletNetwork) {
+        setErrorText("Please select deposit or withdraw, asset, and network.");
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    const finalMessage = message.trim();
+
+    if (!finalMessage) {
       setErrorText("Please write your message.");
       setSubmitting(false);
       return;
     }
 
+    const finalSubject =
+      subject === "Wallet Help" && walletAction && walletAsset && walletNetwork
+        ? `Wallet Help - ${walletAction.toUpperCase()} ${walletAsset} ${walletNetwork}`
+        : subject;
+
     const { error } = await supabase.from("support_messages").insert({
       user_id: profile.id,
-      subject,
-      message: message.trim(),
+      subject: finalSubject,
+      message: finalMessage,
       status: "open",
     });
 
@@ -114,6 +270,10 @@ function SupportContent({ profile }: { profile: Profile }) {
 
     setSuccessText("Support message submitted successfully.");
     setMessage("");
+    setWalletAction(null);
+    setWalletAsset(null);
+    setWalletNetwork(null);
+    setCopied(false);
     setSubmitting(false);
     loadMessages();
   }
@@ -145,8 +305,8 @@ function SupportContent({ profile }: { profile: Profile }) {
           </div>
 
           <p className="text-sm leading-6 text-white/60">
-            Send a support request about missions, wallet records, account
-            access, or campaign-credit questions.
+            Get instant wallet guidance or send a support request to our review
+            team.
           </p>
 
           <div className="mt-4 grid grid-cols-3 gap-3">
@@ -177,7 +337,7 @@ function SupportContent({ profile }: { profile: Profile }) {
               <button
                 key={item.title}
                 type="button"
-                onClick={() => setSubject(item.title)}
+                onClick={() => handleTopicSelect(item.title)}
                 className={`rounded-[1.5rem] border p-4 text-left backdrop-blur-xl ${
                   subject === item.title
                     ? "border-yellow-400/40 bg-yellow-400/10"
@@ -201,6 +361,141 @@ function SupportContent({ profile }: { profile: Profile }) {
           })}
         </div>
 
+        {subject === "Wallet Help" && (
+          <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-yellow-400/[0.07] p-5 backdrop-blur-xl">
+            <div className="mb-4 flex items-center gap-2">
+              <Coins className="h-5 w-5 text-yellow-300" />
+              <h2 className="text-lg font-black">Wallet Assistant</h2>
+            </div>
+
+            <p className="mb-4 text-sm leading-6 text-white/55">
+              Select your wallet request type, asset, and network. The assistant
+              will prepare the correct message automatically.
+            </p>
+
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-bold text-white/80">
+                1. Select Request
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWalletAction("deposit")}
+                  className={`rounded-2xl border p-4 text-left ${
+                    walletAction === "deposit"
+                      ? "border-yellow-400 bg-yellow-400/15 text-yellow-100"
+                      : "border-white/10 bg-black/30 text-white/60"
+                  }`}
+                >
+                  <ArrowDownToLine className="mb-2 h-5 w-5 text-yellow-300" />
+                  <p className="font-black">Deposit</p>
+                  <p className="mt-1 text-xs text-white/45">
+                    Get wallet address
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWalletAction("withdraw")}
+                  className={`rounded-2xl border p-4 text-left ${
+                    walletAction === "withdraw"
+                      ? "border-yellow-400 bg-yellow-400/15 text-yellow-100"
+                      : "border-white/10 bg-black/30 text-white/60"
+                  }`}
+                >
+                  <ArrowUpFromLine className="mb-2 h-5 w-5 text-yellow-300" />
+                  <p className="font-black">Withdraw</p>
+                  <p className="mt-1 text-xs text-white/45">
+                    Send wallet details
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {walletAction && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm font-bold text-white/80">
+                  2. Select Asset
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {assets.map((asset) => (
+                    <button
+                      key={asset}
+                      type="button"
+                      onClick={() => setWalletAsset(asset)}
+                      className={`rounded-2xl border px-4 py-3 font-black ${
+                        walletAsset === asset
+                          ? "border-yellow-400 bg-yellow-400 text-black"
+                          : "border-white/10 bg-black/30 text-white/60"
+                      }`}
+                    >
+                      {asset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {walletAction && walletAsset && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm font-bold text-white/80">
+                  3. Select Network
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {networks.map((network) => (
+                    <button
+                      key={network}
+                      type="button"
+                      onClick={() => setWalletNetwork(network)}
+                      className={`rounded-2xl border px-4 py-3 font-black ${
+                        walletNetwork === network
+                          ? "border-yellow-400 bg-yellow-400 text-black"
+                          : "border-white/10 bg-black/30 text-white/60"
+                      }`}
+                    >
+                      {network}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {walletAction && walletAsset && walletNetwork && (
+              <div className="rounded-2xl border border-yellow-400/20 bg-black/35 p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="text-sm font-black text-yellow-200">
+                    Auto Support Reply
+                  </p>
+
+                  {walletAction === "deposit" && selectedDepositAddress && (
+                    <button
+                      type="button"
+                      onClick={handleCopyAddress}
+                      className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-bold text-white/70"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  )}
+                </div>
+
+                {addressLoading ? (
+                  <p className="text-sm text-white/50">
+                    Loading wallet guide...
+                  </p>
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-white/75">
+                    {walletAutoMessage}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit}
           className="mb-6 rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
@@ -210,13 +505,13 @@ function SupportContent({ profile }: { profile: Profile }) {
 
             <select
               value={subject}
-              onChange={(event) => setSubject(event.target.value)}
+              onChange={(event) => handleTopicSelect(event.target.value)}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
             >
               <option>Mission Help</option>
               <option>Wallet Help</option>
               <option>Account Security</option>
-              <option>Referral Help</option>
+              <option>Team Help</option>
               <option>Other Question</option>
             </select>
           </div>
@@ -227,8 +522,12 @@ function SupportContent({ profile }: { profile: Profile }) {
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              placeholder="Write your support message..."
-              className="min-h-32 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+              placeholder={
+                subject === "Wallet Help"
+                  ? "Your wallet guide will appear here after selection..."
+                  : "Write your support message..."
+              }
+              className="min-h-40 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
           </div>
 
@@ -328,7 +627,7 @@ function SupportContent({ profile }: { profile: Profile }) {
               ) : (
                 <div className="mt-3 flex items-center gap-2 rounded-2xl bg-black/30 p-3 text-sm text-white/50">
                   <Clock className="h-4 w-4 text-yellow-300" />
-                  Waiting for admin reply
+                  Waiting for support review
                 </div>
               )}
             </div>

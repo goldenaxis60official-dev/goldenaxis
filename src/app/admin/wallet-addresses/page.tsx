@@ -1,0 +1,296 @@
+//app>admin>wallet-addresses>page.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import RequireAuth from "@/components/auth/RequireAuth";
+import AdminNav from "../AdminNav";
+import { supabase } from "@/lib/supabaseClient";
+import type { Profile } from "@/types/profile";
+import {
+  AlertCircle,
+  CheckCircle,
+  Landmark,
+  Save,
+  ShieldCheck,
+} from "lucide-react";
+
+type WalletAsset = "USDT" | "USDC";
+type WalletNetwork = "TRC20" | "ERC20";
+
+type WalletAddressRow = {
+  id?: string;
+  asset: WalletAsset;
+  network: WalletNetwork;
+  address: string;
+  memo: string | null;
+  active: boolean;
+};
+
+const walletOptions: Array<{ asset: WalletAsset; network: WalletNetwork }> = [
+  { asset: "USDT", network: "TRC20" },
+  { asset: "USDT", network: "ERC20" },
+  { asset: "USDC", network: "TRC20" },
+  { asset: "USDC", network: "ERC20" },
+];
+
+function getKey(asset: WalletAsset, network: WalletNetwork) {
+  return `${asset}-${network}`;
+}
+
+export default function AdminWalletAddressesPage() {
+  return (
+    <RequireAuth>
+      {(profile) => <AdminWalletAddressesContent profile={profile} />}
+    </RequireAuth>
+  );
+}
+
+function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
+  const isAdmin = profile.role === "admin";
+
+  const [rows, setRows] = useState<Record<string, WalletAddressRow>>({});
+  const [loading, setLoading] = useState(true);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+
+  const [successText, setSuccessText] = useState("");
+  const [errorText, setErrorText] = useState("");
+
+  async function loadAddresses() {
+    setLoading(true);
+    setErrorText("");
+
+    const { data, error } = await supabase
+      .from("support_wallet_addresses")
+      .select("*")
+      .order("asset", { ascending: true })
+      .order("network", { ascending: true });
+
+    if (error) {
+      setErrorText(error.message);
+      setLoading(false);
+      return;
+    }
+
+    const nextRows: Record<string, WalletAddressRow> = {};
+
+    walletOptions.forEach((item) => {
+      const existing = (data || []).find(
+        (row) => row.asset === item.asset && row.network === item.network
+      ) as WalletAddressRow | undefined;
+
+      nextRows[getKey(item.asset, item.network)] = existing || {
+        asset: item.asset,
+        network: item.network,
+        address: "",
+        memo: "",
+        active: true,
+      };
+    });
+
+    setRows(nextRows);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadAddresses();
+    } else {
+      setLoading(false);
+    }
+  }, [isAdmin]);
+
+  function updateRow(
+    asset: WalletAsset,
+    network: WalletNetwork,
+    changes: Partial<WalletAddressRow>
+  ) {
+    const key = getKey(asset, network);
+
+    setRows((current) => ({
+      ...current,
+      [key]: {
+        ...current[key],
+        asset,
+        network,
+        ...changes,
+      },
+    }));
+  }
+
+  async function handleSave(asset: WalletAsset, network: WalletNetwork) {
+    const key = getKey(asset, network);
+    const row = rows[key];
+
+    setSavingKey(key);
+    setSuccessText("");
+    setErrorText("");
+
+    const { error } = await supabase.from("support_wallet_addresses").upsert(
+      {
+        asset,
+        network,
+        address: row?.address?.trim() || "",
+        memo: row?.memo?.trim() || null,
+        active: row?.active ?? true,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "asset,network" }
+    );
+
+    if (error) {
+      setErrorText(error.message);
+      setSavingKey(null);
+      return;
+    }
+
+    setSuccessText(`${asset} ${network} wallet address saved.`);
+    setSavingKey(null);
+    loadAddresses();
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="min-h-screen bg-[#050505] p-6 text-white">
+        <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
+          <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
+          <h1 className="text-2xl font-black">Admin Access Required</h1>
+          <p className="mt-2 text-sm text-white/55">
+            This page is only available for admin accounts.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#050505] text-white">
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <AdminNav />
+
+        <div className="mb-8 flex items-center justify-between gap-5">
+          <div>
+            <p className="text-sm font-bold text-yellow-200/80">
+              Admin Control
+            </p>
+            <h1 className="mt-1 text-3xl font-black">Wallet Addresses</h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/50">
+              Set the deposit wallet addresses shown inside the user support
+              wallet assistant.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4">
+            <Landmark className="h-7 w-7 text-yellow-300" />
+          </div>
+        </div>
+
+        {successText && (
+          <div className="mb-5 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            <CheckCircle className="h-4 w-4" />
+            {successText}
+          </div>
+        )}
+
+        {errorText && (
+          <div className="mb-5 flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <AlertCircle className="h-4 w-4" />
+            {errorText}
+          </div>
+        )}
+
+        <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
+          <div className="mb-5">
+            <p className="text-sm text-yellow-200/80">Deposit Settings</p>
+            <h2 className="text-2xl font-black">USDT / USDC Network Address</h2>
+          </div>
+
+          {loading ? (
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
+              Loading wallet settings...
+            </div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {walletOptions.map((item) => {
+                const key = getKey(item.asset, item.network);
+                const row = rows[key];
+
+                return (
+                  <div
+                    key={key}
+                    className="rounded-[1.7rem] border border-white/10 bg-black/25 p-5"
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-300">
+                          {item.asset}
+                        </p>
+                        <h3 className="mt-1 text-xl font-black">
+                          {item.network} Address
+                        </h3>
+                      </div>
+
+                      <label className="flex items-center gap-2 text-sm text-white/60">
+                        <input
+                          type="checkbox"
+                          checked={row?.active ?? true}
+                          onChange={(event) =>
+                            updateRow(item.asset, item.network, {
+                              active: event.target.checked,
+                            })
+                          }
+                        />
+                        Active
+                      </label>
+                    </div>
+
+                    <div className="mb-4">
+                      <p className="mb-2 text-sm font-bold text-white/80">
+                        Deposit Address
+                      </p>
+                      <textarea
+                        value={row?.address || ""}
+                        onChange={(event) =>
+                          updateRow(item.asset, item.network, {
+                            address: event.target.value,
+                          })
+                        }
+                        placeholder={`Enter ${item.asset} ${item.network} deposit address`}
+                        className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+                      />
+                    </div>
+
+                    <div className="mb-5">
+                      <p className="mb-2 text-sm font-bold text-white/80">
+                        Note / Instruction
+                      </p>
+                      <input
+                        value={row?.memo || ""}
+                        onChange={(event) =>
+                          updateRow(item.asset, item.network, {
+                            memo: event.target.value,
+                          })
+                        }
+                        placeholder="Example: Only send using this network."
+                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => handleSave(item.asset, item.network)}
+                      disabled={savingKey === key}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
+                    >
+                      <Save className="h-5 w-5" />
+                      {savingKey === key ? "Saving..." : "Save Address"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
