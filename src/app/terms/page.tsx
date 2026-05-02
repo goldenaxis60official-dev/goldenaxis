@@ -1,7 +1,8 @@
-//app>terms>page.tsx
+//app>tearms>page.tsx
 
 "use client";
 
+import { useState } from "react";
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import Image from "next/image";
 import AppShell from "@/components/layout/AppShell";
@@ -20,7 +21,24 @@ import {
   Fingerprint,
   Database,
   Sparkles,
+  ZoomIn,
+  X,
 } from "lucide-react";
+
+const certificates = [
+  {
+    title: "Internal Quality Certificate",
+    image: "/certificate1.png",
+    description:
+      "Golden Axis 60 internal platform quality and campaign review standard.",
+  },
+  {
+    title: "Certified Excellence Standard",
+    image: "/certificate2.png",
+    description:
+      "Golden Axis 60 certificate reference for quality, review, and platform trust.",
+  },
+];
 
 const trustBadges = [
   {
@@ -29,10 +47,10 @@ const trustBadges = [
     icon: Award,
   },
   {
-  title: "Quality Checklist",
-  text: "Internal review process for campaign and wallet activity",
-  icon: BadgeCheck,
-},
+    title: "Quality Checklist",
+    text: "Internal review process for campaign and wallet activity",
+    icon: BadgeCheck,
+  },
   {
     title: "KYC Review",
     text: "Account and wallet requests may require manual review",
@@ -88,7 +106,16 @@ const sections = [
   },
 ];
 
+type Certificate = {
+  title: string;
+  image: string;
+  description: string;
+};
+
 export default function TermsPage() {
+  const [selectedCertificate, setSelectedCertificate] =
+    useState<Certificate | null>(null);
+
   return (
     <RequireAuth>
       {() => (
@@ -132,27 +159,41 @@ export default function TermsPage() {
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-[1.5rem] border border-white/15 bg-white/5 p-2">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-[1.2rem] bg-black/30">
-                  <Image
-                    src="/certificate1.png"
-                    alt="Golden Axis 60 official certificate"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+              <div className="space-y-4">
+                {certificates.map((certificate) => (
+                  <button
+                    key={certificate.image}
+                    type="button"
+                    onClick={() => setSelectedCertificate(certificate)}
+                    className="w-full overflow-hidden rounded-[1.5rem] border border-yellow-300/20 bg-gradient-to-b from-white/10 to-white/[0.03] p-2 text-left shadow-[0_0_35px_rgba(250,204,21,0.08)]"
+                  >
+                    <div className="relative overflow-hidden rounded-[1.2rem] bg-white p-2">
+                      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-white">
+                        <Image
+                          src={certificate.image}
+                          alt={certificate.title}
+                          fill
+                          className="object-contain"
+                          priority={certificate.image === "/certificate1.png"}
+                        />
+                      </div>
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                      <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full border border-black/10 bg-black/65 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md">
+                        <ZoomIn className="h-3.5 w-3.5 text-yellow-300" />
+                        View
+                      </div>
+                    </div>
 
-                  <div className="absolute bottom-3 left-3 right-3 rounded-2xl border border-yellow-300/20 bg-black/55 px-3 py-2 backdrop-blur-md">
-                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-200">
-                      Golden Axis 60
-                    </p>
-                    <p className="mt-1 text-[11px] text-white/65">
-                      Internal trust, quality review, wallet checking, and campaign record standard.
-                    </p>
-                  </div>
-                </div>
+                    <div className="px-2 pb-2 pt-3">
+                      <p className="text-sm font-black text-white">
+                        {certificate.title}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-white/55">
+                        {certificate.description}
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
             </LuxuryCard>
 
@@ -218,6 +259,45 @@ export default function TermsPage() {
               })}
             </div>
           </section>
+
+          {/* Certificate Fullscreen Viewer */}
+          {selectedCertificate && (
+            <div className="fixed inset-0 z-50 bg-black/90 px-4 py-6 backdrop-blur-xl">
+              <div className="mx-auto flex h-full max-w-md flex-col">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-200/70">
+                      Certificate Preview
+                    </p>
+                    <h2 className="text-lg font-black text-white">
+                      {selectedCertificate.title}
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCertificate(null)}
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="relative flex-1 overflow-hidden rounded-[1.5rem] border border-yellow-300/20 bg-white p-3">
+                  <Image
+                    src={selectedCertificate.image}
+                    alt={selectedCertificate.title}
+                    fill
+                    className="object-contain p-3"
+                  />
+                </div>
+
+                <p className="mt-4 rounded-2xl border border-yellow-300/15 bg-yellow-400/10 px-4 py-3 text-center text-xs leading-5 text-yellow-50/70">
+                  {selectedCertificate.description}
+                </p>
+              </div>
+            </div>
+          )}
         </AppShell>
       )}
     </RequireAuth>
