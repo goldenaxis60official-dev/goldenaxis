@@ -2,6 +2,7 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -266,7 +267,7 @@ setLoading(false);
           </div>
         </div>
 
-        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+        <LuxuryCard goldGlow className="mb-5 p-5">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm text-white/50">Current Balance</p>
@@ -286,12 +287,10 @@ setLoading(false);
               Deposit credits are added after admin confirms your payment.
             </p>
           </div>
-        </div>
+        </LuxuryCard>
 
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
-        >
+        <LuxuryCard className="p-5">
+  <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <div className="mb-3 flex items-center justify-between">
               <p className="font-bold">1. Select Amount</p>
@@ -557,7 +556,7 @@ setLoading(false);
 
           <button
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-60"
           >
             <ArrowDownToLine className="h-5 w-5" />
             {loading ? "Submitting..." : "Submit Deposit Review"}
@@ -571,7 +570,8 @@ setLoading(false);
             <ClipboardList className="h-5 w-5" />
             View Deposit Records
           </button>
-        </form>
+          </form>
+</LuxuryCard>
       </section>
     </AppShell>
   );

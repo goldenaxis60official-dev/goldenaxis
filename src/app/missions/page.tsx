@@ -2,6 +2,8 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -65,7 +67,7 @@ function RatingStars({ rating }: { rating: number }) {
 function MissionContent({ profile }: { profile: Profile }) {
   const router = useRouter();
 
-  const [assignments, setAssignments] = useState<UserTaskAssignment[]>([]);
+
   const [visibleAssignments, setVisibleAssignments] = useState<
     UserTaskAssignment[]
   >([]);
@@ -124,7 +126,6 @@ const maxStep = rows.reduce(
   0
 );
 
-      setAssignments(rows);
       setVisibleAssignments(visibleRows);
       setAssignedTotal(rows.length);
       setMaxAssignedStep(maxStep);
@@ -244,44 +245,43 @@ setTimeout(() => {
           </div>
         </div>
 
-        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-white/55">Current Progress</p>
+        <LuxuryCard goldGlow className="mb-5 p-5">
+  <div className="mb-4 flex items-center justify-between">
+    <p className="text-sm text-white/55">Current Progress</p>
 
-            <div className="flex items-center gap-1 text-sm text-yellow-300">
-              <Trophy className="h-4 w-4" />
-              Step {profile.current_step} / {assignedTotal || "-"}
-            </div>
-          </div>
+    <div className="flex items-center gap-1 text-sm font-bold text-yellow-300">
+      <Trophy className="h-4 w-4" />
+      Step {profile.current_step} / {assignedTotal || "-"}
+    </div>
+  </div>
 
-          <div className="h-3 overflow-hidden rounded-full bg-black/40">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-yellow-200"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
+  <div className="h-3 overflow-hidden rounded-full bg-black/40">
+    <div
+      className="h-full rounded-full bg-gradient-to-r from-yellow-500 via-yellow-300 to-yellow-100 shadow-[0_0_18px_rgba(250,204,21,0.35)]"
+      style={{ width: `${progressPercent}%` }}
+    />
+  </div>
+</LuxuryCard>
 
         <div className="mb-4 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Today</p>
-            <p className="mt-1 font-bold text-emerald-300">
-              ${Number(profile.today_earnings).toFixed(2)}
-            </p>
-          </div>
+  <StatCard
+    label="Today"
+    value={`$${Number(profile.today_earnings).toFixed(2)}`}
+    color="green"
+  />
 
-          <div className="rounded-2xl bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Balance</p>
-            <p className="mt-1 font-bold text-yellow-300">
-              ${Number(profile.balance).toFixed(2)}
-            </p>
-          </div>
+  <StatCard
+    label="Balance"
+    value={`$${Number(profile.balance).toFixed(2)}`}
+    color="gold"
+  />
 
-          <div className="rounded-2xl bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Assigned</p>
-            <p className="mt-1 font-bold text-blue-300">{assignedTotal}</p>
-          </div>
-        </div>
+  <StatCard
+    label="Assigned"
+    value={String(assignedTotal)}
+    color="blue"
+  />
+</div>
 
         {successText && (
           <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
@@ -304,15 +304,24 @@ setTimeout(() => {
         )}
 
         {!loading && assignedTotal === 0 && (
-          <div className="rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-6 text-center shadow-[0_0_35px_rgba(212,175,55,0.12)]">
-            <Clock className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-            <h2 className="text-xl font-black">Campaign List Preparing</h2>
-            <p className="mt-2 text-sm leading-6 text-yellow-100/70">
-              Your personalized product campaign list has not been assigned yet.
-              or contact support.
-            </p>
-          </div>
-        )}
+  <LuxuryCard goldGlow className="p-6 text-center">
+    <Clock className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
+
+    <h2 className="text-xl font-black">Campaign List Preparing</h2>
+
+    <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-yellow-100/70">
+      Your personalized product campaign list is being prepared. Please wait for
+      assignment or contact support for review.
+    </p>
+
+    <button
+      onClick={() => router.push("/support")}
+      className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
+    >
+      Contact Support
+    </button>
+  </LuxuryCard>
+)}
 
         {!loading && allAssignedCompleted && (
           <div className="rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-center">

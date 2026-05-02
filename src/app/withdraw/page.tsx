@@ -2,6 +2,8 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -202,37 +204,31 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           </div>
         </div>
 
-        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+        <LuxuryCard goldGlow className="mb-5 p-5">
           <p className="text-sm text-white/50">Available Campaign Balance</p>
           <h2 className="mt-2 text-4xl font-black">
             ${Number(profile.balance).toFixed(2)}
           </h2>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Mission Progress</p>
-              <p className="mt-1 font-bold text-yellow-300">
-                {loadingAssignments
-                  ? "..."
-                  : `${Math.min(completedCount, assignedTotal)} / ${
-                      assignedTotal || "-"
-                    }`}
-              </p>
-            </div>
+         <div className="mt-4 grid grid-cols-2 gap-3">
+  <StatCard
+    label="Mission Progress"
+    value={
+      loadingAssignments
+        ? "..."
+        : `${Math.min(completedCount, assignedTotal)} / ${
+            assignedTotal || "-"
+          }`
+    }
+    color="gold"
+  />
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Withdraw Status</p>
-              <p
-  className={`mt-1 font-bold ${
-    completedAllAssignedMissions
-      ? "text-emerald-300"
-      : "text-yellow-300"
-  }`}
->
-  {completedAllAssignedMissions ? "Ready" : "In Progress"}
-</p>
-            </div>
-          </div>
+  <StatCard
+    label="Withdraw Status"
+    value={completedAllAssignedMissions ? "Ready" : "In Progress"}
+    color={completedAllAssignedMissions ? "green" : "gold"}
+  />
+</div>
 
           {hasNoAssignedTasks && (
             <div className="mt-4 flex gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">
@@ -274,12 +270,10 @@ function WithdrawContent({ profile }: { profile: Profile }) {
               </p>
             </div>
           )}
-        </div>
+        </LuxuryCard>
 
-        <form
-  onSubmit={handleSubmit}
-  className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
->
+        <LuxuryCard className="p-5">
+  <form onSubmit={handleSubmit}>
           <div className="mb-5">
             <p className="mb-3 font-bold">1. Request Amount</p>
 
@@ -424,7 +418,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
           <button
             disabled={loading || !completedAllAssignedMissions}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="h-5 w-5" />
             {loading ? "Submitting..." : "Submit Withdrawal Request"}
@@ -438,7 +432,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <ClipboardList className="h-5 w-5" />
             View Withdrawal Records
           </button>
-        </form>
+          </form>
+</LuxuryCard>
       </section>
     </AppShell>
   );

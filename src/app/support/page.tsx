@@ -2,6 +2,7 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/layout/AppShell";
@@ -336,7 +337,7 @@ function SupportContent({ profile }: { profile: Profile }) {
           })}
         </div>
 
-        <div className="mb-5 rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl">
+        <LuxuryCard className="mb-5 p-4">
           <div className="mb-4 flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-yellow-400/15 text-yellow-300">
               <Bot className="h-5 w-5" />
@@ -457,11 +458,11 @@ function SupportContent({ profile }: { profile: Profile }) {
                 </div>
               ))}
           </div>
-        </div>
+        </LuxuryCard>
 
         <form
           onSubmit={handleSubmit}
-          className="sticky bottom-24 z-20 mb-6 rounded-[2rem] border border-yellow-400/20 bg-[#11100b]/95 p-4 shadow-[0_0_35px_rgba(234,179,8,0.12)] backdrop-blur-xl"
+          className="sticky bottom-24 z-20 mb-6 rounded-[2rem] border border-yellow-400/25 bg-[#11100b]/95 p-4 shadow-[0_0_45px_rgba(234,179,8,0.18),0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -497,7 +498,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
           <button
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-60"
           >
             {submitting ? (
               "Sending..."
@@ -540,7 +541,7 @@ function WalletAssistantCard({
   onCopyAddress: () => void;
 }) {
   return (
-    <div className="mb-5 ml-0 rounded-[1.7rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
+    <div className="mb-5 ml-0 rounded-[1.7rem] border border-yellow-400/25 bg-gradient-to-br from-yellow-400/10 via-white/[0.035] to-black/30 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
       <div className="mb-4 flex items-center gap-2">
         <Wallet className="h-5 w-5 text-yellow-300" />
         <div>
@@ -559,8 +560,8 @@ function WalletAssistantCard({
             onClick={() => onSelectAction("deposit")}
             className={`rounded-2xl border p-3 text-left ${
               walletAction === "deposit"
-                ? "border-yellow-400 bg-yellow-400 text-black"
-                : "border-white/10 bg-black/30 text-white/60"
+                ? "border-yellow-400 bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_10px_25px_rgba(234,179,8,0.24)]"
+: "border-white/10 bg-white/[0.05] text-white/60 hover:bg-white/[0.08]"
             }`}
           >
             <ArrowDownToLine className="mb-2 h-5 w-5" />
@@ -744,11 +745,13 @@ function StatusCard({
   color: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3">
-      <p className="text-xs text-white/45">{label}</p>
-      <p className={`mt-1 font-black ${color}`}>{value}</p>
-    </div>
-  );
+  <div className="rounded-[1.25rem] border border-white/10 bg-black/35 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)]">
+    <p className="truncate text-[11px] font-medium tracking-wide text-white/45">
+      {label}
+    </p>
+    <p className={`mt-1 font-black tabular-nums ${color}`}>{value}</p>
+  </div>
+);
 }
 
 function StatusBadge({ status }: { status: SupportStatus }) {

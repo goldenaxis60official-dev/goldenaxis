@@ -1,5 +1,7 @@
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -126,56 +128,36 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
           </div>
         </div>
 
-        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+        <LuxuryCard goldGlow className="mb-5 p-5">
           <p className="text-sm text-white/50">Current Campaign Balance</p>
           <h2 className="mt-2 text-3xl font-black">
             ${Number(profile.balance).toFixed(2)}
           </h2>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-black/30 p-3">
-              <div className="mb-1 flex items-center gap-1 text-emerald-300">
-                <ArrowDownCircle className="h-4 w-4" />
-                <p className="text-xs font-bold">Deposit Requests</p>
-              </div>
-              <p className="font-black text-white">
-                ${totalDeposit.toFixed(2)}
-              </p>
-            </div>
+  <StatCard
+    label="Deposit Requests"
+    value={`$${totalDeposit.toFixed(2)}`}
+    color="green"
+  />
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <div className="mb-1 flex items-center gap-1 text-blue-300">
-                <ArrowUpCircle className="h-4 w-4" />
-                <p className="text-xs font-bold">Withdraw Requests</p>
-              </div>
-              <p className="font-black text-white">
-                ${totalWithdrawal.toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
+  <StatCard
+    label="Withdraw Requests"
+    value={`$${totalWithdrawal.toFixed(2)}`}
+    color="blue"
+  />
+</div>
+        </LuxuryCard>
 
         <div className="mb-5 grid grid-cols-4 gap-3">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">All</p>
-            <p className="mt-1 font-bold text-white">{records.length}</p>
-          </div>
+  <StatCard label="All" value={String(records.length)} color="white" />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Pending</p>
-            <p className="mt-1 font-bold text-yellow-300">{pendingCount}</p>
-          </div>
+  <StatCard label="Pending" value={String(pendingCount)} color="gold" />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Approved</p>
-            <p className="mt-1 font-bold text-emerald-300">{approvedCount}</p>
-          </div>
+  <StatCard label="Approved" value={String(approvedCount)} color="green" />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Rejected</p>
-            <p className="mt-1 font-bold text-red-300">{rejectedCount}</p>
-          </div>
-        </div>
+  <StatCard label="Rejected" value={String(rejectedCount)} color="red" />
+</div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
           {[
@@ -188,8 +170,8 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
               onClick={() => setFilter(item.value as RequestFilter)}
               className={`rounded-2xl border px-3 py-3 text-sm font-bold ${
                 filter === item.value
-                  ? "border-yellow-400 bg-yellow-400 text-black"
-                  : "border-white/10 bg-white/[0.06] text-white/65"
+                  ? "border-yellow-400 bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_10px_25px_rgba(234,179,8,0.24)]"
+: "border-white/10 bg-white/[0.06] text-white/65 hover:bg-white/[0.08]"
               }`}
             >
               {item.label}
@@ -198,9 +180,9 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
         </div>
 
         {loading && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
-            Loading request records...
-          </div>
+          <LuxuryCard className="p-5 text-center text-white/60">
+  Loading request records...
+</LuxuryCard>
         )}
 
         {errorText && (
@@ -211,13 +193,13 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
         )}
 
         {!loading && !errorText && records.length === 0 && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center">
+          <LuxuryCard goldGlow className="p-6 text-center">
             <ClipboardList className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
             <p className="font-bold">No request records yet</p>
             <p className="mt-2 text-sm text-white/50">
               Deposit or withdrawal requests will appear here.
             </p>
-          </div>
+          </LuxuryCard>
         )}
 
         <div className="space-y-4 pb-6">
@@ -226,10 +208,7 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
             const isDeposit = item.type === "deposit_credit";
 
             return (
-              <div
-                key={item.id}
-                className="rounded-[1.7rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-              >
+              <LuxuryCard key={item.id} className="p-4">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div
@@ -302,7 +281,7 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
                     Reviewed: {new Date(item.reviewed_at).toLocaleString()}
                   </p>
                 )}
-              </div>
+              </LuxuryCard>
             );
           })}
         </div>

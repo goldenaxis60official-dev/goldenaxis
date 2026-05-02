@@ -1,5 +1,7 @@
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -129,30 +131,25 @@ function HistoryContent() {
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">All</p>
-            <p className="mt-1 font-bold text-white">{history.length}</p>
-          </div>
+  <StatCard label="All" value={String(history.length)} color="white" />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Completed</p>
-            <p className="mt-1 font-bold text-emerald-300">
-              {history.filter((h) => h.status === "completed").length}
-            </p>
-          </div>
+  <StatCard
+    label="Completed"
+    value={String(history.filter((h) => h.status === "completed").length)}
+    color="green"
+  />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Bonus</p>
-            <p className="mt-1 font-bold text-yellow-300">
-              {history.filter((h) => isLuckyHistory(h)).length}
-            </p>
-          </div>
-        </div>
+  <StatCard
+    label="Bonus"
+    value={String(history.filter((h) => isLuckyHistory(h)).length)}
+    color="gold"
+  />
+</div>
 
         {loading && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
-            Loading records...
-          </div>
+          <LuxuryCard className="p-5 text-center text-white/60">
+  Loading records...
+</LuxuryCard>
         )}
 
         {errorText && (
@@ -163,12 +160,13 @@ function HistoryContent() {
         )}
 
         {!loading && !errorText && history.length === 0 && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center">
-            <p className="font-bold">No mission records yet</p>
-            <p className="mt-2 text-sm text-white/50">
-              Complete your first campaign mission to create a record.
-            </p>
-          </div>
+          <LuxuryCard goldGlow className="p-6 text-center">
+  <Gem className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
+  <p className="font-black">No mission records yet</p>
+  <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+    Complete your first campaign mission to create your historical record.
+  </p>
+</LuxuryCard>
         )}
 
         <div className="space-y-4 pb-6">
@@ -195,14 +193,11 @@ function HistoryContent() {
             const productReviews = Number(snapshot?.reviews_count || 0);
 
             return (
-              <div
-                key={item.id}
-                className={`overflow-hidden rounded-[1.7rem] border backdrop-blur-xl ${
-                  lucky
-                    ? "border-yellow-400/50 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.18)]"
-                    : "border-white/10 bg-white/[0.05]"
-                }`}
-              >
+              <LuxuryCard
+  key={item.id}
+  goldGlow={lucky}
+  className="overflow-hidden p-0"
+>
                 <div className="relative h-44 bg-black/35">
                   {productImage ? (
                     <img
@@ -222,8 +217,8 @@ function HistoryContent() {
                     <span
                       className={`rounded-full px-3 py-1 text-[11px] font-bold ${
                         lucky
-                          ? "bg-yellow-300 text-black"
-                          : "bg-white/10 text-white/80 backdrop-blur"
+                          ? "bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_0_22px_rgba(250,204,21,0.35)]"
+: "bg-white/10 text-white/80 backdrop-blur"
                       }`}
                     >
                       {lucky ? "Lucky Bonus" : "Standard"}
@@ -303,7 +298,7 @@ function HistoryContent() {
                     </div>
                   )}
                 </div>
-              </div>
+              </LuxuryCard>
             );
           })}
         </div>

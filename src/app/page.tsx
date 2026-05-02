@@ -13,7 +13,6 @@ import type { Task } from "@/types/task";
 import { supabase } from "@/lib/supabaseClient";
 import {
   Gem,
-  Crown,
   Wallet,
   Users,
   ShieldCheck,
@@ -231,9 +230,9 @@ function HomeContent({ profile }: { profile: Profile }) {
               <button
                 key={item.label}
                 onClick={() => router.push(item.href)}
-                className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-4 text-center shadow-xl backdrop-blur-xl transition hover:border-yellow-400/40 hover:bg-yellow-400/10"
+                className="group rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.075),rgba(255,255,255,0.025))] p-4 text-center shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition active:scale-[0.97] hover:border-yellow-400/40 hover:bg-yellow-400/10"
               >
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-700 text-black">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 text-black shadow-[0_10px_28px_rgba(234,179,8,0.28)] transition group-hover:scale-105">
                   <Icon className="h-6 w-6" />
                 </div>
 
@@ -266,9 +265,17 @@ function HomeContent({ profile }: { profile: Profile }) {
           <LuxuryCard goldGlow className="p-5 text-center">
             <Clock className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
             <h4 className="font-black">Campaign List Preparing</h4>
-            <p className="mt-2 text-sm leading-6 text-white/55">
-              Your personalized campaign task list has not been assigned yet.
-            </p>
+            <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+  Your personalized campaign list is being prepared. Please wait for assignment
+  or contact support for review.
+</p>
+
+<button
+  onClick={() => router.push("/support")}
+  className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
+>
+  Contact Support
+</button>
           </LuxuryCard>
         )}
 

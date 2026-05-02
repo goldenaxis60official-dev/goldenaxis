@@ -2,6 +2,8 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -181,7 +183,7 @@ const [copied, setCopied] = useState(false);
           </div>
         </div>
 
-        <div className="mb-6 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+        <LuxuryCard goldGlow className="mb-6 p-5">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <p className="text-sm text-white/50">Campaign Balance</p>
@@ -205,7 +207,7 @@ const [copied, setCopied] = useState(false);
       router.push("/team");
     }
   }}
-  className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 text-left"
+  className="rounded-[1.25rem] border border-yellow-400/25 bg-yellow-400/10 px-3 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)] active:scale-[0.98]"
 >
   <div className="flex items-center justify-between gap-2">
     <p className="text-xs text-yellow-100/60">Team Center</p>
@@ -223,19 +225,17 @@ const [copied, setCopied] = useState(false);
   </p>
 </button>
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Today</p>
-              <p className="mt-1 font-black text-emerald-300">
-                ${Number(profile.today_earnings).toFixed(2)}
-              </p>
-            </div>
+            <StatCard
+  label="Today"
+  value={`$${Number(profile.today_earnings).toFixed(2)}`}
+  color="green"
+/>
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Missions</p>
-              <p className="mt-1 font-black text-blue-300">
-                {completedCount}/{missionTotalText}
-              </p>
-            </div>
+<StatCard
+  label="Missions"
+  value={`${completedCount}/${missionTotalText}`}
+  color="blue"
+/>
           </div>
 
           {copied && (
@@ -243,25 +243,23 @@ const [copied, setCopied] = useState(false);
               Team code copied.
             </p>
           )}
-        </div>
+        </LuxuryCard>
 
         <div className="mb-6 grid grid-cols-2 gap-3">
-          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4">
-            <p className="text-xs text-white/45">Total Earnings</p>
-            <p className="mt-1 text-lg font-black text-yellow-300">
-              ${Number(profile.total_earnings).toFixed(2)}
-            </p>
-          </div>
+  <StatCard
+    label="Total Earnings"
+    value={`$${Number(profile.total_earnings).toFixed(2)}`}
+    color="gold"
+  />
 
-          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4">
-            <p className="text-xs text-white/45">Credit Score</p>
-            <p className="mt-1 text-lg font-black text-emerald-300">
-              {profile.credit_score}
-            </p>
-          </div>
-        </div>
+  <StatCard
+    label="Credit Score"
+    value={String(profile.credit_score)}
+    color="green"
+  />
+</div>
 
-        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] backdrop-blur-xl">
+        <LuxuryCard className="mb-8 overflow-hidden p-0">
           {menuItems.map((item) => {
             const Icon = item.icon;
 
@@ -269,7 +267,7 @@ const [copied, setCopied] = useState(false);
               <button
   key={item.label}
   onClick={() => handleMenuClick(item)}
-  className={`flex w-full items-center justify-between border-b border-white/10 px-5 py-4 last:border-b-0 ${
+  className={`flex w-full items-center justify-between border-b border-white/10 px-5 py-4 text-left transition active:scale-[0.99] last:border-b-0 hover:bg-white/[0.035] ${
     item.featured
       ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
       : ""
@@ -317,7 +315,7 @@ const [copied, setCopied] = useState(false);
               </button>
             );
           })}
-        </div>
+        </LuxuryCard>
       </section>
     </AppShell>
   );

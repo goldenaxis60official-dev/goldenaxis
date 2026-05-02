@@ -2,6 +2,7 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
 import Image from "next/image";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -28,10 +29,10 @@ const trustBadges = [
     icon: Award,
   },
   {
-    title: "ISO-Aligned QA",
-    text: "Quality process inspired by international standards",
-    icon: BadgeCheck,
-  },
+  title: "Quality Checklist",
+  text: "Internal review process for campaign and wallet activity",
+  icon: BadgeCheck,
+},
   {
     title: "KYC Review",
     text: "Account and wallet requests may require manual review",
@@ -105,7 +106,7 @@ export default function TermsPage() {
             </div>
 
             {/* Premium Certificate Section */}
-            <div className="mb-5 overflow-hidden rounded-[2rem] border border-yellow-400/25 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.22),rgba(255,255,255,0.06)_35%,rgba(0,0,0,0.45)_100%)] p-4 shadow-[0_0_45px_rgba(250,204,21,0.12)] backdrop-blur-xl">
+            <LuxuryCard goldGlow className="mb-5 overflow-hidden p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <div className="mb-1 flex items-center gap-2">
@@ -116,7 +117,7 @@ export default function TermsPage() {
                   </div>
 
                   <h2 className="text-xl font-black text-white">
-                    Official Platform Certificate
+                    Internal Platform Standard
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-white/55">
@@ -148,13 +149,12 @@ export default function TermsPage() {
                       Golden Axis 60
                     </p>
                     <p className="mt-1 text-[11px] text-white/65">
-                      Internal trust, excellence, authenticity, and quality
-                      assurance certificate.
+                      Internal trust, quality review, wallet checking, and campaign record standard.
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
+            </LuxuryCard>
 
             {/* Trust Badges */}
             <div className="mb-5 grid grid-cols-2 gap-3">
@@ -182,7 +182,7 @@ export default function TermsPage() {
               })}
             </div>
 
-            <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 shadow-[0_0_35px_rgba(250,204,21,0.08)] backdrop-blur-xl">
+            <LuxuryCard goldGlow className="mb-5 p-5">
               <div className="mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-300" />
                 <h2 className="text-lg font-black">Important Notice</h2>
@@ -194,17 +194,14 @@ export default function TermsPage() {
                 profit, or risk-free earning. All wallet, reward, and withdrawal
                 requests are subject to platform review.
               </p>
-            </div>
+            </LuxuryCard>
 
             <div className="space-y-4 pb-6">
               {sections.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <div
-                    key={item.title}
-                    className="rounded-[1.7rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-                  >
+                  <LuxuryCard key={item.title} className="p-4">
                     <div className="mb-3 flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
                         <Icon className="h-5 w-5" />
@@ -216,7 +213,7 @@ export default function TermsPage() {
                     <p className="text-sm leading-6 text-white/60">
                       {item.text}
                     </p>
-                  </div>
+                  </LuxuryCard>
                 );
               })}
             </div>

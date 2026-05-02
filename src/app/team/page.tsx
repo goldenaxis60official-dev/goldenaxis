@@ -2,6 +2,8 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -241,7 +243,7 @@ function TeamContent({ profile }: { profile: Profile }) {
           <>
             {summary ? (
               <>
-                <div className="mb-5 overflow-hidden rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] backdrop-blur-xl">
+                <LuxuryCard goldGlow className="mb-5 overflow-hidden p-0">
                   <div className="p-5">
                     <div className="mb-5 flex items-center justify-between">
                       <div>
@@ -261,7 +263,7 @@ function TeamContent({ profile }: { profile: Profile }) {
 
                     <button
                       onClick={copyTeamCode}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black"
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98]"
                     >
                       {copied ? (
                         <>
@@ -286,29 +288,22 @@ function TeamContent({ profile }: { profile: Profile }) {
                       </p>
                     </div>
                   </div>
-                </div>
+                </LuxuryCard>
 
                 <div className="mb-5 grid grid-cols-3 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-                    <p className="text-xs text-white/45">Team Size</p>
-                    <p className="mt-1 font-bold text-blue-300">{teamCount}</p>
-                  </div>
+  <StatCard label="Team Size" value={String(teamCount)} color="blue" />
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-                    <p className="text-xs text-white/45">Team Bonus</p>
-                    <p className="mt-1 font-bold text-yellow-300">5%</p>
-                  </div>
+  <StatCard label="Team Bonus" value="5%" color="gold" />
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-                    <p className="text-xs text-white/45">Reward</p>
-                    <p className="mt-1 font-bold text-emerald-300">
-                      ${totalReward.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
+  <StatCard
+    label="Reward"
+    value={`$${totalReward.toFixed(2)}`}
+    color="green"
+  />
+</div>
 
                 {isOwner && (
-                  <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-4">
+                  <LuxuryCard goldGlow className="mb-5 p-4">
                     <h2 className="mb-3 font-black">Customize Team</h2>
 
                     <div className="space-y-3">
@@ -331,13 +326,13 @@ function TeamContent({ profile }: { profile: Profile }) {
                       <button
                         onClick={createOrUpdateTeam}
                         disabled={actionLoading}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400/10 px-4 py-3 font-bold text-yellow-200 disabled:opacity-50"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-4 py-3 font-bold text-yellow-200 active:scale-[0.98] disabled:opacity-50"
                       >
                         <RefreshCw className="h-4 w-4" />
                         Update Team Code
                       </button>
                     </div>
-                  </div>
+                  </LuxuryCard>
                 )}
 
                 <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100/80">
@@ -353,21 +348,18 @@ function TeamContent({ profile }: { profile: Profile }) {
                 </div>
 
                 {rewards.length === 0 && (
-                  <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center">
+                  <LuxuryCard className="p-6 text-center">
                     <Gift className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
                     <p className="font-bold">No team bonuses yet</p>
                     <p className="mt-2 text-sm text-white/50">
                       Bonuses appear when another team member completes a mission.
                     </p>
-                  </div>
+                  </LuxuryCard>
                 )}
 
                 <div className="space-y-4 pb-6">
                   {rewards.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-[1.7rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-                    >
+                    <LuxuryCard key={item.id} className="p-4">
                       <div className="mb-4 flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
                           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
@@ -404,13 +396,13 @@ function TeamContent({ profile }: { profile: Profile }) {
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </LuxuryCard>
                   ))}
                 </div>
               </>
             ) : (
               <div className="space-y-5">
-                <div className="rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+                <LuxuryCard goldGlow className="p-5">
                   <h2 className="mb-2 text-xl font-black">Create My Team</h2>
                   <p className="mb-4 text-sm leading-6 text-white/55">
                     Create your own team code. Other members can join by using
@@ -437,15 +429,15 @@ function TeamContent({ profile }: { profile: Profile }) {
                     <button
                       onClick={createOrUpdateTeam}
                       disabled={actionLoading}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-50"
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-50"
                     >
                       <Plus className="h-5 w-5" />
                       Create Team
                     </button>
                   </div>
-                </div>
+                </LuxuryCard>
 
-                <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl">
+                <LuxuryCard className="p-5">
                   <h2 className="mb-2 text-xl font-black">Join Existing Team</h2>
                   <p className="mb-4 text-sm leading-6 text-white/55">
                     Search a team code and join the team directly.
@@ -485,13 +477,13 @@ function TeamContent({ profile }: { profile: Profile }) {
                       <button
                         onClick={joinTeam}
                         disabled={actionLoading}
-                        className="mt-4 w-full rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 font-black text-black disabled:opacity-50"
+                        className="mt-4 w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-3 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-50"
                       >
                         Join Team
                       </button>
                     </div>
                   )}
-                </div>
+                </LuxuryCard>
               </div>
             )}
           </>

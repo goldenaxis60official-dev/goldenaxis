@@ -2,6 +2,8 @@
 
 "use client";
 
+import LuxuryCard from "@/components/ui/LuxuryCard";
+import StatCard from "@/components/ui/StatCard";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -112,39 +114,32 @@ function TransactionsContent({ profile }: { profile: Profile }) {
           </div>
         </div>
 
-        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+        <LuxuryCard goldGlow className="mb-5 p-5">
           <p className="text-sm text-white/50">Current Campaign Balance</p>
           <h2 className="mt-2 text-3xl font-black">
             ${Number(profile.balance).toFixed(2)}
           </h2>
 
           <div className="mt-4 grid grid-cols-3 gap-3">
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Credit In</p>
-              <p className="mt-1 font-bold text-emerald-300">
-                ${totalIn.toFixed(2)}
-              </p>
-            </div>
+  <StatCard
+    label="Credit In"
+    value={`$${totalIn.toFixed(2)}`}
+    color="green"
+  />
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Credit Out</p>
-              <p className="mt-1 font-bold text-red-300">
-                ${totalOut.toFixed(2)}
-              </p>
-            </div>
+  <StatCard
+    label="Credit Out"
+    value={`$${totalOut.toFixed(2)}`}
+    color="red"
+  />
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Net</p>
-              <p
-                className={`mt-1 font-bold ${
-                  netChange >= 0 ? "text-yellow-300" : "text-red-300"
-                }`}
-              >
-                ${netChange.toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
+  <StatCard
+    label="Net"
+    value={`$${netChange.toFixed(2)}`}
+    color={netChange >= 0 ? "gold" : "red"}
+  />
+</div>
+        </LuxuryCard>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
           {[
@@ -157,8 +152,8 @@ function TransactionsContent({ profile }: { profile: Profile }) {
               onClick={() => setFilter(item.value as TransactionFilter)}
               className={`rounded-2xl border px-3 py-3 text-sm font-bold ${
                 filter === item.value
-                  ? "border-yellow-400 bg-yellow-400 text-black"
-                  : "border-white/10 bg-white/[0.06] text-white/65"
+                  ? "border-yellow-400 bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_10px_25px_rgba(234,179,8,0.24)]"
+: "border-white/10 bg-white/[0.06] text-white/65 hover:bg-white/[0.08]"
               }`}
             >
               {item.label}
@@ -167,30 +162,25 @@ function TransactionsContent({ profile }: { profile: Profile }) {
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">All</p>
-            <p className="mt-1 font-bold text-white">{transactions.length}</p>
-          </div>
+  <StatCard label="All" value={String(transactions.length)} color="white" />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Showing</p>
-            <p className="mt-1 font-bold text-yellow-300">
-              {filteredTransactions.length}
-            </p>
-          </div>
+  <StatCard
+    label="Showing"
+    value={String(filteredTransactions.length)}
+    color="gold"
+  />
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Today</p>
-            <p className="mt-1 font-bold text-emerald-300">
-              ${Number(profile.today_earnings).toFixed(2)}
-            </p>
-          </div>
-        </div>
+  <StatCard
+    label="Today"
+    value={`$${Number(profile.today_earnings).toFixed(2)}`}
+    color="green"
+  />
+</div>
 
         {loading && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
-            Loading transactions...
-          </div>
+          <LuxuryCard className="p-5 text-center text-white/60">
+  Loading transactions...
+</LuxuryCard>
         )}
 
         {errorText && (
@@ -201,13 +191,13 @@ function TransactionsContent({ profile }: { profile: Profile }) {
         )}
 
         {!loading && !errorText && filteredTransactions.length === 0 && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center">
+          <LuxuryCard goldGlow className="p-6 text-center">
             <Gem className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
             <p className="font-bold">No transactions found</p>
             <p className="mt-2 text-sm text-white/50">
               Wallet transaction records will appear here.
             </p>
-          </div>
+          </LuxuryCard>
         )}
 
         <div className="space-y-4 pb-6">
@@ -216,10 +206,7 @@ function TransactionsContent({ profile }: { profile: Profile }) {
             const positive = isPositiveAmount(amount);
 
             return (
-              <div
-                key={item.id}
-                className="rounded-[1.7rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-              >
+              <LuxuryCard key={item.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div
@@ -277,7 +264,7 @@ function TransactionsContent({ profile }: { profile: Profile }) {
                     </p>
                   </div>
                 </div>
-              </div>
+              </LuxuryCard>
             );
           })}
         </div>
