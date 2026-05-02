@@ -8,6 +8,7 @@ import RequireAuth from "@/components/auth/RequireAuth";
 import AppShell from "@/components/layout/AppShell";
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import StatCard from "@/components/ui/StatCard";
+import { getLanguage, messages } from "@/i18n";
 import type { Profile } from "@/types/profile";
 import type { Task } from "@/types/task";
 import { supabase } from "@/lib/supabaseClient";
@@ -33,13 +34,13 @@ type UserTaskAssignment = {
 };
 
 const quickActions = [
-  { label: "Start Mission", icon: PlayCircle, href: "/missions" },
-  { label: "History", icon: History, href: "/history" },
-  { label: "Deposit", icon: Wallet, href: "/deposit" },
-  { label: "Team", icon: Users, href: "/team" },
-  { label: "Security", icon: ShieldCheck, href: "/terms" },
-  { label: "Support", icon: Headphones, href: "/support" },
-];
+  { key: "startMission", icon: PlayCircle, href: "/missions" },
+  { key: "history", icon: History, href: "/history" },
+  { key: "deposit", icon: Wallet, href: "/deposit" },
+  { key: "team", icon: Users, href: "/team" },
+  { key: "security", icon: ShieldCheck, href: "/terms" },
+  { key: "support", icon: Headphones, href: "/support" },
+] as const;
 
 export default function HomePage() {
   return (
@@ -51,6 +52,9 @@ export default function HomePage() {
 
 function HomeContent({ profile }: { profile: Profile }) {
   const router = useRouter();
+
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
 
   const [assignments, setAssignments] = useState<UserTaskAssignment[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
@@ -96,7 +100,7 @@ function HomeContent({ profile }: { profile: Profile }) {
       <main className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-yellow-300 border-t-transparent" />
-          <p className="text-sm text-white/60">Opening admin control...</p>
+          <p className="text-sm text-white/60">{t.home.openingAdmin}</p>
         </div>
       </main>
     );
@@ -118,10 +122,10 @@ function HomeContent({ profile }: { profile: Profile }) {
   const nextProduct = nextTask?.products || null;
 
   const nextTaskName =
-    nextProduct?.name || nextTask?.title || "Campaign List Preparing";
+  nextProduct?.name || nextTask?.title || t.home.preparingTitle;
 
-  const nextTaskCategory =
-    nextProduct?.category || nextTask?.category || "Pending Review";
+const nextTaskCategory =
+  nextProduct?.category || nextTask?.category || t.home.pendingReview;
 
   const nextTaskImage =
     nextProduct?.main_image || nextTask?.image_url || "";
@@ -136,7 +140,7 @@ function HomeContent({ profile }: { profile: Profile }) {
     <AppShell>
       <section className="relative px-5 pb-6 pt-8">
         <div className="absolute right-6 top-8 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs text-yellow-200">
-          Credit Score {profile.credit_score}
+          {t.home.creditScore} {profile.credit_score}
         </div>
 
         <div className="mb-6 flex items-center gap-3">
@@ -145,9 +149,9 @@ function HomeContent({ profile }: { profile: Profile }) {
           </div>
 
           <div>
-            <p className="text-sm text-yellow-200/80">Welcome back</p>
+            <p className="text-sm text-yellow-200/80">{t.home.welcomeBack}</p>
             <h1 className="text-2xl font-bold tracking-tight">
-              {profile.display_name || "Gold Member"}
+              {profile.display_name || t.home.goldMember}
             </h1>
           </div>
         </div>
@@ -155,7 +159,7 @@ function HomeContent({ profile }: { profile: Profile }) {
         <LuxuryCard goldGlow className="p-5">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-white/55">Campaign Balance</p>
+              <p className="text-sm text-white/55">{t.home.campaignBalance}</p>
               <h2 className="mt-1 text-4xl font-black tracking-tight">
                 ${Number(profile.balance).toFixed(2)}
               </h2>
@@ -168,19 +172,19 @@ function HomeContent({ profile }: { profile: Profile }) {
 
           <div className="grid grid-cols-3 gap-3">
             <StatCard
-              label="Today"
+              label={t.home.today}
               value={`$${Number(profile.today_earnings).toFixed(2)}`}
               color="green"
             />
 
             <StatCard
-              label="Mission"
+              label={t.home.mission}
               value={`${completedCount} / ${assignedTotal || "-"}`}
               color="gold"
             />
 
             <StatCard
-              label="Assigned"
+              label={t.home.assigned}
               value={loadingTasks ? "..." : String(assignedTotal)}
               color="blue"
             />
@@ -194,12 +198,12 @@ function HomeContent({ profile }: { profile: Profile }) {
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-yellow-300" />
               <p className="text-sm font-bold text-white/80">
-                Campaign Progress
+                {t.home.campaignProgress}
               </p>
             </div>
 
             <p className="text-xs text-yellow-300">
-              Step {profile.current_step}
+              {t.common.step} {profile.current_step}
             </p>
           </div>
 
@@ -211,15 +215,15 @@ function HomeContent({ profile }: { profile: Profile }) {
           </div>
 
           <p className="mt-3 text-xs leading-5 text-white/50">
-            Complete assigned gold and jewel campaign missions to unlock rewards.
+            {t.home.progressNote}
           </p>
         </LuxuryCard>
       </section>
 
       <section className="px-5 py-6">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-bold">Quick Access</h3>
-          <span className="text-xs text-yellow-300">Member Tools</span>
+          <h3 className="text-lg font-bold">{t.home.quickAccess}</h3>
+          <span className="text-xs text-yellow-300">{t.home.memberTools}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
@@ -228,7 +232,7 @@ function HomeContent({ profile }: { profile: Profile }) {
 
             return (
               <button
-                key={item.label}
+                key={item.key}
                 onClick={() => router.push(item.href)}
                 className="group rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.075),rgba(255,255,255,0.025))] p-4 text-center shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition active:scale-[0.97] hover:border-yellow-400/40 hover:bg-yellow-400/10"
               >
@@ -237,7 +241,7 @@ function HomeContent({ profile }: { profile: Profile }) {
                 </div>
 
                 <p className="text-xs font-medium text-white/80">
-                  {item.label}
+                  {t.home.quickActions[item.key]}
                 </p>
               </button>
             );
@@ -247,7 +251,7 @@ function HomeContent({ profile }: { profile: Profile }) {
 
       <section className="px-5 pb-6">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-bold">Next Mission</h3>
+          <h3 className="text-lg font-bold">{t.home.nextMission}</h3>
 
           <div className="flex items-center gap-1 text-xs text-yellow-300">
             <Trophy className="h-4 w-4" />
@@ -257,24 +261,23 @@ function HomeContent({ profile }: { profile: Profile }) {
 
         {loadingTasks && (
           <LuxuryCard className="p-5 text-center text-white/55">
-            Loading mission preview...
+            {t.home.loadingMission}
           </LuxuryCard>
         )}
 
         {!loadingTasks && assignedTotal === 0 && (
           <LuxuryCard goldGlow className="p-5 text-center">
             <Clock className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
-            <h4 className="font-black">Campaign List Preparing</h4>
+            <h4 className="font-black">{t.home.preparingTitle}</h4>
             <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
-  Your personalized campaign list is being prepared. Please wait for assignment
-  or contact support for review.
+  {t.home.preparingNote}
 </p>
 
 <button
   onClick={() => router.push("/support")}
   className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
 >
-  Contact Support
+  {t.common.contactSupport}
 </button>
           </LuxuryCard>
         )}
@@ -282,9 +285,9 @@ function HomeContent({ profile }: { profile: Profile }) {
         {!loadingTasks && assignedTotal > 0 && !nextTask && (
           <LuxuryCard className="p-5 text-center">
             <Trophy className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
-            <h4 className="font-black">All Missions Completed</h4>
+            <h4 className="font-black">{t.home.allCompleted}</h4>
             <p className="mt-2 text-sm leading-6 text-white/55">
-              You have completed all assigned campaign missions.
+              {t.home.allCompletedNote}
             </p>
           </LuxuryCard>
         )}
@@ -318,8 +321,8 @@ function HomeContent({ profile }: { profile: Profile }) {
                   }`}
                 >
                   {nextTask.task_type === "lucky_bonus"
-                    ? "Lucky Bonus"
-                    : "Standard"}
+  ? t.common.luckyBonus
+  : t.common.standard}
                 </span>
               </div>
             </div>
@@ -329,13 +332,13 @@ function HomeContent({ profile }: { profile: Profile }) {
                 <div>
                   <h4 className="text-lg font-black">{nextTaskName}</h4>
                   <p className="mt-1 text-sm text-white/45">
-                    {nextTaskCategory} Campaign
+                    {nextTaskCategory} {t.common.campaign}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-black/35 px-3 py-2 text-right">
                   <p className="text-[10px] uppercase tracking-wide text-white/40">
-                    Reward
+                    {t.common.reward}
                   </p>
                   <p className="font-black text-yellow-300">
                     ${nextReward.toFixed(2)}
@@ -347,7 +350,7 @@ function HomeContent({ profile }: { profile: Profile }) {
                 onClick={() => router.push("/missions")}
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black"
               >
-                Continue Mission
+                {t.home.continueMission}
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>

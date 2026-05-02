@@ -1,32 +1,93 @@
-//src>components>layout>BottomNav.tsx
+//components>layout>BottomNav.tsx
 
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Home, Gem, User } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { getLanguage, messages, type Language } from "@/i18n";
 
 const navItems = [
   {
-    label: "Home",
+    key: "home",
     href: "/",
     icon: Home,
+    premium: false,
   },
   {
-    label: "Missions",
+    key: "missions",
     href: "/missions",
     icon: Gem,
     premium: true,
   },
   {
-    label: "Profile",
+    key: "profile",
     href: "/profile",
     icon: User,
+    premium: false,
   },
-];
+] as const;
 
 export default function BottomNav() {
   const pathname = usePathname();
+
+  const [language, setLanguage] = useState<Language>("en");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const cachedLanguage = localStorage.getItem("golden_axis_language");
+    if (cachedLanguage) {
+      setLanguage(getLanguage(cachedLanguage));
+    }
+
+    async function loadLanguage() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || !mounted) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("language")
+        .eq("id", user.id)
+        .single();
+
+      if (!mounted) return;
+
+      const nextLanguage = getLanguage(data?.language);
+      setLanguage(nextLanguage);
+      localStorage.setItem("golden_axis_language", nextLanguage);
+    }
+
+    function handleLanguageChange(event: Event) {
+      const customEvent = event as CustomEvent<Language>;
+      const nextLanguage = getLanguage(customEvent.detail);
+
+      setLanguage(nextLanguage);
+      localStorage.setItem("golden_axis_language", nextLanguage);
+    }
+
+    loadLanguage();
+
+    window.addEventListener(
+      "golden-axis-language-change",
+      handleLanguageChange
+    );
+
+    return () => {
+      mounted = false;
+      window.removeEventListener(
+        "golden-axis-language-change",
+        handleLanguageChange
+      );
+    };
+  }, []);
+
+  const t = messages[language];
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
@@ -59,12 +120,14 @@ export default function BottomNav() {
                   className={[
                     "relative z-10",
                     item.premium ? "h-6 w-6" : "h-5 w-5",
-                    active && item.premium ? "drop-shadow-[0_0_8px_rgba(0,0,0,0.35)]" : "",
+                    active && item.premium
+                      ? "drop-shadow-[0_0_8px_rgba(0,0,0,0.35)]"
+                      : "",
                   ].join(" ")}
                 />
 
                 <span className="relative z-10 text-[11px] font-black tracking-tight">
-                  {item.label}
+                  {t.bottomNav[item.key]}
                 </span>
               </Link>
             );

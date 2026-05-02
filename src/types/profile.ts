@@ -16,5 +16,6 @@ export type Profile = {
   status: string;
   terms_accepted: boolean;
   role: "user" | "admin";
+  language: "en" | "zh";
   created_at: string;
 };

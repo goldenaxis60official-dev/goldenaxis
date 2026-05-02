@@ -5,6 +5,7 @@
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
+import { getLanguage, messages } from "@/i18n";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -66,6 +67,9 @@ function RatingStars({ rating }: { rating: number }) {
 
 function MissionContent({ profile }: { profile: Profile }) {
   const router = useRouter();
+
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
 
 
   const [visibleAssignments, setVisibleAssignments] = useState<
@@ -188,19 +192,13 @@ const maxStep = rows.reduce(
       }
 
       if (error.message.includes("insufficient_balance")) {
-        setErrorText(
-          "Insufficient campaign balance. Please add credits to continue this mission."
-        );
+        setErrorText(t.missions.insufficientBalance);
       } else if (error.message.includes("no_assigned_tasks")) {
-        setErrorText(
-          "Your campaign task list has not been assigned yet. Please contact support."
-        );
+        setErrorText(t.missions.noAssignedTasks);
       } else if (error.message.includes("all_assigned_missions_completed")) {
-        setErrorText("All assigned campaign missions are completed.");
+        setErrorText(t.missions.allAssignedCompletedError);
       } else if (error.message.includes("assigned_task_not_found")) {
-        setErrorText(
-          "This mission step is not available in your assigned campaign list."
-        );
+        setErrorText(t.missions.assignedTaskNotFound);
       } else {
         setErrorText(error.message);
       }
@@ -218,7 +216,9 @@ if (assignedStep >= maxAssignedStep) {
   return;
 }
 
-setSuccessText(`Mission completed. Reward $${reward} added.`);
+setSuccessText(
+  t.missions.successCompleted.replace("${reward}", `$${reward}`)
+);
 
 setTimeout(() => {
   window.location.reload();
@@ -236,8 +236,8 @@ setTimeout(() => {
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Campaign Center</p>
-            <h1 className="text-2xl font-black">Missions</h1>
+            <p className="text-sm text-yellow-200/80">{t.missions.campaignCenter}</p>
+            <h1 className="text-2xl font-black">{t.missions.title}</h1>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -247,11 +247,11 @@ setTimeout(() => {
 
         <LuxuryCard goldGlow className="mb-5 p-5">
   <div className="mb-4 flex items-center justify-between">
-    <p className="text-sm text-white/55">Current Progress</p>
+    <p className="text-sm text-white/55">{t.missions.currentProgress}</p>
 
     <div className="flex items-center gap-1 text-sm font-bold text-yellow-300">
       <Trophy className="h-4 w-4" />
-      Step {profile.current_step} / {assignedTotal || "-"}
+      {t.missions.step} {profile.current_step} / {assignedTotal || "-"}
     </div>
   </div>
 
@@ -265,19 +265,19 @@ setTimeout(() => {
 
         <div className="mb-4 grid grid-cols-3 gap-3">
   <StatCard
-    label="Today"
+    label={t.missions.today}
     value={`$${Number(profile.today_earnings).toFixed(2)}`}
     color="green"
   />
 
   <StatCard
-    label="Balance"
+    label={t.missions.balance}
     value={`$${Number(profile.balance).toFixed(2)}`}
     color="gold"
   />
 
   <StatCard
-    label="Assigned"
+    label={t.missions.assigned}
     value={String(assignedTotal)}
     color="blue"
   />
@@ -299,7 +299,7 @@ setTimeout(() => {
 
         {loading && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
-            Loading assigned missions...
+            {t.missions.loadingAssigned}
           </div>
         )}
 
@@ -307,18 +307,17 @@ setTimeout(() => {
   <LuxuryCard goldGlow className="p-6 text-center">
     <Clock className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
 
-    <h2 className="text-xl font-black">Campaign List Preparing</h2>
+    <h2 className="text-xl font-black">{t.missions.preparingTitle}</h2>
 
     <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-yellow-100/70">
-      Your personalized product campaign list is being prepared. Please wait for
-      assignment or contact support for review.
+      {t.missions.preparingNote}
     </p>
 
     <button
       onClick={() => router.push("/support")}
       className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
     >
-      Contact Support
+      {t.missions.contactSupport}
     </button>
   </LuxuryCard>
 )}
@@ -326,9 +325,9 @@ setTimeout(() => {
         {!loading && allAssignedCompleted && (
           <div className="rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-center">
             <CheckCircle className="mx-auto mb-4 h-12 w-12 text-emerald-300" />
-            <h2 className="text-xl font-black">All Missions Completed</h2>
+            <h2 className="text-xl font-black">{t.missions.allCompletedTitle}</h2>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              You have completed all assigned campaign missions.
+              {t.missions.allCompletedNote}
             </p>
           </div>
         )}
@@ -339,10 +338,9 @@ setTimeout(() => {
           visibleAssignments.length === 0 && (
             <div className="rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-6 text-center">
               <AlertCircle className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-              <h2 className="text-xl font-black">Mission Step Not Assigned</h2>
+              <h2 className="text-xl font-black">{t.missions.stepNotAssignedTitle}</h2>
               <p className="mt-2 text-sm leading-6 text-yellow-100/70">
-                Your current step is not available in the assigned campaign
-                list. Please contact support.
+                {t.missions.stepNotAssignedNote}
               </p>
             </div>
           )}
@@ -422,11 +420,13 @@ const locked = assignment.assigned_step > profile.current_step;
     }`}
   >
     {lucky && <Sparkles className="h-3.5 w-3.5" />}
-    {lucky ? `Lucky Bonus ${bonusMultiplier.toFixed(1)}x` : "Standard"}
+    {lucky
+  ? `${t.missions.luckyBonus} ${bonusMultiplier.toFixed(1)}x`
+  : t.missions.standard}
   </span>
 
   <span className="rounded-full bg-black/65 px-3 py-1 text-[11px] font-bold text-white/80 backdrop-blur">
-    Step {assignment.assigned_step}
+    {t.missions.step} {assignment.assigned_step}
   </span>
 </div>
 
@@ -435,15 +435,15 @@ const locked = assignment.assigned_step > profile.current_step;
     <div className="flex items-center justify-between gap-3">
       <div>
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200/70">
-          Special Bonus Unlocked
+          {t.missions.specialBonusUnlocked}
         </p>
         <p className="mt-1 text-sm font-black text-yellow-100">
-          Premium jewel reward opportunity
+          {t.missions.premiumJewelOpportunity}
         </p>
       </div>
 
       <div className="rounded-2xl bg-yellow-300 px-3 py-2 text-center text-black">
-        <p className="text-[10px] font-black">Boost</p>
+        <p className="text-[10px] font-black">{t.missions.boost}</p>
         <p className="text-sm font-black">+{bonusPercent.toFixed(0)}%</p>
       </div>
     </div>
@@ -494,13 +494,13 @@ const locked = assignment.assigned_step > profile.current_step;
                         <h3 className="text-xl font-black">{productName}</h3>
 
                         <p className="mt-1 text-sm text-white/45">
-                          {productCategory} Campaign
+                          {productCategory} {t.missions.campaign}
                         </p>
                       </div>
 
                       <div className="rounded-2xl bg-black/35 px-3 py-2 text-right">
                         <p className="text-[10px] uppercase tracking-wide text-white/40">
-                          Value
+                          {t.missions.value}
                         </p>
                         <p className="font-black text-yellow-300">
                           {productCurrency} {productPrice.toFixed(2)}
@@ -518,12 +518,12 @@ const locked = assignment.assigned_step > profile.current_step;
 </div>
 
                       <p className="text-xs text-white/45">
-                        {productReviews} reviews
+                        {productReviews} {t.missions.reviews}
                       </p>
 
                       {product && (
                         <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300">
-                          Verified Product
+                          {t.missions.verifiedProduct}
                         </span>
                       )}
                     </div>
@@ -543,32 +543,32 @@ const locked = assignment.assigned_step > profile.current_step;
 
       <div>
         <p className="text-sm font-black text-yellow-100">
-          Lucky Bonus Campaign
+          {t.missions.luckyBonusCampaign}
         </p>
         <p className="text-xs text-yellow-100/55">
-          Rare premium task with enhanced reward multiplier.
+          {t.missions.luckyBonusNote}
         </p>
       </div>
     </div>
 
     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
       <div className="rounded-2xl bg-black/35 p-2">
-        <p className="text-[10px] text-white/40">Multiplier</p>
+        <p className="text-[10px] text-white/40">{t.missions.multiplier}</p>
         <p className="font-black text-yellow-300">
           {bonusMultiplier.toFixed(1)}x
         </p>
       </div>
 
       <div className="rounded-2xl bg-black/35 p-2">
-        <p className="text-[10px] text-white/40">Bonus</p>
+        <p className="text-[10px] text-white/40">{t.missions.bonus}</p>
         <p className="font-black text-yellow-300">
           +{bonusPercent.toFixed(0)}%
         </p>
       </div>
 
       <div className="rounded-2xl bg-black/35 p-2">
-        <p className="text-[10px] text-white/40">Type</p>
-        <p className="font-black text-yellow-300">Special</p>
+        <p className="text-[10px] text-white/40">{t.missions.type}</p>
+        <p className="font-black text-yellow-300">{t.missions.special}</p>
       </div>
     </div>
   </div>
@@ -576,14 +576,14 @@ const locked = assignment.assigned_step > profile.current_step;
 
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       <div className="rounded-2xl bg-black/30 p-3">
-                        <p className="text-xs text-white/45">Campaign Value</p>
+                        <p className="text-xs text-white/45">{t.missions.campaignValue}</p>
                         <p className="mt-1 font-bold text-white">
                           ${Number(task.price).toFixed(2)}
                         </p>
                       </div>
 
                       <div className="rounded-2xl bg-black/30 p-3">
-                        <p className="text-xs text-white/45">Reward</p>
+                        <p className="text-xs text-white/45">{t.missions.reward}</p>
                         <p className="mt-1 font-bold text-yellow-300">
                           ${reward.toFixed(2)}
                         </p>
@@ -606,14 +606,14 @@ const locked = assignment.assigned_step > profile.current_step;
 }`}
                     >
                       {completed
-                        ? "Completed"
-                        : isCurrent
-                        ? actionLoading
-                          ? "Completing..."
-                          : lucky
-? "Claim Lucky Bonus Task"
-: "Start Promotion Task"
-                        : "Locked"}
+  ? t.missions.completed
+  : isCurrent
+  ? actionLoading
+    ? t.missions.completing
+    : lucky
+    ? t.missions.claimLuckyBonusTask
+    : t.missions.startPromotionTask
+  : t.missions.locked}
                     </button>
                   </div>
                 </div>
@@ -629,9 +629,9 @@ const locked = assignment.assigned_step > profile.current_step;
             <div className="mb-5 flex items-start justify-between">
               <div>
                 <p className="text-sm text-yellow-200/80">
-                  Lucky Jewel Campaign
+                  {t.missions.luckyJewelCampaign}
                 </p>
-                <h2 className="text-2xl font-black">Insufficient Balance</h2>
+                <h2 className="text-2xl font-black">{t.missions.insufficientBalanceTitle}</h2>
               </div>
 
               <button
@@ -651,21 +651,20 @@ const locked = assignment.assigned_step > profile.current_step;
               </div>
 
               <p className="text-sm text-yellow-100/75">
-                This premium jewel task requires a higher campaign balance. Add
-               credits first, then return to continue the bonus task.
+                {t.missions.luckyInsufficientNote}
               </p>
             </div>
 
             <div className="mb-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-black/40 p-3">
-                <p className="text-xs text-white/45">Required Value</p>
+                <p className="text-xs text-white/45">{t.missions.requiredValue}</p>
                 <p className="mt-1 font-bold text-white">
                   ${Number(luckyTask.price).toFixed(2)}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-black/40 p-3">
-                <p className="text-xs text-white/45">Your Balance</p>
+                <p className="text-xs text-white/45">{t.missions.yourBalance}</p>
                 <p className="mt-1 font-bold text-red-300">
                   ${Number(profile.balance).toFixed(2)}
                 </p>
@@ -677,7 +676,7 @@ const locked = assignment.assigned_step > profile.current_step;
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black"
             >
               <Wallet className="h-5 w-5" />
-              Add Credits
+              {t.missions.addCredits}
             </button>
           </div>
         </div>
@@ -694,20 +693,19 @@ const locked = assignment.assigned_step > profile.current_step;
         </div>
 
         <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-200/70">
-          Campaign Completed
+          {t.missions.campaignCompleted}
         </p>
 
         <h2 className="mt-2 text-3xl font-black text-white">
-          Congratulations!
+          {t.missions.congratulations}
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-yellow-100/75">
-          You have successfully completed all promo boost tasks. Your campaign
-          rewards are now ready, and you can withdraw all your earnings.
+          {t.missions.completedPopupNote}
         </p>
 
         <div className="mt-5 rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
-          <p className="text-xs text-white/45">Final Mission Reward</p>
+          <p className="text-xs text-white/45">{t.missions.finalMissionReward}</p>
           <p className="mt-1 text-2xl font-black text-yellow-300">
             ${finalReward}
           </p>
@@ -718,14 +716,14 @@ const locked = assignment.assigned_step > profile.current_step;
             onClick={() => window.location.reload()}
             className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-bold text-white/80"
           >
-            View Status
+            {t.missions.viewStatus}
           </button>
 
           <button
             onClick={() => router.push("/withdraw")}
             className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
           >
-            Withdraw Now
+            {t.missions.withdrawNow}
           </button>
         </div>
       </div>
