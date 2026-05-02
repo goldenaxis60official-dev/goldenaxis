@@ -4,7 +4,27 @@ import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
-import { CheckCircle, Gem, AlertCircle } from "lucide-react";
+import { CheckCircle, Gem, AlertCircle, Star } from "lucide-react";
+
+type ProductSnapshot = {
+  id: string | null;
+  name: string | null;
+  category: string | null;
+  price: number | string | null;
+  currency: string | null;
+  rating: number | string | null;
+  reviews_count: number | string | null;
+  description: string | null;
+  main_image: string | null;
+  images: string[] | null;
+};
+
+type TaskRelation = {
+  title: string;
+  category: string;
+  task_type: "standard" | "lucky_bonus";
+  image_url: string | null;
+};
 
 type HistoryRow = {
   id: string;
@@ -17,12 +37,8 @@ type HistoryRow = {
   status: string;
   unlock_method: string | null;
   created_at: string;
-  tasks: {
-    title: string;
-    category: string;
-    task_type: "standard" | "lucky_bonus";
-    image_url: string | null;
-  } | null;
+  product_snapshot: ProductSnapshot | null;
+  tasks: TaskRelation | TaskRelation[] | null;
 };
 
 export default function HistoryPage() {
@@ -57,6 +73,7 @@ function HistoryContent() {
           status,
           unlock_method,
           created_at,
+          product_snapshot,
           tasks (
             title,
             category,
@@ -79,6 +96,23 @@ function HistoryContent() {
 
     loadHistory();
   }, []);
+
+  function getTask(item: HistoryRow) {
+    if (Array.isArray(item.tasks)) {
+      return item.tasks[0] || null;
+    }
+
+    return item.tasks;
+  }
+
+  function isLuckyHistory(item: HistoryRow) {
+    const task = getTask(item);
+
+    return (
+      task?.task_type === "lucky_bonus" ||
+      Number(item.multiplier_applied || 1) > 1
+    );
+  }
 
   return (
     <AppShell>
@@ -110,10 +144,7 @@ function HistoryContent() {
           <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
             <p className="text-xs text-white/45">Bonus</p>
             <p className="mt-1 font-bold text-yellow-300">
-              {
-                history.filter((h) => h.tasks?.task_type === "lucky_bonus")
-                  .length
-              }
+              {history.filter((h) => isLuckyHistory(h)).length}
             </p>
           </div>
         </div>
@@ -142,76 +173,135 @@ function HistoryContent() {
 
         <div className="space-y-4 pb-6">
           {history.map((item) => {
-            const lucky = item.tasks?.task_type === "lucky_bonus";
+            const task = getTask(item);
+            const snapshot = item.product_snapshot;
+            const lucky = isLuckyHistory(item);
+
+            const productName =
+              snapshot?.name || task?.title || `Mission Step ${item.step_number}`;
+
+            const productCategory =
+              snapshot?.category || task?.category || "Campaign";
+
+            const productImage =
+              snapshot?.main_image ||
+              snapshot?.images?.[0] ||
+              task?.image_url ||
+              "";
+
+            const productCurrency = snapshot?.currency || "USD";
+            const productValue = Number(snapshot?.price || item.task_price || 0);
+            const productRating = Number(snapshot?.rating || 0);
+            const productReviews = Number(snapshot?.reviews_count || 0);
 
             return (
               <div
                 key={item.id}
-                className={`rounded-[1.7rem] border p-4 backdrop-blur-xl ${
+                className={`overflow-hidden rounded-[1.7rem] border backdrop-blur-xl ${
                   lucky
                     ? "border-yellow-400/50 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.18)]"
                     : "border-white/10 bg-white/[0.05]"
                 }`}
               >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-bold ${
-                          lucky
-                            ? "bg-yellow-300 text-black"
-                            : "bg-white/10 text-white/70"
-                        }`}
-                      >
-                        {lucky ? "Lucky Bonus" : "Standard"}
-                      </span>
-
-                      <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-[11px] font-bold text-emerald-300">
-                        Completed
-                      </span>
+                <div className="relative h-44 bg-black/35">
+                  {productImage ? (
+                    <img
+                      src={productImage}
+                      alt={productName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Gem className="h-16 w-16 text-yellow-300/70" />
                     </div>
+                  )}
 
-                    <h3 className="text-lg font-black">
-                      {item.tasks?.title || `Mission Step ${item.step_number}`}
-                    </h3>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
-                    <p className="mt-1 text-sm text-white/45">
-                      Step {item.step_number} •{" "}
-                      {new Date(item.created_at).toLocaleString()}
-                    </p>
+                  <div className="absolute left-4 top-4 flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold ${
+                        lucky
+                          ? "bg-yellow-300 text-black"
+                          : "bg-white/10 text-white/80 backdrop-blur"
+                      }`}
+                    >
+                      {lucky ? "Lucky Bonus" : "Standard"}
+                    </span>
+
+                    <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur">
+                      Completed
+                    </span>
                   </div>
-
-                  <CheckCircle className="h-6 w-6 shrink-0 text-emerald-300" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Product Value</p>
-                    <p className="mt-1 font-bold text-white">
-                      ${Number(item.task_price).toFixed(2)}
-                    </p>
+                <div className="p-4">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-black">{productName}</h3>
+
+                      <p className="mt-1 text-sm text-white/45">
+                        Step {item.step_number} • {productCategory}
+                      </p>
+
+                      {productRating > 0 && (
+                        <div className="mt-2 flex items-center gap-1 text-xs text-yellow-300">
+                          <Star className="h-3.5 w-3.5 fill-current" />
+                          <span className="font-bold">
+                            {productRating.toFixed(1)}
+                          </span>
+                          <span className="text-white/40">
+                            ({productReviews} reviews)
+                          </span>
+                        </div>
+                      )}
+
+                      <p className="mt-2 text-xs text-white/35">
+                        {new Date(item.created_at).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <CheckCircle className="h-6 w-6 shrink-0 text-emerald-300" />
                   </div>
 
-                  <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Commission</p>
-                    <p className="mt-1 font-bold text-yellow-300">
-                      ${Number(item.commission_earned).toFixed(2)}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-black/30 p-3">
+                      <p className="text-xs text-white/45">Product Value</p>
+                      <p className="mt-1 font-bold text-white">
+                        {productCurrency} {productValue.toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-black/30 p-3">
+                      <p className="text-xs text-white/45">Commission</p>
+                      <p className="mt-1 font-bold text-yellow-300">
+                        ${Number(item.commission_earned).toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-black/30 p-3">
+                      <p className="text-xs text-white/45">Before</p>
+                      <p className="mt-1 font-bold text-white/70">
+                        ${Number(item.balance_before).toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-black/30 p-3">
+                      <p className="text-xs text-white/45">After</p>
+                      <p className="mt-1 font-bold text-emerald-300">
+                        ${Number(item.balance_after).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Before</p>
-                    <p className="mt-1 font-bold text-white/70">
-                      ${Number(item.balance_before).toFixed(2)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">After</p>
-                    <p className="mt-1 font-bold text-emerald-300">
-                      ${Number(item.balance_after).toFixed(2)}
-                    </p>
-                  </div>
+                  {Number(item.multiplier_applied) > 1 && (
+                    <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/80">
+                      Bonus multiplier applied:{" "}
+                      <span className="font-black text-yellow-300">
+                        {Number(item.multiplier_applied).toFixed(1)}x
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
