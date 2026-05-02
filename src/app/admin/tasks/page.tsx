@@ -148,13 +148,19 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
   setErrorText("");
   setSuccessText("");
 
+  const syncedProduct = editingTask.product_id
+    ? products.find((product) => product.id === editingTask.product_id) ||
+      editingTask.products ||
+      null
+    : null;
+
   if (editingTask.product_id && !syncedProduct) {
-  setErrorText(
-    "This task is connected to a deleted or missing product. Select an active product from Product Catalog first."
-  );
-  setSaving(false);
-  return;
-}
+    setErrorText(
+      "This task is connected to a deleted or missing product. Select an active product from Product Catalog first."
+    );
+    setSaving(false);
+    return;
+  }
 
   const { error } = await supabase
     .from("tasks")
