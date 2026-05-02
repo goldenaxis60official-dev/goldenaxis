@@ -1,3 +1,5 @@
+import type { Product } from "./product";
+
 export type Task = {
   id: string;
   step_number: number;
@@ -13,5 +15,7 @@ export type Task = {
   rating_label_2: string | null;
   description: string | null;
   is_active: boolean;
+  product_id: string | null;
+  products?: Product | null;
   created_at: string;
 };

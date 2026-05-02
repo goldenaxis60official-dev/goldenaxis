@@ -28,7 +28,29 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      router.push("/");
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  throw new Error("Login succeeded, but user session was not found.");
+}
+
+const { data: profileData, error: profileError } = await supabase
+  .from("profiles")
+  .select("role")
+  .eq("id", user.id)
+  .single();
+
+if (profileError || !profileData) {
+  throw new Error("Profile not found.");
+}
+
+if (profileData.role === "admin") {
+  router.push("/admin");
+} else {
+  router.push("/");
+}
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";

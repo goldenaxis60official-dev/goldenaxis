@@ -1,9 +1,12 @@
 "use client";
+
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AppShell from "@/components/layout/AppShell";
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import StatCard from "@/components/ui/StatCard";
+import type { Profile } from "@/types/profile";
 import {
   Gem,
   Crown,
@@ -47,11 +50,35 @@ const sampleTasks = [
 ];
 
 export default function HomePage() {
-  const router = useRouter();
   return (
     <RequireAuth>
-      {(profile) => (
-        <AppShell>
+      {(profile) => <HomeContent profile={profile} />}
+    </RequireAuth>
+  );
+}
+
+function HomeContent({ profile }: { profile: Profile }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (profile.role === "admin") {
+      router.replace("/admin");
+    }
+  }, [profile.role, router]);
+
+  if (profile.role === "admin") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-yellow-300 border-t-transparent" />
+          <p className="text-sm text-white/60">Opening admin control...</p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <AppShell>
       <section className="relative px-5 pb-6 pt-8">
         <div className="absolute right-6 top-8 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs text-yellow-200">
           Credit Score {profile.credit_score}
@@ -186,8 +213,6 @@ export default function HomePage() {
           })}
         </div>
       </section>
-            </AppShell>
-      )}
-    </RequireAuth>
+                </AppShell>
   );
 }

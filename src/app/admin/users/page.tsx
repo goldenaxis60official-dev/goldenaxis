@@ -1,21 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import AppShell from "@/components/layout/AppShell";
+import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
+import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
 import type { Profile } from "@/types/profile";
 import {
-  Users,
-  ShieldCheck,
   AlertCircle,
   CheckCircle,
-  Search,
-  Wallet,
   Crown,
+  ListChecks,
   Pencil,
-  X,
   Save,
+  Search,
+  ShieldCheck,
+  Users,
+  Wallet,
+  X,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
@@ -84,6 +86,13 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
     });
   }, [users, searchText]);
 
+  const adminCount = users.filter((user) => user.role === "admin").length;
+  const activeCount = users.filter((user) => user.status === "active").length;
+  const totalBalance = users.reduce(
+    (sum, user) => sum + Number(user.balance || 0),
+    0
+  );
+
   async function handleAdjustBalance() {
     if (!selectedUser) return;
 
@@ -113,182 +122,227 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
 
   if (!isAdmin) {
     return (
-      <AppShell>
-        <section className="px-5 pt-8">
-          <div className="rounded-[2rem] border border-red-400/30 bg-red-500/10 p-6 text-center">
-            <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-            <h1 className="text-2xl font-black">Admin Access Required</h1>
-            <p className="mt-2 text-sm text-white/55">
-              This page is only available for admin accounts.
-            </p>
-          </div>
-        </section>
-      </AppShell>
+      <main className="min-h-screen bg-[#050505] p-6 text-white">
+        <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
+          <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
+          <h1 className="text-2xl font-black">Admin Access Required</h1>
+          <p className="mt-2 text-sm text-white/55">
+            This page is only available for admin accounts.
+          </p>
+        </div>
+      </main>
     );
   }
 
-  const adminCount = users.filter((user) => user.role === "admin").length;
-  const activeCount = users.filter((user) => user.status === "active").length;
-
   return (
-    <AppShell>
-      <section className="px-5 pt-8">
-        <div className="mb-6 flex items-center justify-between">
+    <main className="min-h-screen bg-[#050505] text-white">
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <AdminNav />
+
+        <div className="mb-8 flex items-center justify-between gap-5">
           <div>
-            <p className="text-sm text-yellow-200/80">Admin Control</p>
-            <h1 className="text-2xl font-black">User Manager</h1>
+            <p className="text-sm font-bold text-yellow-200/80">
+              Admin Control
+            </p>
+            <h1 className="mt-1 text-3xl font-black">User Manager</h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/50">
+              Manage users, balances, invite codes, account status, and campaign
+              progress.
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
-            <Users className="h-6 w-6 text-yellow-300" />
-          </div>
+          <Link
+            href="/admin/user-tasks"
+            className="flex items-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
+          >
+            <ListChecks className="h-4 w-4" />
+            User Task Assignment
+          </Link>
         </div>
 
-        <div className="mb-5 grid grid-cols-3 gap-3">
-          <StatBox label="Users" value={String(users.length)} />
-          <StatBox label="Active" value={String(activeCount)} />
-          <StatBox label="Admins" value={String(adminCount)} />
-        </div>
-
-        <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3">
-          <Search className="h-5 w-5 text-white/40" />
-          <input
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Search name, email, invite code..."
-            className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
-          />
+        <div className="mb-6 grid grid-cols-4 gap-4">
+          <StatCard label="Users" value={String(users.length)} />
+          <StatCard label="Active" value={String(activeCount)} />
+          <StatCard label="Admins" value={String(adminCount)} />
+          <StatCard label="Total Balance" value={`$${totalBalance.toFixed(2)}`} />
         </div>
 
         {successText && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          <div className="mb-5 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             <CheckCircle className="h-4 w-4" />
             {successText}
           </div>
         )}
 
         {errorText && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="mb-5 flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             <AlertCircle className="h-4 w-4" />
             {errorText}
           </div>
         )}
 
-        {loading && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
-            Loading users...
+        <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-yellow-200/80">Members</p>
+              <h2 className="text-2xl font-black">Registered Users</h2>
+            </div>
+
+            <div className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3">
+              <Search className="h-5 w-5 text-white/40" />
+              <input
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder="Search name, email, invite code, ID..."
+                className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
+              />
+            </div>
           </div>
-        )}
 
-        {!loading && filteredUsers.length === 0 && (
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center">
-            <Users className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
-            <p className="font-bold">No users found</p>
-            <p className="mt-2 text-sm text-white/50">
-              Try another search keyword.
-            </p>
-          </div>
-        )}
+          {loading && (
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
+              Loading users...
+            </div>
+          )}
 
-        <div className="space-y-4 pb-6">
-          {filteredUsers.map((user) => {
-            const isUserAdmin = user.role === "admin";
+          {!loading && filteredUsers.length === 0 && (
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
+              <Users className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
+              <p className="font-black">No users found</p>
+              <p className="mt-2 text-sm text-white/50">
+                Try another search keyword.
+              </p>
+            </div>
+          )}
 
-            return (
-              <div
-                key={user.id}
-                className="rounded-[1.7rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-              >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-                        isUserAdmin
-                          ? "bg-yellow-400/10 text-yellow-300"
-                          : "bg-blue-400/10 text-blue-300"
-                      }`}
-                    >
-                      {isUserAdmin ? (
-                        <Crown className="h-6 w-6" />
-                      ) : (
-                        <Users className="h-6 w-6" />
-                      )}
-                    </div>
+          {!loading && filteredUsers.length > 0 && (
+            <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white/[0.06] text-xs uppercase tracking-wide text-white/45">
+                  <tr>
+                    <th className="px-4 py-3">User</th>
+                    <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Balance</th>
+                    <th className="px-4 py-3">Today</th>
+                    <th className="px-4 py-3">Step</th>
+                    <th className="px-4 py-3">Invite Code</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
 
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-black">
-                          {user.display_name || "Gold Member"}
-                        </h3>
+                <tbody className="divide-y divide-white/10">
+                  {filteredUsers.map((user) => {
+                    const isUserAdmin = user.role === "admin";
 
-                        <span
-                          className={`rounded-full px-2 py-1 text-[10px] font-bold ${
-                            isUserAdmin
-                              ? "bg-yellow-300 text-black"
-                              : "bg-white/10 text-white/60"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </div>
+                    return (
+                      <tr key={user.id} className="bg-black/20">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                                isUserAdmin
+                                  ? "bg-yellow-400/10 text-yellow-300"
+                                  : "bg-blue-400/10 text-blue-300"
+                              }`}
+                            >
+                              {isUserAdmin ? (
+                                <Crown className="h-6 w-6" />
+                              ) : (
+                                <Users className="h-6 w-6" />
+                              )}
+                            </div>
 
-                      <p className="mt-1 text-xs text-white/45">
-                        {user.email || "No email"}
-                      </p>
+                            <div>
+                              <p className="font-black">
+                                {user.display_name || "Gold Member"}
+                              </p>
+                              <p className="mt-1 text-xs text-white/45">
+                                {user.email || "No email"}
+                              </p>
+                              <p className="mt-1 max-w-[220px] truncate text-[10px] text-white/30">
+                                {user.id}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
 
-                      <p className="mt-1 text-xs text-yellow-300">
-                        Invite: {user.referral_code}
-                      </p>
-                    </div>
-                  </div>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-black ${
+                              isUserAdmin
+                                ? "bg-yellow-300 text-black"
+                                : "bg-white/10 text-white/70"
+                            }`}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
 
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      user.status === "active"
-                        ? "bg-emerald-400/10 text-emerald-300"
-                        : "bg-red-400/10 text-red-300"
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </div>
+                        <td className="px-4 py-4 font-black text-yellow-300">
+                          ${Number(user.balance).toFixed(2)}
+                        </td>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <MiniBox
-                    label="Balance"
-                    value={`$${Number(user.balance).toFixed(2)}`}
-                    color="gold"
-                  />
-                  <MiniBox
-                    label="Today"
-                    value={`$${Number(user.today_earnings).toFixed(2)}`}
-                  />
-                  <MiniBox
-                    label="Step"
-                    value={`${Math.min(user.current_step - 1, 80)}/80`}
-                  />
-                </div>
+                        <td className="px-4 py-4 font-bold text-emerald-300">
+                          ${Number(user.today_earnings).toFixed(2)}
+                        </td>
 
-                <button
-                  onClick={() => {
-                    setSelectedUser(user);
-                    setAdjustAmount(100);
-                    setAdjustNote("");
-                  }}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Adjust Balance
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                        <td className="px-4 py-4 font-bold text-white">
+                          {user.current_step}
+                        </td>
+
+                        <td className="px-4 py-4 text-yellow-200">
+                          {user.referral_code || "-"}
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-black ${
+                              user.status === "active"
+                                ? "bg-emerald-400/15 text-emerald-300"
+                                : "bg-red-500/15 text-red-300"
+                            }`}
+                          >
+                            {user.status}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <div className="flex justify-end gap-2">
+                            <Link
+                              href={`/admin/user-tasks?user=${user.id}`}
+                              className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-2 text-yellow-300"
+                              title="Manage user tasks"
+                            >
+                              <ListChecks className="h-4 w-4" />
+                            </Link>
+
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setAdjustAmount(100);
+                                setAdjustNote("");
+                              }}
+                              className="rounded-xl border border-white/10 bg-white/[0.06] p-2 text-white/70"
+                              title="Adjust balance"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         {selectedUser && (
-          <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 px-4 pb-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-5 shadow-2xl">
-              <div className="mb-5 flex items-center justify-between">
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
+            <div className="w-full max-w-xl rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
+              <div className="mb-6 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-yellow-200/80">Admin Action</p>
                   <h2 className="text-2xl font-black">Adjust Balance</h2>
@@ -302,13 +356,17 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
                 </button>
               </div>
 
-              <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-                <p className="font-bold">
-                  {selectedUser.display_name || "Gold Member"}
-                </p>
-                <p className="mt-1 text-sm text-white/45">
-                  Current balance: ${Number(selectedUser.balance).toFixed(2)}
-                </p>
+              <div className="mb-5 grid grid-cols-3 gap-3">
+                <MiniBox
+                  label="User"
+                  value={selectedUser.display_name || "Gold Member"}
+                />
+                <MiniBox
+                  label="Balance"
+                  value={`$${Number(selectedUser.balance).toFixed(2)}`}
+                  color="gold"
+                />
+                <MiniBox label="Step" value={String(selectedUser.current_step)} />
               </div>
 
               <div className="space-y-4">
@@ -318,7 +376,9 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
                   </p>
                   <input
                     value={adjustAmount}
-                    onChange={(e) => setAdjustAmount(Number(e.target.value))}
+                    onChange={(event) =>
+                      setAdjustAmount(Number(event.target.value))
+                    }
                     type="number"
                     step="0.01"
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
@@ -335,7 +395,7 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
                   </p>
                   <textarea
                     value={adjustNote}
-                    onChange={(e) => setAdjustNote(e.target.value)}
+                    onChange={(event) => setAdjustNote(event.target.value)}
                     placeholder="Example: Manual test credit"
                     className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                   />
@@ -353,16 +413,18 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
             </div>
           </div>
         )}
-      </section>
-    </AppShell>
+      </div>
+    </main>
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
       <p className="text-xs text-white/45">{label}</p>
-      <p className="mt-1 truncate font-bold text-yellow-300">{value}</p>
+      <p className="mt-1 truncate text-xl font-black text-yellow-300">
+        {value}
+      </p>
     </div>
   );
 }
