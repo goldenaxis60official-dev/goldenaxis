@@ -24,6 +24,7 @@ type WalletAddressRow = {
   network: WalletNetwork;
   address: string;
   memo: string | null;
+  qr_image_url: string | null;
   active: boolean;
 };
 
@@ -80,12 +81,13 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
       ) as WalletAddressRow | undefined;
 
       nextRows[getKey(item.asset, item.network)] = existing || {
-        asset: item.asset,
-        network: item.network,
-        address: "",
-        memo: "",
-        active: true,
-      };
+  asset: item.asset,
+  network: item.network,
+  address: "",
+  memo: "",
+  qr_image_url: null,
+  active: true,
+};
     });
 
     setRows(nextRows);
@@ -118,6 +120,45 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
     }));
   }
 
+  async function handleQrUpload(
+  asset: WalletAsset,
+  network: WalletNetwork,
+  file: File
+) {
+  const key = getKey(asset, network);
+
+  setSavingKey(key);
+  setSuccessText("");
+  setErrorText("");
+
+  const fileExt = file.name.split(".").pop() || "png";
+  const filePath = `${asset}-${network}-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("support-wallet-qrs")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (uploadError) {
+    setErrorText(uploadError.message);
+    setSavingKey(null);
+    return;
+  }
+
+  const { data } = supabase.storage
+    .from("support-wallet-qrs")
+    .getPublicUrl(filePath);
+
+  updateRow(asset, network, {
+    qr_image_url: data.publicUrl,
+  });
+
+  setSuccessText(`${asset} ${network} QR image uploaded. Click Save Address to keep it.`);
+  setSavingKey(null);
+}
+
   async function handleSave(asset: WalletAsset, network: WalletNetwork) {
     const key = getKey(asset, network);
     const row = rows[key];
@@ -128,13 +169,14 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
 
     const { error } = await supabase.from("support_wallet_addresses").upsert(
       {
-        asset,
-        network,
-        address: row?.address?.trim() || "",
-        memo: row?.memo?.trim() || null,
-        active: row?.active ?? true,
-        updated_at: new Date().toISOString(),
-      },
+  asset,
+  network,
+  address: row?.address?.trim() || "",
+  memo: row?.memo?.trim() || null,
+  qr_image_url: row?.qr_image_url || null,
+  active: row?.active ?? true,
+  updated_at: new Date().toISOString(),
+},
       { onConflict: "asset,network" }
     );
 
@@ -259,6 +301,59 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                         className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                       />
                     </div>
+
+                    <div className="mb-4">
+  <p className="mb-2 text-sm font-bold text-white/80">
+    QR Image
+  </p>
+
+  {row?.qr_image_url ? (
+    <div className="mb-3 flex items-center gap-4 rounded-2xl border border-white/10 bg-black/35 p-3">
+      <img
+        src={row.qr_image_url}
+        alt={`${item.asset} ${item.network} QR`}
+        className="h-24 w-24 rounded-2xl border border-white/10 bg-white object-cover p-1"
+      />
+
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-white">
+          QR image uploaded
+        </p>
+        <p className="mt-1 truncate text-xs text-white/45">
+          {row.qr_image_url}
+        </p>
+
+        <button
+          type="button"
+          onClick={() =>
+            updateRow(item.asset, item.network, {
+              qr_image_url: null,
+            })
+          }
+          className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-200"
+        >
+          Remove QR
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="mb-3 rounded-2xl border border-dashed border-white/10 bg-black/25 p-4 text-center text-sm text-white/45">
+      No QR image uploaded
+    </div>
+  )}
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(event) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        handleQrUpload(item.asset, item.network, file);
+      }
+    }}
+    className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white file:mr-4 file:rounded-xl file:border-0 file:bg-yellow-400 file:px-4 file:py-2 file:font-black file:text-black"
+  />
+</div>
 
                     <div className="mb-5">
                       <p className="mb-2 text-sm font-bold text-white/80">
