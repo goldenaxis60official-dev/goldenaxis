@@ -1,3 +1,5 @@
+//auth>RequireAuth.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,11 +34,18 @@ export default function RequireAuth({ children }: RequireAuthProps) {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
         console.error(error);
         router.replace("/login");
+        return;
+      }
+
+      if (!data) {
+        router.replace(
+          `/verify-email?email=${encodeURIComponent(user.email || "")}`
+        );
         return;
       }
 

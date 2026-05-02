@@ -20,7 +20,6 @@ import {
   UsersRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { generateTeamCode } from "@/lib/referral";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,86 +35,63 @@ export default function RegisterPage() {
   const [errorText, setErrorText] = useState("");
 
   async function handleRegister(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setErrorText("");
+  e.preventDefault();
+  setErrorText("");
 
-    if (!accepted) {
-      setErrorText("Please accept the platform agreement first.");
-      return;
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanDisplayName = displayName.trim() || "Gold Member";
-    const cleanTeamCode = teamCode.trim().toUpperCase();
-
-    if (!cleanEmail || !password) {
-      setErrorText("Email and password are required.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorText("Password must be at least 6 characters.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { data: signUpData, error: signUpError } =
-        await supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-        });
-
-      if (signUpError) throw signUpError;
-
-      const user = signUpData.user;
-
-      if (!user) {
-        throw new Error("Signup succeeded, but user session was not created.");
-      }
-
-      // Keep legacy referral_code filled only to avoid old DB column issues.
-      // New system uses teams/team_members/team_rewards.
-      const legacyCode = generateTeamCode();
-
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: user.id,
-        email: cleanEmail,
-        display_name: cleanDisplayName,
-        referral_code: legacyCode,
-        referred_by: null,
-        terms_accepted: true,
-        role: "user",
-        balance: 0,
-        today_earnings: 0,
-        total_earnings: 0,
-        current_step: 1,
-        credit_score: 100,
-        status: "active",
-      });
-
-      if (profileError) throw profileError;
-
-      if (cleanTeamCode) {
-        const { error: joinError } = await supabase.rpc("join_team_by_code", {
-          _team_code: cleanTeamCode,
-        });
-
-        if (joinError) {
-          throw new Error(joinError.message || "Team code not found.");
-        }
-      }
-
-      router.replace("/");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong.";
-      setErrorText(message);
-    } finally {
-      setLoading(false);
-    }
+  if (!accepted) {
+    setErrorText("Please accept the platform agreement first.");
+    return;
   }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanDisplayName = displayName.trim() || "Gold Member";
+  const cleanTeamCode = teamCode.trim().toUpperCase();
+
+  if (!cleanEmail || !password) {
+    setErrorText("Email and password are required.");
+    return;
+  }
+
+  if (password.length < 6) {
+    setErrorText("Password must be at least 6 characters.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    localStorage.setItem(
+      "ga60_pending_signup",
+      JSON.stringify({
+        email: cleanEmail,
+        displayName: cleanDisplayName,
+        teamCode: cleanTeamCode,
+      })
+    );
+
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/verify-email`,
+        data: {
+          display_name: cleanDisplayName,
+          team_code: cleanTeamCode,
+        },
+      },
+    });
+
+    if (signUpError) throw signUpError;
+
+    router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}`);
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+    setErrorText(message);
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <main className="min-h-screen bg-black text-white">

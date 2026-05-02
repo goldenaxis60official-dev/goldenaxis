@@ -74,8 +74,29 @@ export default function LoginPage() {
       }
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong.";
-      setErrorText(message);
+  err instanceof Error ? err.message : "Something went wrong.";
+
+if (
+  message.toLowerCase().includes("email not confirmed") ||
+  message.toLowerCase().includes("not confirmed")
+) {
+  const cleanEmail = email.trim().toLowerCase();
+
+  if (cleanEmail) {
+    await supabase.auth.resend({
+      type: "signup",
+      email: cleanEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/verify-email`,
+      },
+    });
+
+    router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}`);
+    return;
+  }
+}
+
+setErrorText(message);
     } finally {
       setLoading(false);
     }
