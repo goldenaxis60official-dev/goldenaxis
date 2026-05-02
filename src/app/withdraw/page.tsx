@@ -1,3 +1,5 @@
+//app>withdraw>page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,13 +15,19 @@ import {
   CheckCircle,
   ShieldCheck,
   ClipboardList,
+  Wallet,
+  MessageCircle,
 } from "lucide-react";
 
-const methods = ["Manual Review", "Campaign Wallet", "Bank Review"];
+type WalletAsset = "USDT" | "USDC";
+type WalletNetwork = "TRC20" | "ERC20";
 
 type AssignmentRow = {
   assigned_step: number;
 };
+
+const assets: WalletAsset[] = ["USDT", "USDC"];
+const networks: WalletNetwork[] = ["TRC20", "ERC20"];
 
 export default function WithdrawPage() {
   return (
@@ -33,7 +41,9 @@ function WithdrawContent({ profile }: { profile: Profile }) {
   const router = useRouter();
 
   const [amount, setAmount] = useState(Number(profile.balance || 0));
-  const [method, setMethod] = useState("Manual Review");
+  const [asset, setAsset] = useState<WalletAsset>("USDT");
+  const [network, setNetwork] = useState<WalletNetwork>("TRC20");
+  const [receivingAddress, setReceivingAddress] = useState("");
   const [note, setNote] = useState("");
 
   const [assignedTotal, setAssignedTotal] = useState(0);
@@ -82,6 +92,12 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
   const hasNoAssignedTasks = !loadingAssignments && assignedTotal === 0;
 
+  function openWalletSupport() {
+    router.push(
+      `/support?topic=wallet&action=withdraw&asset=${asset}&network=${network}`
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -107,8 +123,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    if (amount <= 0) {
-      setErrorText("Please enter a valid amount.");
+    if (!amount || amount <= 0) {
+      setErrorText("Please enter a valid withdrawal amount.");
       return;
     }
 
@@ -117,14 +133,28 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       return;
     }
 
+    if (!receivingAddress.trim()) {
+      setErrorText(`Please enter your ${asset} ${network} receiving address.`);
+      return;
+    }
+
     setLoading(true);
+
+    const finalNote = [
+      `Asset: ${asset}`,
+      `Network: ${network}`,
+      `Receiving Address: ${receivingAddress.trim()}`,
+      note.trim() ? `User Note: ${note.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const { error } = await supabase.from("wallet_requests").insert({
       user_id: profile.id,
       type: "withdrawal",
       amount,
-      method,
-      note: note.trim() || null,
+      method: `${asset} ${network}`,
+      note: finalNote,
       status: "pending",
     });
 
@@ -134,7 +164,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText("Withdrawal submitted");
+    setSuccessText("Withdrawal request submitted for admin review.");
+    setReceivingAddress("");
     setNote("");
     setLoading(false);
   }
@@ -146,6 +177,9 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           <div>
             <p className="text-sm text-yellow-200/80">Wallet Center</p>
             <h1 className="text-2xl font-black">Withdraw Request</h1>
+            <p className="mt-1 text-xs text-white/45">
+              Submit your withdrawal wallet details for admin review.
+            </p>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -172,7 +206,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             </div>
 
             <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-xs text-white/45">Status</p>
+              <p className="text-xs text-white/45">Withdraw Status</p>
               <p
                 className={`mt-1 font-bold ${
                   completedAllAssignedMissions
@@ -209,8 +243,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="mt-4 flex gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100/80">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
               <p>
-                Your assigned campaign sequence is complete. You can
-                withdrawal earn.
+                Your assigned campaign sequence is complete. You can submit a
+                withdrawal request for admin review.
               </p>
             </div>
           )}
@@ -223,7 +257,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           }`}
         >
           <div className="mb-5">
-            <p className="mb-3 font-bold">Request Amount</p>
+            <p className="mb-3 font-bold">1. Request Amount</p>
 
             <input
               value={amount}
@@ -237,30 +271,119 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           </div>
 
           <div className="mb-5">
-            <p className="mb-3 font-bold">Method</p>
+            <p className="mb-3 font-bold">2. Select Withdraw Asset</p>
 
-            <select
-              value={method}
-              onChange={(event) => setMethod(event.target.value)}
-              disabled={!completedAllAssignedMissions}
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50 disabled:cursor-not-allowed"
-            >
-              {methods.map((item) => (
-                <option key={item}>{item}</option>
+            <div className="grid grid-cols-2 gap-3">
+              {assets.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  disabled={!completedAllAssignedMissions}
+                  onClick={() => setAsset(item)}
+                  className={`rounded-2xl border px-4 py-4 font-black disabled:cursor-not-allowed ${
+                    asset === item
+                      ? "border-yellow-400 bg-yellow-400 text-black"
+                      : "border-white/10 bg-black/30 text-white/70"
+                  }`}
+                >
+                  {item}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <div className="mb-5">
-            <p className="mb-3 font-bold">Note Optional</p>
+            <p className="mb-3 font-bold">3. Select Network</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {networks.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  disabled={!completedAllAssignedMissions}
+                  onClick={() => setNetwork(item)}
+                  className={`rounded-2xl border px-4 py-4 font-black disabled:cursor-not-allowed ${
+                    network === item
+                      ? "border-yellow-400 bg-yellow-400 text-black"
+                      : "border-white/10 bg-black/30 text-white/70"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-5 rounded-[1.7rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-yellow-300" />
+              <p className="font-black">4. Receiving Wallet</p>
+            </div>
+
+            <p className="mb-3 text-sm leading-6 text-white/55">
+              Enter your personal receiving address. Make sure this address
+              supports {asset} on {network}. Wrong network/address may cause
+              loss.
+            </p>
+
+            <input
+              value={receivingAddress}
+              onChange={(event) => setReceivingAddress(event.target.value)}
+              disabled={!completedAllAssignedMissions}
+              placeholder={`Enter your ${asset} ${network} receiving address`}
+              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
+            />
+
+            <button
+              type="button"
+              onClick={openWalletSupport}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/20 bg-black/30 px-5 py-4 font-bold text-yellow-100"
+            >
+              <MessageCircle className="h-5 w-5" />
+              Need help? Open Wallet Support
+            </button>
+          </div>
+
+          <div className="mb-5">
+            <p className="mb-3 font-bold">5. Note Optional</p>
 
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
               disabled={!completedAllAssignedMissions}
               placeholder="Write note for admin..."
-              className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
+              className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
             />
+          </div>
+
+          <div className="mb-5 rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
+            <p className="text-xs text-white/45">Request Summary</p>
+
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-white/40">Amount</p>
+                <p className="mt-1 font-black text-yellow-300">
+                  ${Number(amount || 0).toFixed(2)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-white/40">Method</p>
+                <p className="mt-1 font-black text-white">
+                  {asset} {network}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-white/40">Status</p>
+                <p className="mt-1 font-black text-blue-300">Pending</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-white/40">Balance Deduct</p>
+                <p className="mt-1 font-black text-white">After Approval</p>
+              </div>
+            </div>
           </div>
 
           {successText && (
