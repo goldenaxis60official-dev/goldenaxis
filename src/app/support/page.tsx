@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
@@ -190,69 +191,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
   const depositAddress = selectedWalletAddress?.address?.trim() || "";
 
-  const walletAutoMessage = useMemo(() => {
-    if (
-      activeTopic !== "Wallet Help" ||
-      !walletAction ||
-      !walletAsset ||
-      !walletNetwork
-    ) {
-      return "";
-    }
-
-    if (walletAction === "deposit") {
-      if (!depositAddress) {
-        return `Deposit Help Request
-
-Asset: ${walletAsset}
-Network: ${walletNetwork}
-
-I selected ${walletAsset} deposit using ${walletNetwork}, but the deposit address is not available right now. Please confirm the correct deposit address before I transfer.`;
-      }
-
-      return `Deposit Guide
-
-Asset: ${walletAsset}
-Network: ${walletNetwork}
-Deposit Address: ${depositAddress}
-
-${
-  selectedWalletAddress?.memo ||
-  "Please make sure the asset and network are correct before sending."
-}
-
-After transfer, please send your transaction hash or deposit proof here for support review.`;
-    }
-
-    return `Withdrawal Help Request
-
-Asset: ${walletAsset}
-Network: ${walletNetwork}
-
-Please help me with withdrawal using ${walletAsset} on ${walletNetwork} network.
-
-I will provide:
-1. Withdrawal amount
-2. My receiving wallet address
-3. Any memo/tag if required
-
-Please review my withdrawal request.`;
-  }, [
-    activeTopic,
-    walletAction,
-    walletAsset,
-    walletNetwork,
-    depositAddress,
-    selectedWalletAddress,
-  ]);
-
-  useEffect(() => {
-    if (walletAutoMessage) {
-      setMessage(walletAutoMessage);
-    }
-  }, [walletAutoMessage]);
-
-  function handleTopicSelect(topic: SupportTopic) {
+    function handleTopicSelect(topic: SupportTopic) {
     setActiveTopic(topic);
     setSuccessText("");
     setErrorText("");
@@ -298,14 +237,6 @@ Please review my withdrawal request.`;
     setSubmitting(true);
     setSuccessText("");
     setErrorText("");
-
-    if (activeTopic === "Wallet Help") {
-      if (!walletAction || !walletAsset || !walletNetwork) {
-        setErrorText("Please select deposit or withdraw, asset, and network.");
-        setSubmitting(false);
-        return;
-      }
-    }
 
     const finalMessage = message.trim();
 
@@ -557,10 +488,10 @@ Please review my withdrawal request.`;
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             placeholder={
-              activeTopic === "Wallet Help"
-                ? "Select wallet options above or type your message..."
-                : "Type your message..."
-            }
+  activeTopic === "Wallet Help"
+    ? "Ask support a wallet question only..."
+    : "Type your message..."
+}
             className="mb-3 min-h-24 w-full rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
           />
 
@@ -754,9 +685,26 @@ function WalletAssistantCard({
 
                 <p className="mt-3 text-xs text-white/45">Instruction</p>
                 <p className="mt-1 text-sm leading-6 text-white/70">
-                  {selectedWalletAddress?.memo ||
-                    "Please make sure the asset and network are correct before sending."}
-                </p>
+  {selectedWalletAddress?.memo ||
+    "Please make sure the asset and network are correct before sending."}
+</p>
+
+<div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3">
+  <p className="text-xs font-bold text-yellow-100/80">
+    After you send payment
+  </p>
+  <p className="mt-1 text-sm leading-6 text-white/70">
+    Open Deposit Review and submit your amount plus transaction hash/proof note.
+    This chat is only for wallet help.
+  </p>
+
+  <Link
+    href={`/deposit?asset=${walletAsset}&network=${walletNetwork}`}
+    className="mt-3 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-4 py-3 text-sm font-black text-black"
+  >
+    Open Deposit Review
+  </Link>
+</div>
               </div>
             </div>
           ) : (
@@ -767,10 +715,17 @@ function WalletAssistantCard({
               </p>
 
               <p className="mt-3 text-sm leading-6 text-white/70">
-                Please send your withdrawal amount and your receiving{" "}
-                {walletAsset} {walletNetwork} wallet address. Support will review
-                your request.
-              </p>
+  To request withdrawal, open the Withdraw Request page and submit your amount
+  plus your receiving {walletAsset} {walletNetwork} wallet address. This chat is
+  only for help if you are confused.
+</p>
+
+<Link
+  href={`/withdraw?asset=${walletAsset}&network=${walletNetwork}`}
+  className="mt-4 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-4 py-3 text-sm font-black text-black"
+>
+  Open Withdraw Request
+</Link>
             </div>
           )}
         </div>

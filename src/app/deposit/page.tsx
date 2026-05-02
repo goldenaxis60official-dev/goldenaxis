@@ -86,8 +86,21 @@ function DepositContent({ profile }: { profile: Profile }) {
   }
 
   useEffect(() => {
-    loadWalletAddresses();
-  }, []);
+  const params = new URLSearchParams(window.location.search);
+
+  const urlAsset = params.get("asset")?.toUpperCase();
+  const urlNetwork = params.get("network")?.toUpperCase();
+
+  if (urlAsset === "USDT" || urlAsset === "USDC") {
+    setAsset(urlAsset);
+  }
+
+  if (urlNetwork === "TRC20" || urlNetwork === "ERC20") {
+    setNetwork(urlNetwork);
+  }
+
+  loadWalletAddresses();
+}, []);
 
   const selectedWalletAddress = useMemo(() => {
     return (

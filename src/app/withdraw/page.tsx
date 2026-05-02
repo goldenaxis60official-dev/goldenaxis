@@ -85,6 +85,21 @@ function WithdrawContent({ profile }: { profile: Profile }) {
     loadAssignedProgress();
   }, [profile.id]);
 
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+
+  const urlAsset = params.get("asset")?.toUpperCase();
+  const urlNetwork = params.get("network")?.toUpperCase();
+
+  if (urlAsset === "USDT" || urlAsset === "USDC") {
+    setAsset(urlAsset);
+  }
+
+  if (urlNetwork === "TRC20" || urlNetwork === "ERC20") {
+    setNetwork(urlNetwork);
+  }
+}, []);
+
   const completedCount = Math.max(profile.current_step - 1, 0);
 
   const completedAllAssignedMissions =
