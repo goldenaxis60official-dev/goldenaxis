@@ -188,7 +188,7 @@ const maxStep = rows.reduce(
 
       if (error.message.includes("insufficient_balance")) {
         setErrorText(
-          "Insufficient campaign balance. Please add demo credits to continue this mission."
+          "Insufficient campaign balance. Please add credits to continue this mission."
         );
       } else if (error.message.includes("no_assigned_tasks")) {
         setErrorText(
@@ -643,7 +643,7 @@ const locked = assignment.assigned_step > profile.current_step;
 
               <p className="text-sm text-yellow-100/75">
                 This premium jewel task requires a higher campaign balance. Add
-                demo credits first, then return to continue the bonus task.
+               credits first, then return to continue the bonus task.
               </p>
             </div>
 
@@ -668,7 +668,7 @@ const locked = assignment.assigned_step > profile.current_step;
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black"
             >
               <Wallet className="h-5 w-5" />
-              Add Demo Credits
+              Add Credits
             </button>
           </div>
         </div>

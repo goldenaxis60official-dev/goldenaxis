@@ -403,7 +403,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
               <div>
                 <p className="text-xs text-white/40">Balance Deduct</p>
-                <p className="mt-1 font-black text-white">After Approval</p>
+                <p className="mt-1 font-black text-white">After withdraw</p>
               </div>
             </div>
           </div>
