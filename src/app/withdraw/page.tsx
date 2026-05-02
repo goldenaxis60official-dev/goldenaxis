@@ -193,8 +193,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <p className="text-sm text-yellow-200/80">Wallet Center</p>
             <h1 className="text-2xl font-black">Withdraw Request</h1>
             <p className="mt-1 text-xs text-white/45">
-              Submit your withdrawal wallet details for admin review.
-            </p>
+  Withdrawal review opens after your campaign sequence is complete. Support is always available.
+</p>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -223,14 +223,14 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="rounded-2xl bg-black/30 p-3">
               <p className="text-xs text-white/45">Withdraw Status</p>
               <p
-                className={`mt-1 font-bold ${
-                  completedAllAssignedMissions
-                    ? "text-emerald-300"
-                    : "text-red-300"
-                }`}
-              >
-                {completedAllAssignedMissions ? "Unlocked" : "Locked"}
-              </p>
+  className={`mt-1 font-bold ${
+    completedAllAssignedMissions
+      ? "text-emerald-300"
+      : "text-yellow-300"
+  }`}
+>
+  {completedAllAssignedMissions ? "Ready" : "In Progress"}
+</p>
             </div>
           </div>
 
@@ -245,14 +245,25 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           )}
 
           {!hasNoAssignedTasks && !completedAllAssignedMissions && (
-            <div className="mt-4 flex gap-3 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-100/80">
-              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
-              <p>
-                Withdrawal request unlocks after all assigned campaign missions
-                are completed.
-              </p>
-            </div>
-          )}
+  <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">
+    <div className="flex gap-3">
+      <Lock className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
+      <p>
+        Your withdrawal review is preparing. It becomes available after your
+        assigned campaign missions are completed.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={openWalletSupport}
+      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/25 bg-black/25 px-4 py-3 text-sm font-black text-yellow-100"
+    >
+      <MessageCircle className="h-4 w-4" />
+      Contact Withdrawal Support
+    </button>
+  </div>
+)}
 
           {completedAllAssignedMissions && (
             <div className="mt-4 flex gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100/80">
@@ -266,11 +277,9 @@ function WithdrawContent({ profile }: { profile: Profile }) {
         </div>
 
         <form
-          onSubmit={handleSubmit}
-          className={`rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl ${
-            !completedAllAssignedMissions ? "opacity-60" : ""
-          }`}
-        >
+  onSubmit={handleSubmit}
+  className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
+>
           <div className="mb-5">
             <p className="mb-3 font-bold">1. Request Amount</p>
 
@@ -291,15 +300,14 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="grid grid-cols-2 gap-3">
               {assets.map((item) => (
                 <button
-                  key={item}
-                  type="button"
-                  disabled={!completedAllAssignedMissions}
-                  onClick={() => setAsset(item)}
-                  className={`rounded-2xl border px-4 py-4 font-black disabled:cursor-not-allowed ${
-                    asset === item
-                      ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-white/10 bg-black/30 text-white/70"
-                  }`}
+  key={item}
+  type="button"
+  onClick={() => setAsset(item)}
+                  className={`rounded-2xl border px-4 py-4 font-black ${
+  asset === item
+    ? "border-yellow-400 bg-yellow-400 text-black"
+    : "border-white/10 bg-black/30 text-white/70"
+}`}
                 >
                   {item}
                 </button>
@@ -313,15 +321,14 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="grid grid-cols-2 gap-3">
               {networks.map((item) => (
                 <button
-                  key={item}
-                  type="button"
-                  disabled={!completedAllAssignedMissions}
-                  onClick={() => setNetwork(item)}
-                  className={`rounded-2xl border px-4 py-4 font-black disabled:cursor-not-allowed ${
-                    network === item
-                      ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-white/10 bg-black/30 text-white/70"
-                  }`}
+  key={item}
+  type="button"
+  onClick={() => setNetwork(item)}
+                  className={`rounded-2xl border px-4 py-4 font-black ${
+  network === item
+    ? "border-yellow-400 bg-yellow-400 text-black"
+    : "border-white/10 bg-black/30 text-white/70"
+}`}
                 >
                   {item}
                 </button>
