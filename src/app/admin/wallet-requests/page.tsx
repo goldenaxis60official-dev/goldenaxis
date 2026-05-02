@@ -28,6 +28,7 @@ type AdminWalletRequest = {
   method: string | null;
   status: "pending" | "approved" | "rejected";
   note: string | null;
+  proof_image_url: string | null;
   admin_note: string | null;
   created_at: string;
   reviewed_at: string | null;
@@ -321,6 +322,26 @@ function AdminWalletRequestsContent({ profile }: { profile: Profile }) {
                                   User note: {item.note}
                                 </p>
                               )}
+                              {item.proof_image_url && (
+  <div className="mt-3 overflow-hidden rounded-2xl border border-yellow-400/20 bg-black/40">
+    <a
+      href={item.proof_image_url}
+      target="_blank"
+      rel="noreferrer"
+      className="block"
+    >
+      <img
+        src={item.proof_image_url}
+        alt="Deposit proof"
+        className="h-32 w-full object-cover"
+      />
+
+      <div className="border-t border-white/10 px-3 py-2 text-xs font-bold text-yellow-200">
+        Open deposit proof
+      </div>
+    </a>
+  </div>
+)}
                             </div>
                           </div>
                         </td>

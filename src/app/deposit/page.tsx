@@ -19,6 +19,8 @@ import {
   MessageCircle,
   QrCode,
   ArrowDownToLine,
+  ImagePlus,
+  X,
 } from "lucide-react";
 
 type WalletAsset = "USDT" | "USDC";
@@ -58,6 +60,8 @@ function DepositContent({ profile }: { profile: Profile }) {
 
   const [txHash, setTxHash] = useState("");
   const [note, setNote] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState("");
 
   const [addressLoading, setAddressLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -132,6 +136,45 @@ function DepositContent({ profile }: { profile: Profile }) {
     );
   }
 
+  async function uploadProofImage() {
+  if (!proofFile) return "";
+
+  const fileExt = proofFile.name.split(".").pop() || "jpg";
+  const safeFileName = proofFile.name
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9.-]/g, "");
+
+  const filePath = `deposits/${profile.id}/${Date.now()}-${safeFileName || `proof.${fileExt}`}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("wallet-request-proofs")
+    .upload(filePath, proofFile, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage
+    .from("wallet-request-proofs")
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+function handleProofChange(file: File | null) {
+  setProofFile(file);
+
+  if (!file) {
+    setProofPreview("");
+    return;
+  }
+
+  setProofPreview(URL.createObjectURL(file));
+}
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -144,15 +187,34 @@ function DepositContent({ profile }: { profile: Profile }) {
     }
 
     if (!depositAddress) {
-      setErrorText(
-        "Deposit address is not available. Please contact wallet support before sending."
-      );
-      return;
-    }
+  setErrorText(
+    "Deposit address is not available. Please contact wallet support before sending."
+  );
+  return;
+}
 
-    setLoading(true);
+if (!txHash.trim() && !proofFile) {
+  setErrorText("Please enter transaction hash or upload deposit proof screenshot.");
+  return;
+}
 
-    const finalNote = [
+setLoading(true);
+
+let proofImageUrl = "";
+
+try {
+  proofImageUrl = await uploadProofImage();
+} catch (uploadError) {
+  setErrorText(
+    uploadError instanceof Error
+      ? uploadError.message
+      : "Failed to upload deposit proof."
+  );
+  setLoading(false);
+  return;
+}
+
+const finalNote = [
       `Asset: ${asset}`,
       `Network: ${network}`,
       `Deposit Address Used: ${depositAddress}`,
@@ -163,13 +225,14 @@ function DepositContent({ profile }: { profile: Profile }) {
       .join("\n");
 
     const { error } = await supabase.from("wallet_requests").insert({
-      user_id: profile.id,
-      type: "deposit_credit",
-      amount: finalAmount,
-      method: `${asset} ${network}`,
-      note: finalNote,
-      status: "pending",
-    });
+  user_id: profile.id,
+  type: "deposit_credit",
+  amount: finalAmount,
+  method: `${asset} ${network}`,
+  note: finalNote,
+  proof_image_url: proofImageUrl || null,
+  status: "pending",
+});
 
     if (error) {
       setErrorText(error.message);
@@ -179,9 +242,11 @@ function DepositContent({ profile }: { profile: Profile }) {
 
     setSuccessText("Deposit review request submitted.");
     setTxHash("");
-    setNote("");
-    setCustomAmount("");
-    setLoading(false);
+setNote("");
+setCustomAmount("");
+setProofFile(null);
+setProofPreview("");
+setLoading(false);
   }
 
   return (
@@ -392,6 +457,51 @@ function DepositContent({ profile }: { profile: Profile }) {
               placeholder="Transaction hash / proof note optional"
               className="mb-3 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
+
+            <div className="mb-3 rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <div>
+      <p className="font-bold text-white">Deposit Proof Screenshot</p>
+      <p className="mt-1 text-xs text-white/45">
+        Upload payment screenshot so admin can verify faster.
+      </p>
+    </div>
+
+    <ImagePlus className="h-5 w-5 text-yellow-300" />
+  </div>
+
+  {proofPreview ? (
+    <div className="mb-3 overflow-hidden rounded-2xl border border-yellow-400/20 bg-black/40">
+      <img
+        src={proofPreview}
+        alt="Deposit proof preview"
+        className="max-h-72 w-full object-cover"
+      />
+
+      <button
+        type="button"
+        onClick={() => handleProofChange(null)}
+        className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-3 text-sm font-bold text-red-200"
+      >
+        <X className="h-4 w-4" />
+        Remove Screenshot
+      </button>
+    </div>
+  ) : (
+    <label className="flex cursor-pointer items-center justify-center rounded-2xl border border-dashed border-yellow-400/25 bg-yellow-400/10 px-4 py-5 text-center text-sm font-bold text-yellow-100">
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(event) => {
+          const file = event.target.files?.[0] || null;
+          handleProofChange(file);
+        }}
+        className="hidden"
+      />
+      Tap to upload payment screenshot
+    </label>
+  )}
+</div>
 
             <textarea
               value={note}
