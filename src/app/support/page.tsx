@@ -27,14 +27,24 @@ import {
 
 type SupportStatus = "open" | "reviewing" | "closed";
 
-type SupportMessage = {
+type SupportTicket = {
   id: string;
+  user_id: string;
   subject: string;
   message: string;
   status: SupportStatus;
   admin_reply: string | null;
   created_at: string;
   replied_at: string | null;
+};
+
+type ChatMessage = {
+  id: string;
+  ticket_id: string;
+  sender_id: string | null;
+  sender_role: "user" | "admin";
+  message: string;
+  created_at: string;
 };
 
 type SupportTopic = "Mission Help" | "Wallet Help" | "Account Security";
@@ -93,7 +103,9 @@ export default function SupportPage() {
 function SupportContent({ profile }: { profile: Profile }) {
   const [activeTopic, setActiveTopic] = useState<SupportTopic>("Mission Help");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<SupportMessage[]>([]);
+
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const [walletAction, setWalletAction] = useState<WalletAction | null>(null);
   const [walletAsset, setWalletAsset] = useState<WalletAsset | null>(null);
@@ -110,23 +122,75 @@ function SupportContent({ profile }: { profile: Profile }) {
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  async function loadMessages() {
+  const finalSubject =
+    activeTopic === "Wallet Help" && walletAction && walletAsset && walletNetwork
+      ? `Wallet Help - ${walletAction.toUpperCase()} ${walletAsset} ${walletNetwork}`
+      : activeTopic;
+
+  const activeTopicData = helpTopics.find((item) => item.title === activeTopic);
+
+  const selectedWalletAddress = useMemo(() => {
+    if (!walletAsset || !walletNetwork) return null;
+
+    return (
+      walletAddresses.find(
+        (item) =>
+          item.asset === walletAsset &&
+          item.network === walletNetwork &&
+          item.active
+      ) || null
+    );
+  }, [walletAddresses, walletAsset, walletNetwork]);
+
+  const depositAddress = selectedWalletAddress?.address?.trim() || "";
+
+  const groupedMessages = useMemo(() => {
+    return tickets.map((ticket) => ({
+      ticket,
+      messages: chatMessages.filter((chat) => chat.ticket_id === ticket.id),
+    }));
+  }, [tickets, chatMessages]);
+
+  async function loadTicketsAndChat() {
     setLoading(true);
     setErrorText("");
 
-    const { data, error } = await supabase
+    const { data: ticketData, error: ticketError } = await supabase
       .from("support_messages")
       .select("*")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: true });
 
-    if (error) {
-      setErrorText(error.message);
+    if (ticketError) {
+      setErrorText(ticketError.message);
       setLoading(false);
       return;
     }
 
-    setMessages((data || []) as SupportMessage[]);
+    const rows = (ticketData || []) as SupportTicket[];
+    setTickets(rows);
+
+    const ticketIds = rows.map((item) => item.id);
+
+    if (ticketIds.length === 0) {
+      setChatMessages([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: chatData, error: chatError } = await supabase
+      .from("support_chat_messages")
+      .select("*")
+      .in("ticket_id", ticketIds)
+      .order("created_at", { ascending: true });
+
+    if (chatError) {
+      setErrorText(chatError.message);
+      setLoading(false);
+      return;
+    }
+
+    setChatMessages((chatData || []) as ChatMessage[]);
     setLoading(false);
   }
 
@@ -148,51 +212,36 @@ function SupportContent({ profile }: { profile: Profile }) {
   }
 
   useEffect(() => {
-    loadMessages();
+    loadTicketsAndChat();
     loadWalletAddresses();
   }, [profile.id]);
 
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
 
-  const topic = params.get("topic");
-  const action = params.get("action");
-  const asset = params.get("asset")?.toUpperCase();
-  const network = params.get("network")?.toUpperCase();
+    const topic = params.get("topic");
+    const action = params.get("action");
+    const asset = params.get("asset")?.toUpperCase();
+    const network = params.get("network")?.toUpperCase();
 
-  if (topic === "wallet") {
-    setActiveTopic("Wallet Help");
+    if (topic === "wallet") {
+      setActiveTopic("Wallet Help");
 
-    if (action === "deposit" || action === "withdraw") {
-      setWalletAction(action);
+      if (action === "deposit" || action === "withdraw") {
+        setWalletAction(action);
+      }
+
+      if (asset === "USDT" || asset === "USDC") {
+        setWalletAsset(asset);
+      }
+
+      if (network === "TRC20" || network === "ERC20") {
+        setWalletNetwork(network);
+      }
     }
+  }, []);
 
-    if (asset === "USDT" || asset === "USDC") {
-      setWalletAsset(asset);
-    }
-
-    if (network === "TRC20" || network === "ERC20") {
-      setWalletNetwork(network);
-    }
-  }
-}, []);
-
-  const selectedWalletAddress = useMemo(() => {
-    if (!walletAsset || !walletNetwork) return null;
-
-    return (
-      walletAddresses.find(
-        (item) =>
-          item.asset === walletAsset &&
-          item.network === walletNetwork &&
-          item.active
-      ) || null
-    );
-  }, [walletAddresses, walletAsset, walletNetwork]);
-
-  const depositAddress = selectedWalletAddress?.address?.trim() || "";
-
-    function handleTopicSelect(topic: SupportTopic) {
+  function handleTopicSelect(topic: SupportTopic) {
     setActiveTopic(topic);
     setSuccessText("");
     setErrorText("");
@@ -247,41 +296,75 @@ function SupportContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    const finalSubject =
-      activeTopic === "Wallet Help" && walletAction && walletAsset && walletNetwork
-        ? `Wallet Help - ${walletAction.toUpperCase()} ${walletAsset} ${walletNetwork}`
-        : activeTopic;
+    let targetTicket = tickets.find(
+      (ticket) =>
+        ticket.subject === finalSubject &&
+        ticket.status !== "closed"
+    );
 
-    const { error } = await supabase.from("support_messages").insert({
-      user_id: profile.id,
-      subject: finalSubject,
-      message: finalMessage,
-      status: "open",
-    });
+    if (!targetTicket) {
+      const { data: newTicket, error: ticketError } = await supabase
+        .from("support_messages")
+        .insert({
+          user_id: profile.id,
+          subject: finalSubject,
+          message: finalMessage,
+          status: "open",
+        })
+        .select("*")
+        .single();
 
-    if (error) {
-      setErrorText(error.message);
+      if (ticketError) {
+        setErrorText(ticketError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      targetTicket = newTicket as SupportTicket;
+    } else {
+      const { error: updateError } = await supabase
+        .from("support_messages")
+        .update({
+          status: "open",
+          message: finalMessage,
+        })
+        .eq("id", targetTicket.id);
+
+      if (updateError) {
+        setErrorText(updateError.message);
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    const { error: chatError } = await supabase
+      .from("support_chat_messages")
+      .insert({
+        ticket_id: targetTicket.id,
+        sender_id: profile.id,
+        sender_role: "user",
+        message: finalMessage,
+      });
+
+    if (chatError) {
+      setErrorText(chatError.message);
       setSubmitting(false);
       return;
     }
 
     setSuccessText("Message sent to support.");
     setMessage("");
-    setWalletAction(null);
-    setWalletAsset(null);
-    setWalletNetwork(null);
     setCopied(false);
     setSubmitting(false);
-    loadMessages();
+
+    await loadTicketsAndChat();
   }
 
-  const openCount = messages.filter((item) => item.status === "open").length;
-  const reviewingCount = messages.filter(
+  const openCount = tickets.filter((item) => item.status === "open").length;
+  const reviewingCount = tickets.filter(
     (item) => item.status === "reviewing"
   ).length;
-  const closedCount = messages.filter((item) => item.status === "closed").length;
-
-  const activeTopicData = helpTopics.find((item) => item.title === activeTopic);
+  const closedCount = tickets.filter((item) => item.status === "closed").length;
 
   return (
     <AppShell>
@@ -291,7 +374,7 @@ function SupportContent({ profile }: { profile: Profile }) {
             <p className="text-sm text-yellow-200/80">Support Chat</p>
             <h1 className="text-2xl font-black">Customer Support</h1>
             <p className="mt-1 text-xs text-white/45">
-              Online review • Usually replies after admin check
+              Chat with support • Replies appear in this conversation
             </p>
           </div>
 
@@ -348,9 +431,8 @@ function SupportContent({ profile }: { profile: Profile }) {
                 Golden Axis Support
               </p>
               <p className="mt-2 text-sm leading-6 text-white/65">
-                Hello {profile.display_name || "there"}, select a topic below or
-                send a message. For wallet help, I can show deposit QR, wallet
-                address, and network instructions instantly.
+                Hello {profile.display_name || "there"}, send a message below.
+                For wallet help, choose deposit or withdraw first.
               </p>
             </div>
           </div>
@@ -385,75 +467,76 @@ function SupportContent({ profile }: { profile: Profile }) {
             />
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {loading && (
               <div className="rounded-2xl bg-black/25 p-4 text-center text-sm text-white/50">
                 Loading conversation...
               </div>
             )}
 
-            {!loading && messages.length === 0 && (
+            {!loading && groupedMessages.length === 0 && (
               <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-5 text-center">
                 <MessageCircle className="mx-auto mb-2 h-7 w-7 text-yellow-300" />
                 <p className="text-sm font-bold text-white">
                   No conversation yet
                 </p>
                 <p className="mt-1 text-xs text-white/45">
-                  Your messages and admin replies will appear here like chat.
+                  Your chat with support will appear here.
                 </p>
               </div>
             )}
 
             {!loading &&
-              messages.map((item) => (
-                <div key={item.id} className="space-y-3">
-                  <div className="flex justify-end">
-                    <div className="max-w-[88%] rounded-3xl rounded-tr-sm border border-yellow-400/20 bg-yellow-400/15 p-4">
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-xs font-black text-yellow-100">
-                          {item.subject}
-                        </p>
-                        <StatusBadge status={item.status} />
+              groupedMessages.map(({ ticket, messages }) => (
+                <div key={ticket.id} className="space-y-3">
+                  <div className="flex items-center justify-center">
+                    <div className="rounded-full border border-white/10 bg-black/35 px-4 py-2 text-center">
+                      <p className="text-[11px] font-black text-yellow-100/80">
+                        {ticket.subject}
+                      </p>
+                      <div className="mt-1 flex items-center justify-center gap-2">
+                        <StatusBadge status={ticket.status} />
+                        <span className="text-[10px] text-white/30">
+                          {new Date(ticket.created_at).toLocaleDateString()}
+                        </span>
                       </div>
-
-                      <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
-                        {item.message}
-                      </p>
-
-                      <p className="mt-2 text-right text-[11px] text-white/35">
-                        {new Date(item.created_at).toLocaleString()}
-                      </p>
                     </div>
                   </div>
 
-                  {item.admin_reply ? (
-                    <div className="flex justify-start">
-                      <div className="max-w-[88%] rounded-3xl rounded-tl-sm border border-white/10 bg-black/35 p-4">
-                        <div className="mb-2 flex items-center gap-2">
-                          <Headphones className="h-4 w-4 text-yellow-300" />
-                          <p className="text-xs font-black text-yellow-100">
-                            Support Reply
-                          </p>
-                        </div>
+                  {messages.length === 0 ? (
+                    <>
+                      <ChatBubble
+                        role="user"
+                        message={ticket.message}
+                        time={ticket.created_at}
+                      />
 
-                        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/75">
-                          {item.admin_reply}
-                        </p>
-
-                        {item.replied_at && (
-                          <p className="mt-2 text-[11px] text-white/35">
-                            {new Date(item.replied_at).toLocaleString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                      {ticket.admin_reply ? (
+                        <ChatBubble
+                          role="admin"
+                          message={ticket.admin_reply}
+                          time={ticket.replied_at || ticket.created_at}
+                        />
+                      ) : (
+                        <WaitingBubble />
+                      )}
+                    </>
                   ) : (
-                    <div className="flex justify-start">
-                      <div className="flex items-center gap-2 rounded-2xl bg-black/25 px-4 py-3 text-xs text-white/45">
-                        <Clock className="h-4 w-4 text-yellow-300" />
-                        Waiting for support review
-                      </div>
-                    </div>
+                    <>
+                      {messages.map((chat) => (
+                        <ChatBubble
+                          key={chat.id}
+                          role={chat.sender_role}
+                          message={chat.message}
+                          time={chat.created_at}
+                        />
+                      ))}
+
+                      {ticket.status !== "closed" &&
+                        !messages.some((chat) => chat.sender_role === "admin") && (
+                          <WaitingBubble />
+                        )}
+                    </>
                   )}
                 </div>
               ))}
@@ -467,7 +550,9 @@ function SupportContent({ profile }: { profile: Profile }) {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-white/45">Message to support</p>
-              <p className="text-sm font-black text-yellow-200">{activeTopic}</p>
+              <p className="text-sm font-black text-yellow-200">
+                {finalSubject}
+              </p>
             </div>
 
             {successText && (
@@ -489,10 +574,10 @@ function SupportContent({ profile }: { profile: Profile }) {
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             placeholder={
-  activeTopic === "Wallet Help"
-    ? "Ask support a wallet question only..."
-    : "Type your message..."
-}
+              activeTopic === "Wallet Help"
+                ? "Ask support a wallet question only..."
+                : "Type your message..."
+            }
             className="mb-3 min-h-24 w-full rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
           />
 
@@ -512,6 +597,61 @@ function SupportContent({ profile }: { profile: Profile }) {
         </form>
       </section>
     </AppShell>
+  );
+}
+
+function ChatBubble({
+  role,
+  message,
+  time,
+}: {
+  role: "user" | "admin";
+  message: string;
+  time: string;
+}) {
+  const isUser = role === "user";
+
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`max-w-[88%] rounded-3xl p-4 ${
+          isUser
+            ? "rounded-tr-sm border border-yellow-400/20 bg-yellow-400/15"
+            : "rounded-tl-sm border border-white/10 bg-black/35"
+        }`}
+      >
+        <div className="mb-2 flex items-center gap-2">
+          {isUser ? (
+            <MessageCircle className="h-4 w-4 text-yellow-300" />
+          ) : (
+            <Headphones className="h-4 w-4 text-yellow-300" />
+          )}
+
+          <p className="text-xs font-black text-yellow-100">
+            {isUser ? "You" : "Support Reply"}
+          </p>
+        </div>
+
+        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
+          {message}
+        </p>
+
+        <p className="mt-2 text-right text-[11px] text-white/35">
+          {new Date(time).toLocaleString()}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function WaitingBubble() {
+  return (
+    <div className="flex justify-start">
+      <div className="flex items-center gap-2 rounded-2xl bg-black/25 px-4 py-3 text-xs text-white/45">
+        <Clock className="h-4 w-4 text-yellow-300" />
+        Waiting for support review
+      </div>
+    </div>
   );
 }
 
@@ -561,7 +701,7 @@ function WalletAssistantCard({
             className={`rounded-2xl border p-3 text-left ${
               walletAction === "deposit"
                 ? "border-yellow-400 bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_10px_25px_rgba(234,179,8,0.24)]"
-: "border-white/10 bg-white/[0.05] text-white/60 hover:bg-white/[0.08]"
+                : "border-white/10 bg-white/[0.05] text-white/60 hover:bg-white/[0.08]"
             }`}
           >
             <ArrowDownToLine className="mb-2 h-5 w-5" />
@@ -686,26 +826,26 @@ function WalletAssistantCard({
 
                 <p className="mt-3 text-xs text-white/45">Instruction</p>
                 <p className="mt-1 text-sm leading-6 text-white/70">
-  {selectedWalletAddress?.memo ||
-    "Please make sure the asset and network are correct before sending."}
-</p>
+                  {selectedWalletAddress?.memo ||
+                    "Please make sure the asset and network are correct before sending."}
+                </p>
 
-<div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3">
-  <p className="text-xs font-bold text-yellow-100/80">
-    After you send payment
-  </p>
-  <p className="mt-1 text-sm leading-6 text-white/70">
-    Open Deposit Review and submit your amount plus transaction hash/proof note.
-    This chat is only for wallet help.
-  </p>
+                <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3">
+                  <p className="text-xs font-bold text-yellow-100/80">
+                    After you send payment
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-white/70">
+                    Open Deposit Review and submit your amount plus transaction
+                    hash/proof note. This chat is only for wallet help.
+                  </p>
 
-  <Link
-    href={`/deposit?asset=${walletAsset}&network=${walletNetwork}`}
-    className="mt-3 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-4 py-3 text-sm font-black text-black"
-  >
-    Open Deposit Review
-  </Link>
-</div>
+                  <Link
+                    href={`/deposit?asset=${walletAsset}&network=${walletNetwork}`}
+                    className="mt-3 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-4 py-3 text-sm font-black text-black"
+                  >
+                    Open Deposit Review
+                  </Link>
+                </div>
               </div>
             </div>
           ) : (
@@ -716,17 +856,17 @@ function WalletAssistantCard({
               </p>
 
               <p className="mt-3 text-sm leading-6 text-white/70">
-  To request withdrawal, open the Withdraw Request page and submit your amount
-  plus your receiving {walletAsset} {walletNetwork} wallet address. This chat is
-  only for help if you are confused.
-</p>
+                To request withdrawal, open the Withdraw Request page and submit
+                your amount plus your receiving {walletAsset} {walletNetwork}{" "}
+                wallet address. This chat is only for help if you are confused.
+              </p>
 
-<Link
-  href={`/withdraw?asset=${walletAsset}&network=${walletNetwork}`}
-  className="mt-4 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-4 py-3 text-sm font-black text-black"
->
-  Open Withdraw Request
-</Link>
+              <Link
+                href={`/withdraw?asset=${walletAsset}&network=${walletNetwork}`}
+                className="mt-4 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-4 py-3 text-sm font-black text-black"
+              >
+                Open Withdraw Request
+              </Link>
             </div>
           )}
         </div>
@@ -745,13 +885,13 @@ function StatusCard({
   color: string;
 }) {
   return (
-  <div className="rounded-[1.25rem] border border-white/10 bg-black/35 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)]">
-    <p className="truncate text-[11px] font-medium tracking-wide text-white/45">
-      {label}
-    </p>
-    <p className={`mt-1 font-black tabular-nums ${color}`}>{value}</p>
-  </div>
-);
+    <div className="rounded-[1.25rem] border border-white/10 bg-black/35 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)]">
+      <p className="truncate text-[11px] font-medium tracking-wide text-white/45">
+        {label}
+      </p>
+      <p className={`mt-1 font-black tabular-nums ${color}`}>{value}</p>
+    </div>
+  );
 }
 
 function StatusBadge({ status }: { status: SupportStatus }) {
