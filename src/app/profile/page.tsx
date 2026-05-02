@@ -35,7 +35,20 @@ type TeamSummary = {
 };
 
 const menuItems = [
-  { label: "Team Center", icon: Users, href: "/team", featured: true },
+  {
+    label: "Team Center",
+    icon: Users,
+    href: "/team",
+    featured: true,
+    subtitle: "Create or join team code",
+  },
+  {
+    label: "Customer Support",
+    icon: Headphones,
+    href: "/support",
+    featured: true,
+    subtitle: "Chat with support or wallet assistant",
+  },
   { label: "Deposit Credits", icon: Upload, href: "/deposit" },
   { label: "Withdraw Request", icon: Download, href: "/withdraw" },
   {
@@ -50,7 +63,6 @@ const menuItems = [
   },
   { label: "Task History", icon: History, href: "/history" },
   { label: "Transaction Details", icon: History, href: "/transactions" },
-  { label: "Customer Support", icon: Headphones, href: "/support" },
   { label: "Terms & Security", icon: ShieldCheck, href: "/terms" },
   { label: "Logout", icon: LogOut, href: "/login", danger: true },
 ];
@@ -289,11 +301,15 @@ const [copied, setCopied] = useState(false);
     {item.label}
   </span>
 
-  {item.featured && (
-    <p className="mt-0.5 text-xs text-yellow-100/55">
-      Create or join team code
-    </p>
-  )}
+  {item.subtitle && (
+  <p
+    className={`mt-0.5 text-xs ${
+      item.featured ? "text-yellow-100/60" : "text-white/40"
+    }`}
+  >
+    {item.subtitle}
+  </p>
+)}
 </div>
                 </div>
 
