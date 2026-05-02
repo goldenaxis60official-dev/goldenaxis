@@ -1,8 +1,9 @@
+//src>app>admin>user-tasks>page.tsx
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -108,15 +109,16 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
         .order("created_at", { ascending: false }),
 
       supabase
-        .from("tasks")
-        .select(
-          `
-          *,
-          products (*)
-        `
-        )
-        .eq("is_active", true)
-        .order("step_number", { ascending: true }),
+  .from("tasks")
+  .select(
+    `
+    *,
+    products!inner (*)
+  `
+  )
+  .eq("is_active", true)
+  .eq("products.is_active", true)
+  .order("step_number", { ascending: true }),
     ]);
 
     if (usersResult.error) {
@@ -135,11 +137,8 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
     const loadedTasks = (tasksResult.data || []) as Task[];
 
     setUsers(loadedUsers);
-    setTasks(loadedTasks);
-
-    if (loadedTasks.length > 0) {
-      setSelectedTaskId(loadedTasks[0].id);
-    }
+setTasks(loadedTasks);
+setSelectedTaskId(loadedTasks[0]?.id || "");
 
     if (queryUserId) {
       const foundUser = loadedUsers.find((user) => user.id === queryUserId);
@@ -348,36 +347,22 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
     <div className="mx-auto max-w-7xl px-6 py-8">
       <AdminNav />
 
-      <div className="mb-8 flex items-center justify-between gap-5">
-          <div>
-            <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">User Task Assignment</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Assign a personalized campaign task list to each user. Each user
-              can have 1 to 80 active mission steps.
-            </p>
-          </div>
+      <div className="mb-8 max-w-3xl">
+  <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">
+    Admin Control
+  </p>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/users"
-              className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-bold text-white/70 hover:bg-white/[0.1]"
-            >
-              User Manager
-            </Link>
+  <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
+    User Task Assignment
+  </h1>
 
-            <Link
-              href="/admin/tasks"
-              className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
-            >
-              Task Library
-            </Link>
-          </div>
-        </div>
+  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
+    Assign a personalized campaign task list to each user. Only active task
+    templates connected to active catalog products can be assigned.
+  </p>
+</div>
 
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Users" value={String(users.length)} />
           <StatCard label="Task Library" value={String(tasks.length)} />
           <StatCard
@@ -411,7 +396,7 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
         )}
 
         {!loading && (
-          <div className="grid grid-cols-[360px_1fr] gap-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
             <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
               <div className="mb-5">
                 <p className="text-sm text-yellow-200/80">Members</p>
@@ -518,13 +503,16 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
                       onChange={(event) => setSelectedTaskId(event.target.value)}
                       className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
                     >
-                      {tasks.map((task) => (
-                        <option key={task.id} value={task.id}>
-                          Step {task.step_number} —{" "}
-                          {task.products?.name || task.title} — $
-                          {Number(task.price).toFixed(2)}
-                        </option>
-                      ))}
+                      {tasks.length === 0 ? (
+  <option value="">No active connected task templates</option>
+) : (
+  tasks.map((task) => (
+    <option key={task.id} value={task.id}>
+      Step {task.step_number} — {task.products?.name || "Connected Product"} — $
+      {Number(task.products?.price || task.price).toFixed(2)}
+    </option>
+  ))
+)}
                     </select>
                   </div>
 
@@ -547,7 +535,7 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
                   <div className="flex items-end">
                     <button
                       onClick={handleAddAssignment}
-                      disabled={saving || !selectedUser}
+                      disabled={saving || !selectedUser || !selectedTaskId || tasks.length === 0}
                       className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 font-black text-black disabled:opacity-60"
                     >
                       <Plus className="h-5 w-5" />

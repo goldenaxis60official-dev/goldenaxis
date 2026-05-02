@@ -1,3 +1,5 @@
+//src>app>admin>tasks>page.tsx
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -51,9 +53,9 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
   );
 
   const connectedTasks = useMemo(
-    () => tasks.filter((task) => task.product_id).length,
-    [tasks]
-  );
+  () => tasks.filter((task) => task.products && task.products.is_active).length,
+  [tasks]
+);
 
   const selectedEditingProduct =
     editingTask?.product_id
@@ -78,9 +80,10 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
         .order("step_number", { ascending: true }),
 
       supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false }),
+  .from("products")
+  .select("*")
+  .eq("is_active", true)
+  .order("created_at", { ascending: false }),
     ]);
 
     if (tasksResult.error) {
@@ -145,11 +148,13 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
   setErrorText("");
   setSuccessText("");
 
-  const syncedProduct = editingTask.product_id
-    ? products.find((product) => product.id === editingTask.product_id) ||
-      editingTask.products ||
-      null
-    : null;
+  if (editingTask.product_id && !syncedProduct) {
+  setErrorText(
+    "This task is connected to a deleted or missing product. Select an active product from Product Catalog first."
+  );
+  setSaving(false);
+  return;
+}
 
   const { error } = await supabase
     .from("tasks")
@@ -205,28 +210,21 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
     <div className="mx-auto max-w-7xl px-6 py-8">
       <AdminNav />
 
-      <div className="mb-8 flex items-center justify-between gap-5">
-          <div>
-            <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Task Manager</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-  Connect each mission step to a product and control campaign logic.
-  Product name, price, photos, rating, and description are managed only
-  inside Product Catalog.
-</p>
-          </div>
+      <div className="mb-8 max-w-3xl">
+  <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">
+    Admin Control
+  </p>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/products"
-              className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
-            >
-              Product Catalog
-            </Link>
-          </div>
-        </div>
+  <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
+    Task Library
+  </h1>
+
+  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
+    Connect each mission step to an active catalog product and control campaign
+    reward logic. Product name, price, photos, rating, and description come from
+    Product Catalog.
+  </p>
+</div>
 
         <div className="mb-6 grid grid-cols-4 gap-4">
           <StatCard label="Total Tasks" value={String(tasks.length)} />
