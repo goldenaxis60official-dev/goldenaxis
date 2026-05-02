@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
+import type { Profile } from "@/types/profile";
 import {
   Users,
   Copy,
@@ -11,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle,
   Crown,
+  ShieldCheck,
 } from "lucide-react";
 
 type TeamSummary = {
@@ -30,12 +32,12 @@ type ReferralReward = {
 export default function TeamPage() {
   return (
     <RequireAuth>
-      {() => <TeamContent />}
+      {(profile) => <TeamContent profile={profile} />}
     </RequireAuth>
   );
 }
 
-function TeamContent() {
+function TeamContent({ profile }: { profile: Profile }) {
   const [summary, setSummary] = useState<TeamSummary | null>(null);
   const [rewards, setRewards] = useState<ReferralReward[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,7 @@ function TeamContent() {
       const { data: rewardData, error: rewardError } = await supabase
         .from("referral_rewards")
         .select("id, base_commission, referral_rate, reward_amount, created_at")
+        .eq("referrer_id", profile.id)
         .order("created_at", { ascending: false });
 
       if (rewardError) {
@@ -74,18 +77,24 @@ function TeamContent() {
     }
 
     loadTeam();
-  }, []);
+  }, [profile.id]);
 
   async function copyInviteCode() {
-    if (!summary?.referral_code) return;
+    const inviteCode = summary?.referral_code || profile.referral_code;
 
-    await navigator.clipboard.writeText(summary.referral_code);
+    if (!inviteCode) return;
+
+    await navigator.clipboard.writeText(inviteCode);
     setCopied(true);
 
     setTimeout(() => {
       setCopied(false);
     }, 1500);
   }
+
+  const inviteCode = summary?.referral_code || profile.referral_code;
+  const totalReward = Number(summary?.total_reward || 0);
+  const teamCount = Number(summary?.team_count || 0);
 
   return (
     <AppShell>
@@ -114,46 +123,56 @@ function TeamContent() {
           </div>
         )}
 
-        {!loading && summary && (
+        {!loading && !errorText && (
           <>
-            <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/50">Your Gold Invite Code</p>
-                  <h2 className="mt-1 text-4xl font-black tracking-wide text-yellow-300">
-                    {summary.referral_code}
-                  </h2>
+            <div className="mb-5 overflow-hidden rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] backdrop-blur-xl">
+              <div className="p-5">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white/50">Your Gold Invite Code</p>
+                    <h2 className="mt-1 text-4xl font-black tracking-wide text-yellow-300">
+                      {inviteCode}
+                    </h2>
+                  </div>
+
+                  <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
+                    <Crown className="h-7 w-7" />
+                  </div>
                 </div>
 
-                <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
-                  <Crown className="h-7 w-7" />
-                </div>
+                <button
+                  onClick={copyInviteCode}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="h-5 w-5" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-5 w-5" />
+                      Copy Invite Code
+                    </>
+                  )}
+                </button>
               </div>
 
-              <button
-                onClick={copyInviteCode}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black"
-              >
-                {copied ? (
-                  <>
-                    <CheckCircle className="h-5 w-5" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-5 w-5" />
-                    Copy Invite Code
-                  </>
-                )}
-              </button>
+              <div className="border-t border-yellow-400/10 bg-yellow-400/10 p-4">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
+                  <p className="text-sm leading-6 text-yellow-100/80">
+                    Share your invite code with new members. Team rewards are
+                    added only when invited users complete campaign missions.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="mb-5 grid grid-cols-3 gap-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
                 <p className="text-xs text-white/45">Team Size</p>
-                <p className="mt-1 font-bold text-blue-300">
-                  {summary.team_count}
-                </p>
+                <p className="mt-1 font-bold text-blue-300">{teamCount}</p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
@@ -164,12 +183,12 @@ function TeamContent() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
                 <p className="text-xs text-white/45">Reward</p>
                 <p className="mt-1 font-bold text-emerald-300">
-                  ${Number(summary.total_reward).toFixed(2)}
+                  ${totalReward.toFixed(2)}
                 </p>
               </div>
             </div>
 
-            <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">
+            <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100/80">
               Referrers earn 10% from referral task commission only. There is no
               one-time signup bonus.
             </div>
@@ -227,7 +246,7 @@ function TeamContent() {
                     <div className="rounded-2xl bg-black/30 p-3">
                       <p className="text-xs text-white/45">Referral Rate</p>
                       <p className="mt-1 font-bold text-yellow-300">
-                        {Number(item.referral_rate) * 100}%
+                        {(Number(item.referral_rate) * 100).toFixed(0)}%
                       </p>
                     </div>
                   </div>

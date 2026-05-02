@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
 import type { Transaction } from "@/types/transaction";
+import type { Profile } from "@/types/profile";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -12,6 +13,8 @@ import {
   AlertCircle,
   ReceiptText,
 } from "lucide-react";
+
+type TransactionFilter = "all" | "in" | "out";
 
 function getTransactionLabel(type: string) {
   const labels: Record<string, string> = {
@@ -35,13 +38,15 @@ function isPositiveAmount(amount: number) {
 export default function TransactionsPage() {
   return (
     <RequireAuth>
-      {() => <TransactionsContent />}
+      {(profile) => <TransactionsContent profile={profile} />}
     </RequireAuth>
   );
 }
 
-function TransactionsContent() {
+function TransactionsContent({ profile }: { profile: Profile }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filter, setFilter] = useState<TransactionFilter>("all");
+
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
@@ -53,6 +58,7 @@ function TransactionsContent() {
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
+        .eq("user_id", profile.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -66,15 +72,29 @@ function TransactionsContent() {
     }
 
     loadTransactions();
-  }, []);
+  }, [profile.id]);
+
+  const filteredTransactions = useMemo(() => {
+    if (filter === "in") {
+      return transactions.filter((item) => Number(item.amount) >= 0);
+    }
+
+    if (filter === "out") {
+      return transactions.filter((item) => Number(item.amount) < 0);
+    }
+
+    return transactions;
+  }, [filter, transactions]);
 
   const totalIn = transactions
-    .filter((t) => Number(t.amount) > 0)
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .filter((item) => Number(item.amount) > 0)
+    .reduce((sum, item) => sum + Number(item.amount), 0);
 
   const totalOut = transactions
-    .filter((t) => Number(t.amount) < 0)
-    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+    .filter((item) => Number(item.amount) < 0)
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+
+  const netChange = totalIn - totalOut;
 
   return (
     <AppShell>
@@ -90,23 +110,77 @@ function TransactionsContent() {
           </div>
         </div>
 
+        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+          <p className="text-sm text-white/50">Current Campaign Balance</p>
+          <h2 className="mt-2 text-3xl font-black">
+            ${Number(profile.balance).toFixed(2)}
+          </h2>
+
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Credit In</p>
+              <p className="mt-1 font-bold text-emerald-300">
+                ${totalIn.toFixed(2)}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Credit Out</p>
+              <p className="mt-1 font-bold text-red-300">
+                ${totalOut.toFixed(2)}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Net</p>
+              <p
+                className={`mt-1 font-bold ${
+                  netChange >= 0 ? "text-yellow-300" : "text-red-300"
+                }`}
+              >
+                ${netChange.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-5 grid grid-cols-3 gap-3">
+          {[
+            { label: "All", value: "all" },
+            { label: "Credit In", value: "in" },
+            { label: "Credit Out", value: "out" },
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setFilter(item.value as TransactionFilter)}
+              className={`rounded-2xl border px-3 py-3 text-sm font-bold ${
+                filter === item.value
+                  ? "border-yellow-400 bg-yellow-400 text-black"
+                  : "border-white/10 bg-white/[0.06] text-white/65"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         <div className="mb-5 grid grid-cols-3 gap-3">
           <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Records</p>
+            <p className="text-xs text-white/45">All</p>
             <p className="mt-1 font-bold text-white">{transactions.length}</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Credit In</p>
-            <p className="mt-1 font-bold text-emerald-300">
-              ${totalIn.toFixed(2)}
+            <p className="text-xs text-white/45">Showing</p>
+            <p className="mt-1 font-bold text-yellow-300">
+              {filteredTransactions.length}
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Credit Out</p>
-            <p className="mt-1 font-bold text-red-300">
-              ${totalOut.toFixed(2)}
+            <p className="text-xs text-white/45">Today</p>
+            <p className="mt-1 font-bold text-emerald-300">
+              ${Number(profile.today_earnings).toFixed(2)}
             </p>
           </div>
         </div>
@@ -124,18 +198,18 @@ function TransactionsContent() {
           </div>
         )}
 
-        {!loading && !errorText && transactions.length === 0 && (
+        {!loading && !errorText && filteredTransactions.length === 0 && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center">
             <Gem className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
-            <p className="font-bold">No transactions yet</p>
+            <p className="font-bold">No transactions found</p>
             <p className="mt-2 text-sm text-white/50">
-              Complete a mission to create your first wallet record.
+              Wallet transaction records will appear here.
             </p>
           </div>
         )}
 
         <div className="space-y-4 pb-6">
-          {transactions.map((item) => {
+          {filteredTransactions.map((item) => {
             const amount = Number(item.amount);
             const positive = isPositiveAmount(amount);
 
@@ -170,7 +244,7 @@ function TransactionsContent() {
                       </p>
 
                       {item.description && (
-                        <p className="mt-2 text-sm text-white/55">
+                        <p className="mt-2 text-sm leading-6 text-white/55">
                           {item.description}
                         </p>
                       )}

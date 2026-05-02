@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import type { Profile } from "@/types/profile";
 import {
   User,
   Wallet,
@@ -16,178 +18,234 @@ import {
   LogOut,
   ChevronRight,
   ClipboardList,
-  Crown,
+  Copy,
+  CheckCircle,
+  Gem,
 } from "lucide-react";
 
 const menuItems = [
-  { label: "Deposit Credits", icon: Upload },
-  { label: "Withdraw Request", icon: Download },
-  { label: "Deposit Record", icon: ClipboardList },
-  { label: "Withdrawal Record", icon: ClipboardList },
-  { label: "Task History", icon: History },
-  { label: "Transaction Details", icon: History },
-  { label: "Team Invite", icon: Users },
-  { label: "Customer Support", icon: Headphones },
-  { label: "Terms & Security", icon: ShieldCheck },
-  { label: "Logout", icon: LogOut },
+  { label: "Deposit Credits", icon: Upload, href: "/deposit" },
+  { label: "Withdraw Request", icon: Download, href: "/withdraw" },
+  {
+    label: "Deposit Record",
+    icon: ClipboardList,
+    href: "/wallet-records?type=deposit_credit",
+  },
+  {
+    label: "Withdrawal Record",
+    icon: ClipboardList,
+    href: "/wallet-records?type=withdrawal",
+  },
+  { label: "Task History", icon: History, href: "/history" },
+  { label: "Transaction Details", icon: History, href: "/transactions" },
+  { label: "Team Invite", icon: Users, href: "/team" },
+  { label: "Customer Support", icon: Headphones, href: "/support" },
+  { label: "Terms & Security", icon: ShieldCheck, href: "/terms" },
+  { label: "Logout", icon: LogOut, href: "/login", danger: true },
 ];
 
 export default function ProfilePage() {
-  const router = useRouter();
-
-  async function handleMenuClick(label: string) {
-
-if (label === "Team Invite") {
-  router.push("/team");
-  return;
-}
-
-if (label === "Deposit Credits") {
-  router.push("/deposit");
-  return;
-}
-
-if (label === "Withdraw Request") {
-  router.push("/withdraw");
-  return;
-}
-
-if (label === "Deposit Record") {
-  router.push("/wallet-records?type=deposit_credit");
-  return;
-}
-
-if (label === "Withdrawal Record") {
-  router.push("/wallet-records?type=withdrawal");
-  return;
-}
-
-if (label === "Transaction Details") {
-  router.push("/transactions");
-  return;
-}
-
-if (label === "Task History") {
-  router.push("/history");
-  return;
-}
-
-if (label === "Customer Support") {
-  router.push("/support");
-  return;
-}
-
-if (label === "Terms & Security") {
-  router.push("/terms");
-  return;
-}
-
-if (label === "Logout") {
-  await supabase.auth.signOut();
-  router.push("/login");
-}
-  }
-
   return (
     <RequireAuth>
-      {(profile) => (
-        <AppShell>
-          <section className="px-5 pt-8">
-            <div className="mb-8 text-center">
-              <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
-                <User className="h-12 w-12 text-yellow-300" />
+      {(profile) => <ProfileContent profile={profile} />}
+    </RequireAuth>
+  );
+}
+
+function ProfileContent({ profile }: { profile: Profile }) {
+  const router = useRouter();
+
+  const [assignedTotal, setAssignedTotal] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (profile.role === "admin") {
+      router.replace("/admin");
+    }
+  }, [profile.role, router]);
+
+  useEffect(() => {
+    async function loadAssignedCount() {
+      const { count } = await supabase
+        .from("user_task_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", profile.id)
+        .eq("is_active", true);
+
+      setAssignedTotal(count || 0);
+    }
+
+    if (profile.role === "user") {
+      loadAssignedCount();
+    }
+  }, [profile.id, profile.role]);
+
+  async function handleMenuClick(item: (typeof menuItems)[number]) {
+    if (item.label === "Logout") {
+      await supabase.auth.signOut();
+      router.replace("/login");
+      return;
+    }
+
+    router.push(item.href);
+  }
+
+  async function copyInviteCode() {
+    if (!profile.referral_code) return;
+
+    await navigator.clipboard.writeText(profile.referral_code);
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+  }
+
+  if (profile.role === "admin") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-yellow-300 border-t-transparent" />
+          <p className="text-sm text-white/60">Opening admin control...</p>
+        </div>
+      </main>
+    );
+  }
+
+  const completedCount = Math.max(profile.current_step - 1, 0);
+  const missionTotalText =
+    assignedTotal === null ? "..." : assignedTotal > 0 ? assignedTotal : "-";
+
+  return (
+    <AppShell>
+      <section className="px-5 pt-8">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
+            <User className="h-12 w-12 text-yellow-300" />
+          </div>
+
+          <h1 className="text-2xl font-black">
+            {profile.display_name || "Gold Member"}
+          </h1>
+
+          <p className="mt-1 text-sm text-white/50">
+            {profile.email || "Golden Axis User"}
+          </p>
+
+          <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-bold text-yellow-200">
+            <Gem className="h-3.5 w-3.5" />
+            Golden Axis Member
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/50">Campaign Balance</p>
+              <h2 className="mt-1 text-3xl font-black">
+                ${Number(profile.balance).toFixed(2)}
+              </h2>
+            </div>
+
+            <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
+              <Wallet className="h-7 w-7" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <button
+              type="button"
+              onClick={copyInviteCode}
+              className="rounded-2xl bg-black/30 p-3 text-left"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-white/45">Invite Code</p>
+                {copied ? (
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5 text-white/35" />
+                )}
               </div>
 
-              <h1 className="text-2xl font-black">
-                {profile.display_name || "Gold Member"}
-              </h1>
-              <p className="mt-1 text-sm text-white/50">
-                {profile.email || "Golden Axis User"}
+              <p className="mt-1 truncate font-black text-yellow-300">
+                {profile.referral_code}
+              </p>
+            </button>
+
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Today</p>
+              <p className="mt-1 font-black text-emerald-300">
+                ${Number(profile.today_earnings).toFixed(2)}
               </p>
             </div>
 
-            <div className="mb-6 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/50">Account Balance</p>
-                  <h2 className="mt-1 text-3xl font-black">
-                    ${Number(profile.balance).toFixed(2)}
-                  </h2>
-                </div>
-
-                <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
-                  <Wallet className="h-7 w-7" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-2xl bg-black/30 p-3">
-                  <p className="text-xs text-white/45">Invite Code</p>
-                  <p className="mt-1 font-black text-yellow-300">
-                    {profile.referral_code}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-black/30 p-3">
-                  <p className="text-xs text-white/45">Today</p>
-                  <p className="mt-1 font-black text-emerald-300">
-                    ${Number(profile.today_earnings).toFixed(2)}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-black/30 p-3">
-                  <p className="text-xs text-white/45">Step</p>
-                  <p className="mt-1 font-black text-blue-300">
-                    {profile.current_step}/80
-                  </p>
-                </div>
-              </div>
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Missions</p>
+              <p className="mt-1 font-black text-blue-300">
+                {completedCount}/{missionTotalText}
+              </p>
             </div>
+          </div>
 
-            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] backdrop-blur-xl">
-              {profile.role === "admin" && (
-  <button
-    onClick={() => router.push("/admin")}
-    className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4"
-  >
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
-        <Crown className="h-5 w-5" />
-      </div>
+          {copied && (
+            <p className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-200">
+              Invite code copied.
+            </p>
+          )}
+        </div>
 
-      <span className="font-medium text-yellow-300">Admin Panel</span>
-    </div>
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4">
+            <p className="text-xs text-white/45">Total Earnings</p>
+            <p className="mt-1 text-lg font-black text-yellow-300">
+              ${Number(profile.total_earnings).toFixed(2)}
+            </p>
+          </div>
 
-    <ChevronRight className="h-5 w-5 text-white/35" />
-  </button>
-)}
-              {menuItems.map((item) => {
-                const Icon = item.icon;
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4">
+            <p className="text-xs text-white/45">Credit Score</p>
+            <p className="mt-1 text-lg font-black text-emerald-300">
+              {profile.credit_score}
+            </p>
+          </div>
+        </div>
 
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => handleMenuClick(item.label)}
-                    className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4 last:border-b-0"
+        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] backdrop-blur-xl">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <button
+                key={item.label}
+                onClick={() => handleMenuClick(item)}
+                className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4 last:border-b-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                      item.danger
+                        ? "bg-red-500/10 text-red-300"
+                        : "bg-yellow-400/10 text-yellow-300"
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
-                        <Icon className="h-5 w-5" />
-                      </div>
+                    <Icon className="h-5 w-5" />
+                  </div>
 
-                      <span className="font-medium text-white/80">
-                        {item.label}
-                      </span>
-                    </div>
+                  <span
+                    className={`font-medium ${
+                      item.danger ? "text-red-200" : "text-white/80"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
 
-                    <ChevronRight className="h-5 w-5 text-white/35" />
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </AppShell>
-      )}
-    </RequireAuth>
+                <ChevronRight className="h-5 w-5 text-white/35" />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    </AppShell>
   );
 }

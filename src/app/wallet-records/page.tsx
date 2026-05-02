@@ -6,6 +6,7 @@ import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
 import type { WalletRequest } from "@/types/walletRequest";
+import type { Profile } from "@/types/profile";
 import {
   ClipboardList,
   AlertCircle,
@@ -14,7 +15,11 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  ArrowDownCircle,
+  ArrowUpCircle,
 } from "lucide-react";
+
+type RequestFilter = "all" | "deposit_credit" | "withdrawal";
 
 function getTypeLabel(type: WalletRequest["type"]) {
   if (type === "deposit_credit") return "Deposit Credit";
@@ -42,17 +47,17 @@ function getStatusClass(status: WalletRequest["status"]) {
 export default function WalletRecordsPage() {
   return (
     <RequireAuth>
-      {() => <WalletRecordsContent />}
+      {(profile) => <WalletRecordsContent profile={profile} />}
     </RequireAuth>
   );
 }
 
-function WalletRecordsContent() {
+function WalletRecordsContent({ profile }: { profile: Profile }) {
   const searchParams = useSearchParams();
   const defaultType = searchParams.get("type");
 
   const [records, setRecords] = useState<WalletRequest[]>([]);
-  const [filter, setFilter] = useState<"all" | "deposit_credit" | "withdrawal">(
+  const [filter, setFilter] = useState<RequestFilter>(
     defaultType === "deposit_credit" || defaultType === "withdrawal"
       ? defaultType
       : "all"
@@ -69,6 +74,7 @@ function WalletRecordsContent() {
       let query = supabase
         .from("wallet_requests")
         .select("*")
+        .eq("user_id", profile.id)
         .order("created_at", { ascending: false });
 
       if (filter !== "all") {
@@ -88,12 +94,23 @@ function WalletRecordsContent() {
     }
 
     loadRecords();
-  }, [filter]);
+  }, [filter, profile.id]);
 
   const pendingCount = records.filter((item) => item.status === "pending").length;
   const approvedCount = records.filter(
     (item) => item.status === "approved"
   ).length;
+  const rejectedCount = records.filter(
+    (item) => item.status === "rejected"
+  ).length;
+
+  const totalDeposit = records
+    .filter((item) => item.type === "deposit_credit")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+  const totalWithdrawal = records
+    .filter((item) => item.type === "withdrawal")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   return (
     <AppShell>
@@ -109,9 +126,38 @@ function WalletRecordsContent() {
           </div>
         </div>
 
-        <div className="mb-5 grid grid-cols-3 gap-3">
+        <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-white/[0.06] p-5 backdrop-blur-xl">
+          <p className="text-sm text-white/50">Current Campaign Balance</p>
+          <h2 className="mt-2 text-3xl font-black">
+            ${Number(profile.balance).toFixed(2)}
+          </h2>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-black/30 p-3">
+              <div className="mb-1 flex items-center gap-1 text-emerald-300">
+                <ArrowDownCircle className="h-4 w-4" />
+                <p className="text-xs font-bold">Deposit Requests</p>
+              </div>
+              <p className="font-black text-white">
+                ${totalDeposit.toFixed(2)}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-black/30 p-3">
+              <div className="mb-1 flex items-center gap-1 text-blue-300">
+                <ArrowUpCircle className="h-4 w-4" />
+                <p className="text-xs font-bold">Withdraw Requests</p>
+              </div>
+              <p className="font-black text-white">
+                ${totalWithdrawal.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-5 grid grid-cols-4 gap-3">
           <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-            <p className="text-xs text-white/45">Records</p>
+            <p className="text-xs text-white/45">All</p>
             <p className="mt-1 font-bold text-white">{records.length}</p>
           </div>
 
@@ -124,6 +170,11 @@ function WalletRecordsContent() {
             <p className="text-xs text-white/45">Approved</p>
             <p className="mt-1 font-bold text-emerald-300">{approvedCount}</p>
           </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+            <p className="text-xs text-white/45">Rejected</p>
+            <p className="mt-1 font-bold text-red-300">{rejectedCount}</p>
+          </div>
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
@@ -134,9 +185,7 @@ function WalletRecordsContent() {
           ].map((item) => (
             <button
               key={item.value}
-              onClick={() =>
-                setFilter(item.value as "all" | "deposit_credit" | "withdrawal")
-              }
+              onClick={() => setFilter(item.value as RequestFilter)}
               className={`rounded-2xl border px-3 py-3 text-sm font-bold ${
                 filter === item.value
                   ? "border-yellow-400 bg-yellow-400 text-black"
@@ -246,6 +295,12 @@ function WalletRecordsContent() {
                       {item.admin_note}
                     </p>
                   </div>
+                )}
+
+                {item.reviewed_at && (
+                  <p className="mt-3 text-xs text-white/35">
+                    Reviewed: {new Date(item.reviewed_at).toLocaleString()}
+                  </p>
                 )}
               </div>
             );

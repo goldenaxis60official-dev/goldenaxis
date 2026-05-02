@@ -10,38 +10,49 @@ import {
   Users,
   Lock,
   AlertTriangle,
+  ClipboardList,
 } from "lucide-react";
 
 const sections = [
   {
     title: "Promotional Credit Simulation",
     icon: Gem,
-    text: "Golden Axis 60 uses campaign credits and simulation rewards inside the platform. Displayed balances and rewards are part of the promotional task experience unless officially reviewed and approved by the platform.",
+    text: "Golden Axis 60 uses campaign credits and simulation rewards inside the platform. Displayed balances, product values, and rewards are part of the promotional task experience unless officially reviewed and approved by the platform.",
+  },
+  {
+    title: "Assigned Mission Rule",
+    icon: ClipboardList,
+    text: "Each user receives a personalized campaign mission list assigned by the platform. A campaign list can contain a minimum of 1 mission and a maximum of 80 missions. Missions must be completed in order.",
   },
   {
     title: "Mission Sequence Rule",
     icon: FileText,
-    text: "Users complete campaign missions in order. Future missions remain locked until previous missions are completed. The full campaign sequence contains up to 80 mission steps.",
+    text: "Users complete assigned campaign missions step by step. Future missions remain locked until previous assigned missions are completed. If no missions are assigned yet, the campaign list may show as preparing.",
   },
   {
     title: "Lucky Bonus Rule",
     icon: Gem,
-    text: "Lucky Bonus missions are premium Jewel tasks with a higher reward multiplier. If the user balance is not enough, the platform may ask the user to add campaign/demo credits before continuing.",
+    text: "Lucky Bonus missions are premium jewel campaign tasks with a higher reward multiplier. If the user balance is not enough, the platform may ask the user to add campaign credits before continuing.",
   },
   {
     title: "Wallet Request Rule",
     icon: Wallet,
-    text: "Deposit-credit and withdrawal requests require admin review. A request status can be pending, approved, or rejected. Balance changes are recorded in the transaction ledger.",
+    text: "Deposit-credit and withdrawal requests require admin review. A request status can be pending, approved, or rejected. Approved balance changes are recorded in the transaction ledger.",
+  },
+  {
+    title: "Withdrawal Rule",
+    icon: ShieldCheck,
+    text: "Withdrawal requests become available only after the user completes all assigned active campaign missions. Requests are still subject to admin review and platform approval.",
   },
   {
     title: "Referral Rule",
     icon: Users,
-    text: "Referral rewards are calculated from referral task commission only. There is no automatic signup bonus. The standard team reward rate is 10% of the referral user's mission commission.",
+    text: "Referral rewards are calculated from referral task commission only. There is no automatic signup bonus. The standard team reward rate is 10% of the referred user's mission commission.",
   },
   {
     title: "Account Security",
     icon: Lock,
-    text: "Users are responsible for protecting their login information. Admin actions, balance changes, and wallet approvals are recorded for transparency and audit history.",
+    text: "Users are responsible for protecting their login information. Admin actions, balance changes, wallet approvals, and support replies may be recorded for transparency and audit history.",
   },
 ];
 
@@ -71,8 +82,8 @@ export default function TermsPage() {
               <p className="text-sm leading-6 text-white/65">
                 This platform is designed as a promotional campaign simulation.
                 It should not be presented as guaranteed income, investment
-                profit, or risk-free earning. All wallet and reward requests are
-                subject to platform review.
+                profit, or risk-free earning. All wallet, reward, and withdrawal
+                requests are subject to platform review.
               </p>
             </div>
 

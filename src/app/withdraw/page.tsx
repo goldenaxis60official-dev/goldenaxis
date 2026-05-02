@@ -1,19 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
+import type { Profile } from "@/types/profile";
 import {
   Download,
   Lock,
   AlertCircle,
   CheckCircle,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
-import type { Profile } from "@/types/profile";
 
 const methods = ["Manual Review", "Campaign Wallet", "Bank Review"];
+
+type AssignmentRow = {
+  assigned_step: number;
+};
 
 export default function WithdrawPage() {
   return (
@@ -24,47 +30,101 @@ export default function WithdrawPage() {
 }
 
 function WithdrawContent({ profile }: { profile: Profile }) {
+  const router = useRouter();
+
   const [amount, setAmount] = useState(Number(profile.balance || 0));
   const [method, setMethod] = useState("Manual Review");
   const [note, setNote] = useState("");
+
+  const [assignedTotal, setAssignedTotal] = useState(0);
+  const [maxAssignedStep, setMaxAssignedStep] = useState(0);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  const completedAllMissions = Number(profile.current_step) >= 81;
+  useEffect(() => {
+    async function loadAssignedProgress() {
+      setLoadingAssignments(true);
+
+      const { data, error } = await supabase
+        .from("user_task_assignments")
+        .select("assigned_step")
+        .eq("user_id", profile.id)
+        .eq("is_active", true)
+        .order("assigned_step", { ascending: true });
+
+      if (error) {
+        setErrorText(error.message);
+        setLoadingAssignments(false);
+        return;
+      }
+
+      const rows = (data || []) as AssignmentRow[];
+      const highestStep = rows.reduce(
+        (max, row) => Math.max(max, Number(row.assigned_step)),
+        0
+      );
+
+      setAssignedTotal(rows.length);
+      setMaxAssignedStep(highestStep);
+      setLoadingAssignments(false);
+    }
+
+    loadAssignedProgress();
+  }, [profile.id]);
+
+  const completedCount = Math.max(profile.current_step - 1, 0);
+
+  const completedAllAssignedMissions =
+    assignedTotal > 0 && Number(profile.current_step) > maxAssignedStep;
+
+  const hasNoAssignedTasks = !loadingAssignments && assignedTotal === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    setLoading(true);
     setSuccessText("");
     setErrorText("");
 
-    if (!completedAllMissions) {
-      setErrorText("Complete all 80 campaign missions to unlock withdrawal request.");
-      setLoading(false);
+    if (loadingAssignments) {
+      setErrorText("Checking campaign progress. Please wait.");
+      return;
+    }
+
+    if (hasNoAssignedTasks) {
+      setErrorText(
+        "Your campaign task list has not been assigned yet. Withdrawal is not available."
+      );
+      return;
+    }
+
+    if (!completedAllAssignedMissions) {
+      setErrorText(
+        "Complete all assigned campaign missions to unlock withdrawal request."
+      );
       return;
     }
 
     if (amount <= 0) {
       setErrorText("Please enter a valid amount.");
-      setLoading(false);
       return;
     }
 
     if (amount > Number(profile.balance)) {
       setErrorText("Request amount cannot exceed your campaign balance.");
-      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const { error } = await supabase.from("wallet_requests").insert({
       user_id: profile.id,
       type: "withdrawal",
       amount,
       method,
-      note,
+      note: note.trim() || null,
       status: "pending",
     });
 
@@ -103,7 +163,11 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="rounded-2xl bg-black/30 p-3">
               <p className="text-xs text-white/45">Mission Progress</p>
               <p className="mt-1 font-bold text-yellow-300">
-                {Math.min(profile.current_step - 1, 80)} / 80
+                {loadingAssignments
+                  ? "..."
+                  : `${Math.min(completedCount, assignedTotal)} / ${
+                      assignedTotal || "-"
+                    }`}
               </p>
             </div>
 
@@ -111,30 +175,42 @@ function WithdrawContent({ profile }: { profile: Profile }) {
               <p className="text-xs text-white/45">Status</p>
               <p
                 className={`mt-1 font-bold ${
-                  completedAllMissions ? "text-emerald-300" : "text-red-300"
+                  completedAllAssignedMissions
+                    ? "text-emerald-300"
+                    : "text-red-300"
                 }`}
               >
-                {completedAllMissions ? "Unlocked" : "Locked"}
+                {completedAllAssignedMissions ? "Unlocked" : "Locked"}
               </p>
             </div>
           </div>
 
-          {!completedAllMissions && (
-            <div className="mt-4 flex gap-3 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-100/80">
-              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+          {hasNoAssignedTasks && (
+            <div className="mt-4 flex gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">
+              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
               <p>
-                Withdrawal request unlocks after all 80 campaign missions are
-                completed. This keeps the simulation sequence consistent.
+                Your campaign task list is still preparing. Withdrawal becomes
+                available after admin assigns and you complete your missions.
               </p>
             </div>
           )}
 
-          {completedAllMissions && (
+          {!hasNoAssignedTasks && !completedAllAssignedMissions && (
+            <div className="mt-4 flex gap-3 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-100/80">
+              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+              <p>
+                Withdrawal request unlocks after all assigned campaign missions
+                are completed.
+              </p>
+            </div>
+          )}
+
+          {completedAllAssignedMissions && (
             <div className="mt-4 flex gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100/80">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
               <p>
-                Your campaign sequence is complete. You can submit a withdrawal
-                request for admin review.
+                Your assigned campaign sequence is complete. You can submit a
+                withdrawal request for admin review.
               </p>
             </div>
           )}
@@ -143,7 +219,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
         <form
           onSubmit={handleSubmit}
           className={`rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl ${
-            !completedAllMissions ? "opacity-60" : ""
+            !completedAllAssignedMissions ? "opacity-60" : ""
           }`}
         >
           <div className="mb-5">
@@ -151,11 +227,11 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
             <input
               value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              onChange={(event) => setAmount(Number(event.target.value))}
               type="number"
               min="1"
               step="0.01"
-              disabled={!completedAllMissions}
+              disabled={!completedAllAssignedMissions}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
             />
           </div>
@@ -165,8 +241,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
             <select
               value={method}
-              onChange={(e) => setMethod(e.target.value)}
-              disabled={!completedAllMissions}
+              onChange={(event) => setMethod(event.target.value)}
+              disabled={!completedAllAssignedMissions}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50 disabled:cursor-not-allowed"
             >
               {methods.map((item) => (
@@ -180,8 +256,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
             <textarea
               value={note}
-              onChange={(e) => setNote(e.target.value)}
-              disabled={!completedAllMissions}
+              onChange={(event) => setNote(event.target.value)}
+              disabled={!completedAllAssignedMissions}
               placeholder="Write note for admin..."
               className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
             />
@@ -202,11 +278,20 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           )}
 
           <button
-            disabled={loading || !completedAllMissions}
+            disabled={loading || !completedAllAssignedMissions}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="h-5 w-5" />
             {loading ? "Submitting..." : "Submit Withdrawal Request"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.push("/wallet-records?type=withdrawal")}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 font-bold text-white/75"
+          >
+            <ClipboardList className="h-5 w-5" />
+            View Withdrawal Records
           </button>
         </form>
       </section>

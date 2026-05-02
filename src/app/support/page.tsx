@@ -69,6 +69,7 @@ function SupportContent({ profile }: { profile: Profile }) {
     const { data, error } = await supabase
       .from("support_messages")
       .select("*")
+      .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -83,7 +84,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
   useEffect(() => {
     loadMessages();
-  }, []);
+  }, [profile.id]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -101,7 +102,7 @@ function SupportContent({ profile }: { profile: Profile }) {
     const { error } = await supabase.from("support_messages").insert({
       user_id: profile.id,
       subject,
-      message,
+      message: message.trim(),
       status: "open",
     });
 
@@ -116,6 +117,12 @@ function SupportContent({ profile }: { profile: Profile }) {
     setSubmitting(false);
     loadMessages();
   }
+
+  const openCount = messages.filter((item) => item.status === "open").length;
+  const reviewingCount = messages.filter(
+    (item) => item.status === "reviewing"
+  ).length;
+  const closedCount = messages.filter((item) => item.status === "closed").length;
 
   return (
     <AppShell>
@@ -142,6 +149,25 @@ function SupportContent({ profile }: { profile: Profile }) {
             access, or campaign-credit questions. Admin replies will appear in
             your support history.
           </p>
+
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Open</p>
+              <p className="mt-1 font-black text-blue-300">{openCount}</p>
+            </div>
+
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Reviewing</p>
+              <p className="mt-1 font-black text-yellow-300">
+                {reviewingCount}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-black/30 p-3">
+              <p className="text-xs text-white/45">Closed</p>
+              <p className="mt-1 font-black text-emerald-300">{closedCount}</p>
+            </div>
+          </div>
         </div>
 
         <div className="mb-5 grid gap-3">
@@ -151,6 +177,7 @@ function SupportContent({ profile }: { profile: Profile }) {
             return (
               <button
                 key={item.title}
+                type="button"
                 onClick={() => setSubject(item.title)}
                 className={`rounded-[1.5rem] border p-4 text-left backdrop-blur-xl ${
                   subject === item.title
@@ -165,7 +192,9 @@ function SupportContent({ profile }: { profile: Profile }) {
 
                   <div>
                     <h3 className="font-black">{item.title}</h3>
-                    <p className="mt-1 text-sm text-white/50">{item.text}</p>
+                    <p className="mt-1 text-sm leading-5 text-white/50">
+                      {item.text}
+                    </p>
                   </div>
                 </div>
               </button>
@@ -182,7 +211,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
             <select
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(event) => setSubject(event.target.value)}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
             >
               <option>Mission Help</option>
@@ -198,7 +227,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
             <textarea
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(event) => setMessage(event.target.value)}
               placeholder="Write your support message..."
               className="min-h-32 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
@@ -279,7 +308,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
               <div className="rounded-2xl bg-black/30 p-3">
                 <p className="text-xs text-white/45">Your Message</p>
-                <p className="mt-1 text-sm leading-6 text-white/70">
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-white/70">
                   {item.message}
                 </p>
               </div>
@@ -287,9 +316,15 @@ function SupportContent({ profile }: { profile: Profile }) {
               {item.admin_reply ? (
                 <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3">
                   <p className="text-xs text-yellow-200/70">Admin Reply</p>
-                  <p className="mt-1 text-sm leading-6 text-yellow-100">
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-yellow-100">
                     {item.admin_reply}
                   </p>
+
+                  {item.replied_at && (
+                    <p className="mt-2 text-xs text-yellow-100/45">
+                      Replied: {new Date(item.replied_at).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="mt-3 flex items-center gap-2 rounded-2xl bg-black/30 p-3 text-sm text-white/50">

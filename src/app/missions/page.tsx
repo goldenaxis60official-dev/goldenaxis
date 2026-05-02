@@ -331,25 +331,34 @@ function MissionContent({ profile }: { profile: Profile }) {
               const productReviews = Number(product?.reviews_count || 0);
 
               const reward =
-                Number(task.price) *
-                Number(task.commission_rate) *
-                Number(task.multiplier);
+  Number(task.price) *
+  Number(task.commission_rate) *
+  Number(task.multiplier);
 
-              const isCurrent =
-                assignment.assigned_step === profile.current_step;
-              const completed =
-                assignment.assigned_step < profile.current_step;
-              const locked = assignment.assigned_step > profile.current_step;
+const bonusMultiplier = Number(task.multiplier || 1);
+const bonusPercent = Math.max((bonusMultiplier - 1) * 100, 0);
+
+const isCurrent =
+  assignment.assigned_step === profile.current_step;
+const completed =
+  assignment.assigned_step < profile.current_step;
+const locked = assignment.assigned_step > profile.current_step;
 
               return (
                 <div
                   key={assignment.id}
-                  className={`overflow-hidden rounded-[2rem] border backdrop-blur-xl ${
-                    lucky
-                      ? "border-yellow-400/50 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.18)]"
-                      : "border-white/10 bg-white/[0.05]"
-                  } ${locked ? "opacity-50" : ""}`}
+                  className={`relative overflow-hidden rounded-[2rem] border backdrop-blur-xl ${
+  lucky
+    ? "border-yellow-300/70 bg-[radial-gradient(circle_at_top,#8a610d33_0%,#1a1202_42%,#050505_100%)] shadow-[0_0_55px_rgba(250,204,21,0.28)]"
+    : "border-white/10 bg-white/[0.05]"
+} ${locked ? "opacity-50" : ""}`}
                 >
+                {lucky && (
+  <>
+    <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-yellow-300/20 blur-3xl" />
+    <div className="pointer-events-none absolute -left-16 top-40 h-44 w-44 rounded-full bg-amber-500/10 blur-3xl" />
+  </>
+)}
                   <div className="relative h-64 bg-black/40">
                     {activeImage ? (
                       <img
@@ -366,20 +375,41 @@ function MissionContent({ profile }: { profile: Profile }) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
 
                     <div className="absolute left-4 top-4 flex items-center gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-black ${
-                          lucky
-                            ? "bg-yellow-300 text-black"
-                            : "bg-black/65 text-white"
-                        }`}
-                      >
-                        {lucky ? "Lucky Bonus 2x" : "Standard"}
-                      </span>
+  <span
+    className={`flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-black backdrop-blur ${
+      lucky
+        ? "bg-gradient-to-r from-yellow-200 to-yellow-500 text-black shadow-[0_0_22px_rgba(250,204,21,0.45)]"
+        : "bg-black/65 text-white"
+    }`}
+  >
+    {lucky && <Sparkles className="h-3.5 w-3.5" />}
+    {lucky ? `Lucky Bonus ${bonusMultiplier.toFixed(1)}x` : "Standard"}
+  </span>
 
-                      <span className="rounded-full bg-black/65 px-3 py-1 text-[11px] font-bold text-white/80">
-                        Step {assignment.assigned_step}
-                      </span>
-                    </div>
+  <span className="rounded-full bg-black/65 px-3 py-1 text-[11px] font-bold text-white/80 backdrop-blur">
+    Step {assignment.assigned_step}
+  </span>
+</div>
+
+{lucky && (
+  <div className="absolute bottom-4 left-4 right-4 rounded-[1.4rem] border border-yellow-300/30 bg-black/55 p-3 backdrop-blur-md">
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200/70">
+          Special Bonus Unlocked
+        </p>
+        <p className="mt-1 text-sm font-black text-yellow-100">
+          Premium jewel reward opportunity
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-yellow-300 px-3 py-2 text-center text-black">
+        <p className="text-[10px] font-black">Boost</p>
+        <p className="text-sm font-black">+{bonusPercent.toFixed(0)}%</p>
+      </div>
+    </div>
+  </div>
+)}
 
                     {images.length > 1 && (
                       <>
@@ -465,11 +495,44 @@ function MissionContent({ profile }: { profile: Profile }) {
                     )}
 
                     {lucky && (
-                      <div className="mt-3 flex items-center gap-2 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/80">
-                        <Sparkles className="h-4 w-4 text-yellow-300" />
-                        Premium jewel campaign with bonus multiplier.
-                      </div>
-                    )}
+  <div className="mt-4 rounded-[1.5rem] border border-yellow-300/30 bg-gradient-to-r from-yellow-400/15 to-amber-600/10 p-4 shadow-[inset_0_0_25px_rgba(250,204,21,0.08)]">
+    <div className="mb-2 flex items-center gap-2">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-black">
+        <Sparkles className="h-4 w-4" />
+      </div>
+
+      <div>
+        <p className="text-sm font-black text-yellow-100">
+          Lucky Bonus Campaign
+        </p>
+        <p className="text-xs text-yellow-100/55">
+          Rare premium task with enhanced reward multiplier.
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+      <div className="rounded-2xl bg-black/35 p-2">
+        <p className="text-[10px] text-white/40">Multiplier</p>
+        <p className="font-black text-yellow-300">
+          {bonusMultiplier.toFixed(1)}x
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-black/35 p-2">
+        <p className="text-[10px] text-white/40">Bonus</p>
+        <p className="font-black text-yellow-300">
+          +{bonusPercent.toFixed(0)}%
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-black/35 p-2">
+        <p className="text-[10px] text-white/40">Type</p>
+        <p className="font-black text-yellow-300">Special</p>
+      </div>
+    </div>
+  </div>
+)}
 
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       <div className="rounded-2xl bg-black/30 p-3">
@@ -493,12 +556,14 @@ function MissionContent({ profile }: { profile: Profile }) {
                         handleCompleteMission(task, assignment.assigned_step)
                       }
                       className={`mt-4 w-full rounded-2xl px-5 py-3 text-sm font-black shadow-lg ${
-                        completed
-                          ? "bg-emerald-400/10 text-emerald-300"
-                          : isCurrent
-                          ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black"
-                          : "bg-white/10 text-white/40"
-                      }`}
+  completed
+    ? "bg-emerald-400/10 text-emerald-300"
+    : isCurrent && lucky
+    ? "bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-600 text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
+    : isCurrent
+    ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black"
+    : "bg-white/10 text-white/40"
+}`}
                     >
                       {completed
                         ? "Completed"
@@ -506,8 +571,8 @@ function MissionContent({ profile }: { profile: Profile }) {
                         ? actionLoading
                           ? "Completing..."
                           : lucky
-                          ? "Start Lucky Bonus"
-                          : "Start Promotion Task"
+? "Claim Lucky Bonus Task"
+: "Start Promotion Task"
                         : "Locked"}
                     </button>
                   </div>
