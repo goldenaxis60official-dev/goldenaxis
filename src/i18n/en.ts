@@ -750,4 +750,617 @@ adminNav: {
   support: "Support",
 },
 
+adminProducts: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "Product Customization",
+  description:
+    "Manage gold and jewel campaign products, gallery photos, product value, rating stars, reviews, descriptions, and product visibility.",
+
+  stats: {
+    totalProducts: "Total Products",
+    active: "Active",
+    hidden: "Hidden",
+    storage: "Storage",
+    galleryReady: "Gallery Ready",
+  },
+
+  validation: {
+    productNameRequired: "Product name is required.",
+    priceRequired: "Product price must be greater than 0.",
+    ratingRange: "Rating must be between 0 and 5.",
+  },
+
+  messages: {
+    imageUploaded: "image uploaded.",
+    imagesUploaded: "images uploaded.",
+    productUpdated: "Product updated successfully.",
+    productCreated: "Product created successfully.",
+    productHidden: "Product hidden successfully.",
+    productActivated: "Product activated.",
+    productDeleted: "Product deleted successfully.",
+    linkedTaskBlock:
+      "This product is connected to Task Step {step}. Hide it instead, or remove the product connection from Task Library first.",
+  },
+
+  deleteModal: {
+    tag: "Confirm Delete",
+    title: "Delete Product?",
+    productName: "Product Name",
+    warning:
+      "This will permanently remove the product from the catalog. If this product is connected to a task, deletion will be blocked for safety.",
+    cancel: "Cancel",
+    deleting: "Deleting...",
+    deletePermanently: "Delete Permanently",
+  },
+
+  form: {
+    editProduct: "Edit Product",
+    createProduct: "Create Product",
+    productSettings: "Product Settings",
+    newProduct: "New Product",
+    productName: "Product Name",
+    productNamePlaceholder: "18K Royal Gold Bracelet",
+    category: "Category",
+    categoryPlaceholder: "Gold Jewelry",
+    currency: "Currency",
+    currencyPlaceholder: "USD",
+    price: "Price",
+    rating: "Rating",
+    reviews: "Reviews",
+    description: "Description",
+    descriptionPlaceholder:
+      "Premium polished jewel item prepared for campaign promotion.",
+    productGallery: "Product Gallery",
+    uploading: "Uploading...",
+    uploadImages: "Upload Images",
+    main: "Main",
+    activeProduct: "Active Product",
+    saving: "Saving...",
+    updateProduct: "Update Product",
+    createProductButton: "Create Product",
+  },
+
+  list: {
+    catalog: "Catalog",
+    title: "Product List",
+    description:
+      "Search, filter, sort, and manage products without scrolling through a long list.",
+    shown: "shown",
+    total: "total",
+    searchPlaceholder: "Search product, category, currency...",
+    allStatus: "All Status",
+    activeOnly: "Active Only",
+    hiddenOnly: "Hidden Only",
+    allCategories: "All Categories",
+    newestFirst: "Newest First",
+    nameAZ: "Name A-Z",
+    priceHigh: "Price High",
+    priceLow: "Price Low",
+    topRating: "Top Rating",
+    loading: "Loading products...",
+    noProducts: "No products yet",
+    noProductsDescription: "Create your first gold or jewel product.",
+    noMatching: "No matching products",
+    noMatchingDescription: "Try another search keyword or change the filters.",
+    photos: "photos",
+    product: "Product",
+    category: "Category",
+    price: "Price",
+    rating: "Rating",
+    status: "Status",
+    actions: "Actions",
+    active: "Active",
+    hidden: "Hidden",
+    edit: "Edit",
+    hide: "Hide",
+    activate: "Activate",
+    delete: "Delete",
+    showing: "Showing",
+    of: "of",
+    products: "products",
+    prev: "Prev",
+    next: "Next",
+    page: "Page",
+  },
+},
+
+adminTasks: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "Task Library",
+  description:
+    "Connect each mission step to an active catalog product and control campaign reward logic. Product name, price, photos, rating, and description come from Product Catalog.",
+
+  stats: {
+    totalTasks: "Total Tasks",
+    active: "Active",
+    luckyBonus: "Lucky Bonus",
+    connected: "Connected",
+  },
+
+  messages: {
+    missingProduct:
+      "This task is connected to a deleted or missing product. Select an active product from Product Catalog first.",
+    stepUpdated: "Step {step} updated successfully.",
+  },
+
+  list: {
+    missionSequence: "Mission Sequence",
+    campaignSteps: "Campaign Steps",
+    description:
+      "Search, filter, sort, and edit task logic without scrolling through all 80 steps.",
+    shown: "shown",
+    total: "total",
+    searchPlaceholder: "Search step, product, category, type...",
+    allStatus: "All Status",
+    active: "Active",
+    inactive: "Inactive",
+    allTypes: "All Types",
+    standard: "Standard",
+    luckyBonus: "Lucky Bonus",
+    allProducts: "All Products",
+    connected: "Connected",
+    unconnected: "Unconnected",
+    stepAsc: "Step 1-80",
+    stepDesc: "Step 80-1",
+    rewardHigh: "Reward High",
+    priceHigh: "Price High",
+    noMatching: "No matching tasks",
+    noMatchingDescription: "Try another search keyword or change the filters.",
+    step: "Step",
+    productTask: "Product / Task",
+    type: "Type",
+    price: "Price",
+    reward: "Reward",
+    status: "Status",
+    action: "Action",
+    catalogConnected: "Catalog connected",
+    noCatalogProduct: "No catalog product",
+    showing: "Showing",
+    of: "of",
+    tasks: "tasks",
+    prev: "Prev",
+    next: "Next",
+    page: "Page",
+    loading: "Loading tasks...",
+  },
+
+  modal: {
+    editStep: "Edit Step",
+    taskSettings: "Task Settings",
+    connectProduct: "Connect Product",
+    noProductSelected: "No product selected",
+    productNote:
+      "Product name, price, photo, rating, reviews, and description are edited only in Product Catalog.",
+    connectedProduct: "Connected Product",
+    editProductDetails: "Edit Product Details",
+    productPrice: "Product Price",
+    rating: "Rating",
+    reviews: "Reviews",
+    noProductConnected: "No product connected",
+    noProductConnectedDescription:
+      "Select a product from Product Catalog before using this task in a user campaign list.",
+    taskType: "Task Type",
+    commissionRate: "Commission Rate",
+    multiplier: "Multiplier",
+    rewardPreview: "Campaign Reward Preview",
+    taskValue: "Task Value",
+    reward: "Reward",
+    activeTask: "Active Task",
+    saving: "Saving...",
+    saveTaskLogic: "Save Task Logic",
+    preview: "Preview",
+    taskPrice: "Task Price",
+  },
+},
+
+adminUserTasks: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "User Task Assignment",
+  description:
+    "Assign a personalized campaign task list to each user. Only active task templates connected to active catalog products can be assigned.",
+
+  stats: {
+    users: "Users",
+    taskLibrary: "Task Library",
+    assigned: "Assigned",
+    activeSteps: "Active Steps",
+  },
+
+  messages: {
+    selectUserFirst: "Please select a user first.",
+    selectTaskFirst: "Please select a task first.",
+    maxTasks: "This user already has the maximum 80 assigned tasks.",
+    stepRange: "Assigned step must be between 1 and 80.",
+    stepExists:
+      "Step {step} already exists for this user. Delete that step first or choose another step.",
+    taskAssigned: "Task assigned to Step {step}.",
+    stepRemoved: "Step {step} removed.",
+    stepDeactivated: "Step {step} deactivated.",
+    stepActivated: "Step {step} activated.",
+  },
+
+  loading: {
+    assignmentCenter: "Loading assignment center...",
+    assignedTasks: "Loading assigned tasks...",
+  },
+
+  usersPanel: {
+    members: "Members",
+    selectUser: "Select User",
+    searchPlaceholder: "Search user...",
+    fallbackName: "Gold Member",
+    noEmail: "No email",
+    step: "Step",
+    noMatchingUsers: "No matching users",
+    noMatchingUsersDescription:
+      "Try another name, email, code, or user ID.",
+    showing: "Showing",
+    of: "of",
+    users: "users",
+  },
+
+  builder: {
+    title: "Assignment Builder",
+    noUserSelected: "No User Selected",
+    selectTaskTemplate: "Select Task Template",
+    noActiveTemplates: "No active connected task templates",
+    connectedProduct: "Connected Product",
+    userStep: "User Step",
+    assign: "Assign",
+    nextAvailableStep: "Next available step:",
+    reuseStepNote:
+      "Delete an existing step first if you want to reuse that step.",
+  },
+
+  assignments: {
+    titleTag: "Personalized Campaign",
+    title: "Assigned Tasks",
+    description:
+      "Search, filter, sort, activate, deactivate, or remove assigned user steps.",
+    shown: "shown",
+    total: "total",
+    searchPlaceholder: "Search step, task, product, category...",
+    allStatus: "All Status",
+    active: "Active",
+    inactive: "Inactive",
+    allTypes: "All Types",
+    standard: "Standard",
+    luckyBonus: "Lucky Bonus",
+    stepAsc: "Step 1-80",
+    stepDesc: "Step 80-1",
+    rewardHigh: "Reward High",
+    priceHigh: "Price High",
+    noTasksAssigned: "No tasks assigned",
+    noTasksAssignedDescription:
+      "This user will see “Campaign List Preparing” on the Missions page until you assign at least one active task.",
+    noMatchingAssigned: "No matching assigned tasks",
+    noMatchingAssignedDescription:
+      "Try another search keyword or change the filters.",
+    userStep: "User Step",
+    taskProduct: "Task / Product",
+    type: "Type",
+    price: "Price",
+    reward: "Reward",
+    status: "Status",
+    actions: "Actions",
+    missingTask: "Missing Task",
+    noCategory: "No category",
+    showing: "Showing",
+    of: "of",
+    assignedTasks: "assigned tasks",
+    prev: "Prev",
+    next: "Next",
+    page: "Page",
+    deleteAssignment: "Delete assignment",
+  },
+},
+
+adminUsers: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "User Manager",
+  description:
+    "Manage users, balances, invite codes, account status, and campaign progress.",
+  userTaskAssignment: "User Task Assignment",
+
+  stats: {
+    users: "Users",
+    active: "Active",
+    admins: "Admins",
+    totalBalance: "Total Balance",
+  },
+
+  messages: {
+    balanceAdjusted: "User balance adjusted successfully.",
+    nicknameSaved: "Admin nickname saved successfully.",
+    cannotDeleteSelf: "You cannot delete your own admin account.",
+    cannotDeleteAdmin: "Admin accounts cannot be deleted from this page.",
+    typeDelete: "Type DELETE to confirm user removal.",
+    userRemoved: "User removed from User Manager.",
+  },
+
+  list: {
+    members: "Members",
+    registeredUsers: "Registered Users",
+    description:
+      "Search, filter, sort, manage balances, labels, and campaign assignment.",
+    shown: "shown",
+    total: "total",
+    searchPlaceholder: "Search name, email, nickname, invite code, ID...",
+    allRoles: "All Roles",
+    users: "Users",
+    admins: "Admins",
+    allStatus: "All Status",
+    newestFirst: "Newest First",
+    nameAZ: "Name A-Z",
+    balanceHigh: "Balance High",
+    todayHigh: "Today High",
+    stepHigh: "Step High",
+    loading: "Loading users...",
+    noUsersFound: "No users found",
+    noUsersFoundDescription:
+      "Try another search keyword or change the filters.",
+    user: "User",
+    adminNickname: "Admin Nickname",
+    role: "Role",
+    balance: "Balance",
+    today: "Today",
+    step: "Step",
+    inviteCode: "Invite Code",
+    status: "Status",
+    actions: "Actions",
+    fallbackName: "Gold Member",
+    noEmail: "No email",
+    noNickname: "No nickname",
+    edit: "Edit",
+    manageUserTasks: "Manage user tasks",
+    adjustBalance: "Adjust balance",
+    removeUser: "Remove user",
+    showing: "Showing",
+    of: "of",
+    prev: "Prev",
+    next: "Next",
+    page: "Page",
+  },
+
+  adjustModal: {
+    tag: "Admin Action",
+    title: "Adjust Balance",
+    user: "User",
+    balance: "Balance",
+    step: "Step",
+    amount: "Adjustment Amount",
+    amountHelp:
+      "Use positive amount to add balance. Use negative amount to deduct balance.",
+    note: "Admin Note",
+    notePlaceholder: "Example: Manual test credit",
+    saving: "Saving...",
+    saveAdjustment: "Save Adjustment",
+    defaultNote: "Admin balance adjustment",
+  },
+
+  deleteModal: {
+    tag: "Remove Member",
+    title: "Delete User?",
+    user: "User",
+    email: "Email",
+    warningStart:
+      "This will remove the user from User Manager by marking the profile as deleted. Type",
+    warningEnd: "to confirm.",
+    confirmDelete: "Confirm Delete",
+    typeDeletePlaceholder: "Type DELETE",
+    removing: "Removing...",
+    removeUser: "Remove User",
+  },
+
+  nicknameModal: {
+    tag: "Private Admin Label",
+    title: "Edit Admin Nickname",
+    user: "User",
+    email: "Email",
+    adminNickname: "Admin Nickname",
+    placeholder: "Example: John's friend / VIP user / Telegram A",
+    note:
+      "This nickname is private for admin control only. Normal users cannot see this label.",
+    saving: "Saving...",
+    saveNickname: "Save Nickname",
+  },
+},
+
+adminWalletRequests: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "Wallet Requests",
+  description:
+    "Review user deposit credit and withdrawal requests. Approving requests updates user wallet balance through secure RPC actions.",
+
+  stats: {
+    showing: "Showing",
+    pending: "Pending",
+    deposits: "Deposits",
+    totalAmount: "Total Amount",
+  },
+
+  messages: {
+    approved: "Request approved successfully.",
+    rejected: "Request rejected successfully.",
+  },
+
+  filters: {
+    title: "Filter Requests",
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+    all: "All",
+    searchPlaceholder: "Search user, email, method, note, request ID...",
+    allTypes: "All Types",
+    deposits: "Deposits",
+    withdrawals: "Withdrawals",
+    newestFirst: "Newest First",
+    oldestFirst: "Oldest First",
+    amountHigh: "Amount High",
+    amountLow: "Amount Low",
+  },
+
+  list: {
+    tag: "Request Ledger",
+    title: "Wallet Review Queue",
+    description:
+      "Review proof, user details, amount, balance, and action notes in a cleaner card queue.",
+    shown: "shown",
+    total: "total",
+    loading: "Loading wallet requests...",
+    noRequests: "No requests found",
+    noRequestsDescription:
+      "Wallet requests will appear here when users submit them.",
+    depositCredit: "Deposit Credit",
+    withdrawal: "Withdrawal",
+    request: "Request",
+    manual: "Manual",
+    user: "User",
+    unknownUser: "Unknown User",
+    noEmail: "No email",
+    balance: "Balance",
+    step: "Step",
+    userNoteProof: "User Note / Proof",
+    noUserNote: "No user note",
+    depositProofAlt: "Deposit proof",
+    openDepositProof: "Open deposit proof",
+    reviewAction: "Review Action",
+    optionalReviewNote: "Optional review note...",
+    reject: "Reject",
+    approve: "Approve",
+    reviewedNote: "Reviewed Note",
+    showing: "Showing",
+    of: "of",
+    requests: "requests",
+    prev: "Prev",
+    next: "Next",
+    page: "Page",
+  },
+
+  status: {
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+  },
+},
+
+adminWalletAddresses: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "Wallet Addresses",
+  description:
+    "Set the deposit wallet addresses shown inside the user support wallet assistant.",
+
+  messages: {
+    qrUploaded:
+      "{asset} {network} QR image uploaded. Click Save Address to keep it.",
+    addressSaved: "{asset} {network} wallet address saved.",
+  },
+
+  section: {
+    tag: "Deposit Settings",
+    title: "USDT / USDC Network Address",
+    loading: "Loading wallet settings...",
+  },
+
+  form: {
+    addressTitle: "{network} Address",
+    active: "Active",
+    depositAddress: "Deposit Address",
+    depositAddressPlaceholder:
+      "Enter {asset} {network} deposit address",
+    qrImage: "QR Image",
+    qrImageUploaded: "QR image uploaded",
+    removeQr: "Remove QR",
+    noQrImage: "No QR image uploaded",
+    note: "Note / Instruction",
+    notePlaceholder: "Example: Only send using this network.",
+    saving: "Saving...",
+    saveAddress: "Save Address",
+  },
+},
+
+adminSupport: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+
+  pageTag: "Admin Control",
+  title: "Support Chat Center",
+  description: "Chat with each user directly and manage ticket status.",
+
+  stats: {
+    showing: "Showing",
+    open: "Open",
+    reviewing: "Reviewing",
+    closed: "Closed",
+  },
+
+  messages: {
+    writeReplyFirst: "Please write a reply first.",
+    replySent: "Reply sent.",
+    statusUpdated: "Ticket status updated.",
+  },
+
+  filters: {
+    supportQueue: "Support Queue",
+    userChats: "User Chats",
+    open: "Open",
+    reviewing: "Reviewing",
+    closed: "Closed",
+    all: "All",
+    searchPlaceholder: "Search user, email, ticket...",
+    newest: "Newest",
+    oldest: "Oldest",
+    pageSize: "{count} / page",
+  },
+
+  list: {
+    loadingChats: "Loading chats...",
+    noChatsFound: "No chats found",
+    noChatsFoundDescription: "User support chats will appear here.",
+    unknownUser: "Unknown User",
+    showing: "Showing",
+    of: "of",
+    chats: "chats",
+    selectUserChat: "Select a user chat",
+    selectUserChatDescription:
+      "Choose a ticket from the left side to start replying.",
+  },
+
+  chat: {
+    noEmail: "No email",
+    loadingConversation: "Loading conversation...",
+    fallbackNotice:
+      "Old ticket message shown as fallback. New replies will be saved as real chat messages.",
+    replyPlaceholder: "Type admin reply...",
+    sending: "Sending...",
+    send: "Send",
+    adminSupport: "Admin Support",
+    user: "User",
+  },
+
+  status: {
+    open: "Open",
+    reviewing: "Reviewing",
+    closed: "Closed",
+  },
+},
+
 } as const;

@@ -27,6 +27,8 @@ import {
   CheckCircle,
   Gem,
   Languages,
+  Send,
+  MessageCircle,
 } from "lucide-react";
 
 type TeamSummary = {
@@ -236,6 +238,10 @@ setSavingLanguage(false);
   }, 1500);
 }
 
+function openTelegramSupport() {
+  window.open("https://t.me/goldenaxis60", "_blank", "noopener,noreferrer");
+}
+
   if (profile.role === "admin") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
@@ -345,7 +351,48 @@ setSavingLanguage(false);
               {t.profile.teamCodeCopied}
             </p>
           )}
-        </LuxuryCard>
+               </LuxuryCard>
+
+        <button
+          type="button"
+          onClick={openTelegramSupport}
+          className="group mb-6 w-full overflow-hidden rounded-[1.7rem] border border-sky-400/25 bg-gradient-to-br from-sky-500/20 via-cyan-400/10 to-yellow-400/10 p-[1px] text-left shadow-[0_18px_45px_rgba(0,0,0,0.35),0_0_35px_rgba(56,189,248,0.12)] active:scale-[0.985]"
+        >
+          <div className="relative overflow-hidden rounded-[1.65rem] bg-[#071018]/95 px-5 py-4">
+            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-sky-400/20 blur-2xl" />
+            <div className="absolute -bottom-10 left-8 h-24 w-24 rounded-full bg-yellow-300/10 blur-2xl" />
+
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-cyan-600 text-white shadow-[0_0_30px_rgba(56,189,248,0.35)]">
+                <Send className="h-6 w-6" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-200">
+                    24/7 Online
+                  </span>
+                  <span className="text-xs font-bold text-sky-200">
+                    Telegram
+                  </span>
+                </div>
+
+                <h3 className="text-base font-black text-white">
+                  Chat with official support
+                </h3>
+
+                <p className="mt-1 text-xs leading-relaxed text-white/55">
+                  Need faster help? Contact our official Telegram support at{" "}
+                  <span className="font-bold text-sky-200">@goldenaxis60</span>.
+                </p>
+              </div>
+
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition group-hover:border-sky-300/40 group-hover:text-sky-200">
+                <MessageCircle className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        </button>
 
 <div className="mb-6 flex items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-2">
   <div className="flex items-center gap-2 px-3 text-xs font-bold text-white/55">

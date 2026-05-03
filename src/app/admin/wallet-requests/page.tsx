@@ -3,6 +3,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -43,6 +45,8 @@ type AdminWalletRequest = {
   } | null;
 };
 
+type AdminWalletRequestsText = typeof en.adminWalletRequests;
+
 export default function AdminWalletRequestsPage() {
   return (
     <RequireAuth>
@@ -52,6 +56,13 @@ export default function AdminWalletRequestsPage() {
 }
 
 function AdminWalletRequestsContent({ profile }: { profile: Profile }) {
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+  const t: AdminWalletRequestsText =
+    currentLanguage === "zh"
+      ? (zh.adminWalletRequests as unknown as AdminWalletRequestsText)
+      : en.adminWalletRequests;
+
   const [records, setRecords] = useState<AdminWalletRequest[]>([]);
 const [filter, setFilter] = useState<RequestFilter>("pending");
 const [typeFilter, setTypeFilter] = useState<"all" | "deposit_credit" | "withdrawal">("all");
@@ -68,6 +79,9 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [errorText, setErrorText] = useState("");
 
   const isAdmin = profile.role === "admin";
+  function getRequestFilterLabel(value: RequestFilter) {
+  return t.filters[value];
+}
 
   async function loadRecords() {
   setLoading(true);
@@ -122,7 +136,7 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
       return;
     }
 
-    setSuccessText("Request approved successfully.");
+    setSuccessText(t.messages.approved);
     setActionId(null);
     loadRecords();
   }
@@ -143,7 +157,7 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
       return;
     }
 
-    setSuccessText("Request rejected successfully.");
+    setSuccessText(t.messages.rejected);
     setActionId(null);
     loadRecords();
   }
@@ -211,10 +225,10 @@ useEffect(() => {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -231,18 +245,17 @@ const totalAmount = filteredRecords.reduce(
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav />
+        <AdminNav language={currentLanguage} />
 
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>
             <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Wallet Requests</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Review user deposit credit and withdrawal requests. Approving
-              requests updates user wallet balance through secure RPC actions.
-            </p>
+  {t.pageTag}
+</p>
+<h1 className="mt-1 text-3xl font-black">{t.title}</h1>
+<p className="mt-2 max-w-2xl text-sm text-white/50">
+  {t.description}
+</p>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4">
@@ -251,17 +264,19 @@ const totalAmount = filteredRecords.reduce(
         </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Showing" value={String(records.length)} />
-          <StatCard label="Pending" value={String(pendingCount)} />
-          <StatCard label="Deposits" value={String(depositCount)} />
-          <StatCard label="Total Amount" value={`$${totalAmount.toFixed(2)}`} />
+          <StatCard label={t.stats.showing} value={String(records.length)} />
+<StatCard label={t.stats.pending} value={String(pendingCount)} />
+<StatCard label={t.stats.deposits} value={String(depositCount)} />
+<StatCard label={t.stats.totalAmount} value={`$${totalAmount.toFixed(2)}`} />
         </div>
 
         <div className="mb-6 rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
   <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
     <div>
-      <p className="text-sm text-yellow-200/80">Filter Requests</p>
-      <h2 className="text-xl font-black capitalize">{filter}</h2>
+      <p className="text-sm text-yellow-200/80">{t.filters.title}</p>
+<h2 className="text-xl font-black capitalize">
+  {getRequestFilterLabel(filter)}
+</h2>
     </div>
 
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -276,7 +291,7 @@ const totalAmount = filteredRecords.reduce(
                 : "border-white/10 bg-black/35 text-white/60 hover:bg-white/[0.08]"
             }`}
           >
-            {item}
+            {getRequestFilterLabel(item)}
           </button>
         )
       )}
@@ -289,7 +304,7 @@ const totalAmount = filteredRecords.reduce(
       <input
         value={searchText}
         onChange={(event) => setSearchText(event.target.value)}
-        placeholder="Search user, email, method, note, request ID..."
+        placeholder={t.filters.searchPlaceholder}
         className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
       />
     </div>
@@ -301,9 +316,9 @@ const totalAmount = filteredRecords.reduce(
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="all">All Types</option>
-      <option className="bg-black" value="deposit_credit">Deposits</option>
-      <option className="bg-black" value="withdrawal">Withdrawals</option>
+      <option className="bg-black" value="all">{t.filters.allTypes}</option>
+<option className="bg-black" value="deposit_credit">{t.filters.deposits}</option>
+<option className="bg-black" value="withdrawal">{t.filters.withdrawals}</option>
     </select>
 
     <select
@@ -313,10 +328,10 @@ const totalAmount = filteredRecords.reduce(
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="newest">Newest First</option>
-      <option className="bg-black" value="oldest">Oldest First</option>
-      <option className="bg-black" value="amount_high">Amount High</option>
-      <option className="bg-black" value="amount_low">Amount Low</option>
+      <option className="bg-black" value="newest">{t.filters.newestFirst}</option>
+<option className="bg-black" value="oldest">{t.filters.oldestFirst}</option>
+<option className="bg-black" value="amount_high">{t.filters.amountHigh}</option>
+<option className="bg-black" value="amount_low">{t.filters.amountLow}</option>
     </select>
 
     <select
@@ -349,31 +364,31 @@ const totalAmount = filteredRecords.reduce(
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
   <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
     <div>
-      <p className="text-sm text-yellow-200/80">Request Ledger</p>
-      <h2 className="text-2xl font-black">Wallet Review Queue</h2>
-      <p className="mt-1 text-xs text-white/40">
-        Review proof, user details, amount, balance, and action notes in a cleaner card queue.
-      </p>
+      <p className="text-sm text-yellow-200/80">{t.list.tag}</p>
+<h2 className="text-2xl font-black">{t.list.title}</h2>
+<p className="mt-1 text-xs text-white/40">
+  {t.list.description}
+</p>
     </div>
 
     <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
-      {filteredRecords.length} shown / {records.length} total
+      {filteredRecords.length} {t.list.shown} / {records.length} {t.list.total}
     </div>
   </div>
 
   {loading && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-      Loading wallet requests...
+      {t.list.loading}
     </div>
   )}
 
   {!loading && filteredRecords.length === 0 && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
       <Clock className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-      <p className="font-black">No requests found</p>
-      <p className="mt-2 text-sm text-white/50">
-        Wallet requests will appear here when users submit them.
-      </p>
+      <p className="font-black">{t.list.noRequests}</p>
+<p className="mt-2 text-sm text-white/50">
+  {t.list.noRequestsDescription}
+</p>
     </div>
   )}
 
@@ -408,9 +423,9 @@ const totalAmount = filteredRecords.reduce(
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-black">
-                        {isDeposit ? "Deposit Credit" : "Withdrawal"} Request
+                        {isDeposit ? t.list.depositCredit : t.list.withdrawal} {t.list.request}
                       </p>
-                      <StatusBadge status={item.status} />
+                      <StatusBadge status={item.status} label={t.status[item.status]} />
                     </div>
 
                     <p className="mt-1 text-xs text-white/45">
@@ -422,32 +437,32 @@ const totalAmount = filteredRecords.reduce(
                     </p>
 
                     <p className="mt-1 text-sm text-white/55">
-                      {item.method || "Manual"}
+                      {item.method || t.list.manual}
                     </p>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-white/35">
-                    User
+                    {t.list.user}
                   </p>
                   <p className="mt-2 font-black">
-                    {item.profiles?.display_name || "Unknown User"}
+                    {item.profiles?.display_name || t.list.unknownUser}
                   </p>
                   <p className="mt-1 truncate text-xs text-white/45">
-                    {item.profiles?.email || "No email"}
+                    {item.profiles?.email || t.list.noEmail}
                   </p>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-white/35">Balance</p>
+                      <p className="text-xs text-white/35">{t.list.balance}</p>
                       <p className="mt-1 font-black text-white">
                         ${Number(item.profiles?.balance || 0).toFixed(2)}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-xs text-white/35">Step</p>
+                      <p className="text-xs text-white/35">{t.list.step}</p>
                       <p className="mt-1 font-black text-white">
                         {item.profiles?.current_step || 1}
                       </p>
@@ -457,7 +472,7 @@ const totalAmount = filteredRecords.reduce(
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-white/35">
-                    User Note / Proof
+                    {t.list.userNoteProof}
                   </p>
 
                   {item.note ? (
@@ -465,7 +480,7 @@ const totalAmount = filteredRecords.reduce(
                       {item.note}
                     </p>
                   ) : (
-                    <p className="mt-2 text-xs text-white/35">No user note</p>
+                    <p className="mt-2 text-xs text-white/35">{t.list.noUserNote}</p>
                   )}
 
                   {item.proof_image_url && (
@@ -477,12 +492,12 @@ const totalAmount = filteredRecords.reduce(
                     >
                       <img
                         src={item.proof_image_url}
-                        alt="Deposit proof"
+                        alt={t.list.depositProofAlt}
                         className="h-32 w-full object-cover"
                       />
 
                       <div className="border-t border-white/10 px-3 py-2 text-xs font-bold text-yellow-200">
-                        Open deposit proof
+                        {t.list.openDepositProof}
                       </div>
                     </a>
                   )}
@@ -490,7 +505,7 @@ const totalAmount = filteredRecords.reduce(
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-white/35">
-                    Review Action
+                    {t.list.reviewAction}
                   </p>
 
                   {isPending ? (
@@ -503,7 +518,7 @@ const totalAmount = filteredRecords.reduce(
                             [item.id]: event.target.value,
                           })
                         }
-                        placeholder="Optional review note..."
+                        placeholder={t.list.optionalReviewNote}
                         className="mt-3 min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                       />
 
@@ -514,7 +529,7 @@ const totalAmount = filteredRecords.reduce(
                           className="flex items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-3 text-xs font-black text-red-300 hover:bg-red-500/15 disabled:opacity-50"
                         >
                           <XCircle className="h-4 w-4" />
-                          Reject
+                          {t.list.reject}
                         </button>
 
                         <button
@@ -523,13 +538,13 @@ const totalAmount = filteredRecords.reduce(
                           className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-3 py-3 text-xs font-black text-black disabled:opacity-50"
                         >
                           <CheckCircle className="h-4 w-4" />
-                          Approve
+                          {t.list.approve}
                         </button>
                       </div>
                     </>
                   ) : (
                     <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <p className="text-xs text-white/35">Reviewed Note</p>
+                      <p className="text-xs text-white/35">{t.list.reviewedNote}</p>
                       <p className="mt-2 text-sm leading-5 text-white/60">
                         {item.admin_note || "-"}
                       </p>
@@ -544,16 +559,17 @@ const totalAmount = filteredRecords.reduce(
 
       <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
         <p>
-          Showing{" "}
-          <span className="font-black text-white">{firstResult}</span>
-          {" - "}
-          <span className="font-black text-white">{lastResult}</span>
-          {" of "}
-          <span className="font-black text-yellow-300">
-            {filteredRecords.length}
-          </span>{" "}
-          requests
-        </p>
+  {t.list.showing}{" "}
+  <span className="font-black text-white">{firstResult}</span>
+  {" - "}
+  <span className="font-black text-white">{lastResult}</span>
+  {" "}
+  {t.list.of}{" "}
+  <span className="font-black text-yellow-300">
+    {filteredRecords.length}
+  </span>{" "}
+  {t.list.requests}
+</p>
 
         <div className="flex items-center gap-2">
           <button
@@ -563,11 +579,11 @@ const totalAmount = filteredRecords.reduce(
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
-            Prev
+            {t.list.prev}
           </button>
 
           <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-            Page {currentPage} / {totalPages}
+            {t.list.page} {currentPage} / {totalPages}
           </div>
 
           <button
@@ -578,7 +594,7 @@ const totalAmount = filteredRecords.reduce(
             }
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next
+            {t.list.next}
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -602,7 +618,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, label }: { status: string; label: string }) {
   const styles =
     status === "approved"
       ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
@@ -612,7 +628,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span className={`rounded-full border px-3 py-1 text-xs font-black ${styles}`}>
-      {status}
+      {label}
     </span>
   );
 }

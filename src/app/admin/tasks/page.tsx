@@ -4,6 +4,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -24,6 +26,8 @@ import {
   X,
 } from "lucide-react";
 
+type AdminTasksText = typeof en.adminTasks;
+
 export default function AdminTasksPage() {
   return (
     <RequireAuth>
@@ -34,6 +38,12 @@ export default function AdminTasksPage() {
 
 function AdminTasksContent({ profile }: { profile: Profile }) {
   const isAdmin = profile.role === "admin";
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+  const t: AdminTasksText =
+    currentLanguage === "zh"
+      ? (zh.adminTasks as unknown as AdminTasksText)
+      : en.adminTasks;
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -245,9 +255,7 @@ useEffect(() => {
     : null;
 
   if (editingTask.product_id && !syncedProduct) {
-    setErrorText(
-      "This task is connected to a deleted or missing product. Select an active product from Product Catalog first."
-    );
+    setErrorText(t.messages.missingProduct);
     setSaving(false);
     return;
   }
@@ -281,7 +289,9 @@ useEffect(() => {
     return;
   }
 
-  setSuccessText(`Step ${editingTask.step_number} updated successfully.`);
+  setSuccessText(
+  t.messages.stepUpdated.replace("{step}", String(editingTask.step_number))
+);
   setEditingTask(null);
   setSaving(false);
   loadData();
@@ -292,10 +302,10 @@ useEffect(() => {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -304,29 +314,27 @@ useEffect(() => {
   return (
   <main className="min-h-screen bg-[#050505] text-white">
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <AdminNav />
+      <AdminNav language={currentLanguage} />
 
       <div className="mb-8 max-w-3xl">
   <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">
-    Admin Control
-  </p>
+  {t.pageTag}
+</p>
 
-  <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
-    Task Library
-  </h1>
+<h1 className="mt-2 text-4xl font-black tracking-tight text-white">
+  {t.title}
+</h1>
 
-  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
-    Connect each mission step to an active catalog product and control campaign
-    reward logic. Product name, price, photos, rating, and description come from
-    Product Catalog.
-  </p>
+<p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
+  {t.description}
+</p>
 </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Tasks" value={String(tasks.length)} />
-          <StatCard label="Active" value={String(activeTasks)} />
-          <StatCard label="Lucky Bonus" value={String(luckyTasks)} />
-          <StatCard label="Connected" value={`${connectedTasks}/${tasks.length}`} />
+          <StatCard label={t.stats.totalTasks} value={String(tasks.length)} />
+<StatCard label={t.stats.active} value={String(activeTasks)} />
+<StatCard label={t.stats.luckyBonus} value={String(luckyTasks)} />
+<StatCard label={t.stats.connected} value={`${connectedTasks}/${tasks.length}`} />
         </div>
 
         {successText && (
@@ -345,7 +353,7 @@ useEffect(() => {
 
         {loading && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-            Loading tasks...
+            {t.list.loading}
           </div>
         )}
 
@@ -353,15 +361,15 @@ useEffect(() => {
   <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
     <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
       <div>
-        <p className="text-sm text-yellow-200/80">Mission Sequence</p>
-        <h2 className="text-2xl font-black">Campaign Steps</h2>
-        <p className="mt-1 text-xs text-white/40">
-          Search, filter, sort, and edit task logic without scrolling through all 80 steps.
-        </p>
+        <p className="text-sm text-yellow-200/80">{t.list.missionSequence}</p>
+<h2 className="text-2xl font-black">{t.list.campaignSteps}</h2>
+<p className="mt-1 text-xs text-white/40">
+  {t.list.description}
+</p>
       </div>
 
       <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
-        {filteredTasks.length} shown / {tasks.length} total
+        {filteredTasks.length} {t.list.shown} / {tasks.length} {t.list.total}
       </div>
     </div>
 
@@ -371,7 +379,7 @@ useEffect(() => {
         <input
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search step, product, category, type..."
+          placeholder={t.list.searchPlaceholder}
           className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
         />
       </div>
@@ -383,9 +391,9 @@ useEffect(() => {
         }
         className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
       >
-        <option className="bg-black" value="all">All Status</option>
-        <option className="bg-black" value="active">Active</option>
-        <option className="bg-black" value="inactive">Inactive</option>
+        <option className="bg-black" value="all">{t.list.allStatus}</option>
+<option className="bg-black" value="active">{t.list.active}</option>
+<option className="bg-black" value="inactive">{t.list.inactive}</option>
       </select>
 
       <select
@@ -395,9 +403,9 @@ useEffect(() => {
         }
         className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
       >
-        <option className="bg-black" value="all">All Types</option>
-        <option className="bg-black" value="standard">Standard</option>
-        <option className="bg-black" value="lucky_bonus">Lucky Bonus</option>
+        <option className="bg-black" value="all">{t.list.allTypes}</option>
+<option className="bg-black" value="standard">{t.list.standard}</option>
+<option className="bg-black" value="lucky_bonus">{t.list.luckyBonus}</option>
       </select>
 
       <select
@@ -407,9 +415,9 @@ useEffect(() => {
         }
         className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
       >
-        <option className="bg-black" value="all">All Products</option>
-        <option className="bg-black" value="connected">Connected</option>
-        <option className="bg-black" value="unconnected">Unconnected</option>
+        <option className="bg-black" value="all">{t.list.allProducts}</option>
+<option className="bg-black" value="connected">{t.list.connected}</option>
+<option className="bg-black" value="unconnected">{t.list.unconnected}</option>
       </select>
 
       <select
@@ -419,10 +427,10 @@ useEffect(() => {
         }
         className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
       >
-        <option className="bg-black" value="step_asc">Step 1-80</option>
-        <option className="bg-black" value="step_desc">Step 80-1</option>
-        <option className="bg-black" value="reward_high">Reward High</option>
-        <option className="bg-black" value="price_high">Price High</option>
+        <option className="bg-black" value="step_asc">{t.list.stepAsc}</option>
+<option className="bg-black" value="step_desc">{t.list.stepDesc}</option>
+<option className="bg-black" value="reward_high">{t.list.rewardHigh}</option>
+<option className="bg-black" value="price_high">{t.list.priceHigh}</option>
       </select>
 
       <select
@@ -440,10 +448,10 @@ useEffect(() => {
     {filteredTasks.length === 0 && (
       <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
         <Search className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-        <p className="font-black">No matching tasks</p>
-        <p className="mt-2 text-sm text-white/50">
-          Try another search keyword or change the filters.
-        </p>
+        <p className="font-black">{t.list.noMatching}</p>
+<p className="mt-2 text-sm text-white/50">
+  {t.list.noMatchingDescription}
+</p>
       </div>
     )}
 
@@ -453,13 +461,13 @@ useEffect(() => {
           <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
               <tr>
-                <th className="px-4 py-3">Step</th>
-                <th className="px-4 py-3">Product / Task</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Price</th>
-                <th className="px-4 py-3">Reward</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                <th className="px-4 py-3">{t.list.step}</th>
+<th className="px-4 py-3">{t.list.productTask}</th>
+<th className="px-4 py-3">{t.list.type}</th>
+<th className="px-4 py-3">{t.list.price}</th>
+<th className="px-4 py-3">{t.list.reward}</th>
+<th className="px-4 py-3">{t.list.status}</th>
+<th className="px-4 py-3 text-right">{t.list.action}</th>
               </tr>
             </thead>
 
@@ -503,8 +511,8 @@ useEffect(() => {
 
                           <p className="mt-1 text-xs text-white/45">
                             {product
-                              ? `${product.category} • Catalog connected`
-                              : `${task.category} • No catalog product`}
+  ? `${product.category} • ${t.list.catalogConnected}`
+  : `${task.category} • ${t.list.noCatalogProduct}`}
                           </p>
 
                           {product && (
@@ -528,7 +536,7 @@ useEffect(() => {
                             : "bg-white/10 text-white/70"
                         }`}
                       >
-                        {lucky ? "Lucky Bonus" : "Standard"}
+                        {lucky ? t.list.luckyBonus : t.list.standard}
                       </span>
                     </td>
 
@@ -548,7 +556,7 @@ useEffect(() => {
                             : "bg-red-500/15 text-red-300"
                         }`}
                       >
-                        {task.is_active ? "Active" : "Inactive"}
+                        {task.is_active ? t.list.active : t.list.inactive}
                       </span>
                     </td>
 
@@ -572,16 +580,17 @@ useEffect(() => {
 
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
           <p>
-            Showing{" "}
-            <span className="font-black text-white">{firstResult}</span>
-            {" - "}
-            <span className="font-black text-white">{lastResult}</span>
-            {" of "}
-            <span className="font-black text-yellow-300">
-              {filteredTasks.length}
-            </span>{" "}
-            tasks
-          </p>
+  {t.list.showing}{" "}
+  <span className="font-black text-white">{firstResult}</span>
+  {" - "}
+  <span className="font-black text-white">{lastResult}</span>
+  {" "}
+  {t.list.of}{" "}
+  <span className="font-black text-yellow-300">
+    {filteredTasks.length}
+  </span>{" "}
+  {t.list.tasks}
+</p>
 
           <div className="flex items-center gap-2">
             <button
@@ -591,11 +600,11 @@ useEffect(() => {
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
-              Prev
+              {t.list.prev}
             </button>
 
             <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-              Page {currentPage} / {totalPages}
+              {t.list.page} {currentPage} / {totalPages}
             </div>
 
             <button
@@ -606,7 +615,7 @@ useEffect(() => {
               }
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Next
+              {t.list.next}
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
@@ -623,9 +632,9 @@ useEffect(() => {
                 <div className="mb-6 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-yellow-200/80">
-                      Edit Step {editingTask.step_number}
-                    </p>
-                    <h2 className="text-2xl font-black">Task Settings</h2>
+  {t.modal.editStep} {editingTask.step_number}
+</p>
+<h2 className="text-2xl font-black">{t.modal.taskSettings}</h2>
                   </div>
 
                   <button
@@ -639,15 +648,15 @@ useEffect(() => {
                 <div className="space-y-5">
   <div>
     <p className="mb-2 text-sm font-bold text-white/80">
-      Connect Product
-    </p>
+  {t.modal.connectProduct}
+</p>
 
     <select
       value={editingTask.product_id || ""}
       onChange={(event) => handleProductSelect(event.target.value)}
       className="w-full rounded-2xl border border-yellow-400/20 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
     >
-      <option value="">No product selected</option>
+      <option value="">{t.modal.noProductSelected}</option>
 
       {products.map((product) => (
         <option key={product.id} value={product.id}>
@@ -658,16 +667,15 @@ useEffect(() => {
     </select>
 
     <p className="mt-2 text-xs text-white/40">
-      Product name, price, photo, rating, reviews, and description are edited
-      only in Product Catalog.
-    </p>
+  {t.modal.productNote}
+</p>
   </div>
 
   {selectedEditingProduct ? (
     <div className="rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-4">
       <div className="mb-3 flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs text-yellow-100/60">Connected Product</p>
+          <p className="text-xs text-yellow-100/60">{t.modal.connectedProduct}</p>
           <h3 className="mt-1 text-lg font-black">
             {selectedEditingProduct.name}
           </h3>
@@ -680,13 +688,13 @@ useEffect(() => {
           href="/admin/products"
           className="rounded-xl border border-yellow-400/30 bg-black/30 px-3 py-2 text-xs font-black text-yellow-300 hover:bg-yellow-400/10"
         >
-          Edit Product Details
+          {t.modal.editProductDetails}
         </Link>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl bg-black/30 p-3">
-          <p className="text-xs text-white/45">Product Price</p>
+          <p className="text-xs text-white/45">{t.modal.productPrice}</p>
           <p className="mt-1 font-black text-yellow-300">
             {selectedEditingProduct.currency}{" "}
             {Number(selectedEditingProduct.price).toFixed(2)}
@@ -694,14 +702,14 @@ useEffect(() => {
         </div>
 
         <div className="rounded-2xl bg-black/30 p-3">
-          <p className="text-xs text-white/45">Rating</p>
+          <p className="text-xs text-white/45">{t.modal.rating}</p>
           <p className="mt-1 font-black text-yellow-300">
             {Number(selectedEditingProduct.rating).toFixed(1)}
           </p>
         </div>
 
         <div className="rounded-2xl bg-black/30 p-3">
-          <p className="text-xs text-white/45">Reviews</p>
+          <p className="text-xs text-white/45">{t.modal.reviews}</p>
           <p className="mt-1 font-black text-yellow-300">
             {selectedEditingProduct.reviews_count}
           </p>
@@ -710,17 +718,16 @@ useEffect(() => {
     </div>
   ) : (
     <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
-      <p className="font-black text-white/80">No product connected</p>
-      <p className="mt-2 text-sm text-white/45">
-        Select a product from Product Catalog before using this task in a user
-        campaign list.
-      </p>
+      <p className="font-black text-white/80">{t.modal.noProductConnected}</p>
+<p className="mt-2 text-sm text-white/45">
+  {t.modal.noProductConnectedDescription}
+</p>
     </div>
   )}
 
   <div className="grid grid-cols-3 gap-4">
     <div>
-      <p className="mb-2 text-sm font-bold text-white/80">Task Type</p>
+      <p className="mb-2 text-sm font-bold text-white/80">{t.modal.taskType}</p>
       <select
         value={editingTask.task_type}
         onChange={(event) =>
@@ -731,13 +738,13 @@ useEffect(() => {
         }
         className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
       >
-        <option value="standard">standard</option>
-        <option value="lucky_bonus">lucky_bonus</option>
+        <option value="standard">{t.list.standard}</option>
+<option value="lucky_bonus">{t.list.luckyBonus}</option>
       </select>
     </div>
 
     <NumberInput
-      label="Commission Rate"
+      label={t.modal.commissionRate}
       value={Number(editingTask.commission_rate)}
       step="0.0001"
       onChange={(value) =>
@@ -749,7 +756,7 @@ useEffect(() => {
     />
 
     <NumberInput
-      label="Multiplier"
+      label={t.modal.multiplier}
       value={Number(editingTask.multiplier)}
       step="0.1"
       onChange={(value) =>
@@ -759,25 +766,25 @@ useEffect(() => {
   </div>
 
   <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
-    <p className="text-sm font-black text-white/80">Campaign Reward Preview</p>
+    <p className="text-sm font-black text-white/80">{t.modal.rewardPreview}</p>
 
     <div className="mt-3 grid grid-cols-3 gap-3">
       <div className="rounded-2xl bg-white/[0.05] p-3">
-        <p className="text-xs text-white/45">Task Value</p>
+        <p className="text-xs text-white/45">{t.modal.taskValue}</p>
         <p className="mt-1 font-black text-white">
           ${Number(selectedEditingProduct?.price || editingTask.price).toFixed(2)}
         </p>
       </div>
 
       <div className="rounded-2xl bg-white/[0.05] p-3">
-        <p className="text-xs text-white/45">Multiplier</p>
+        <p className="text-xs text-white/45">{t.modal.multiplier}</p>
         <p className="mt-1 font-black text-blue-300">
           {Number(editingTask.multiplier).toFixed(1)}x
         </p>
       </div>
 
       <div className="rounded-2xl bg-white/[0.05] p-3">
-        <p className="text-xs text-white/45">Reward</p>
+        <p className="text-xs text-white/45">{t.modal.reward}</p>
         <p className="mt-1 font-black text-yellow-300">
           $
           {(
@@ -801,7 +808,7 @@ useEffect(() => {
         })
       }
     />
-    <span className="font-bold text-white/80">Active Task</span>
+    <span className="font-bold text-white/80">{t.modal.activeTask}</span>
   </label>
 
   <button
@@ -810,14 +817,14 @@ useEffect(() => {
     className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
   >
     <Save className="h-5 w-5" />
-    {saving ? "Saving..." : "Save Task Logic"}
+    {saving ? t.modal.saving : t.modal.saveTaskLogic}
   </button>
 </div>
               </div>
 
               <aside className="border-l border-white/10 bg-white/[0.035] p-6">
-                <p className="text-sm text-yellow-200/80">Preview</p>
-                <h3 className="mt-1 text-xl font-black">Connected Product</h3>
+                <p className="text-sm text-yellow-200/80">{t.modal.preview}</p>
+<h3 className="mt-1 text-xl font-black">{t.modal.connectedProduct}</h3>
 
                 <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
                   {selectedEditingProduct?.main_image ||
@@ -853,13 +860,13 @@ useEffect(() => {
                           {Number(selectedEditingProduct.rating).toFixed(1)}
                         </span>
                         <span className="text-sm text-white/40">
-                          ({selectedEditingProduct.reviews_count} reviews)
+                          ({selectedEditingProduct.reviews_count} {t.modal.reviews})
                         </span>
                       </div>
                     )}
 
                     <div className="mt-4 rounded-2xl bg-black/40 p-3">
-                      <p className="text-xs text-white/45">Task Price</p>
+                      <p className="text-xs text-white/45">{t.modal.taskPrice}</p>
                       <p className="mt-1 text-xl font-black text-yellow-300">
                         ${Number(editingTask.price).toFixed(2)}
                       </p>

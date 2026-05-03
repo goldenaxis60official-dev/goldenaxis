@@ -4,6 +4,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -35,6 +37,8 @@ type UserTaskAssignment = {
   tasks: Task | null;
 };
 
+type AdminUserTasksText = typeof en.adminUserTasks;
+
 export default function AdminUserTasksPage() {
   return (
     <RequireAuth>
@@ -48,6 +52,12 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
   const queryUserId = searchParams.get("user");
 
   const isAdmin = profile.role === "admin";
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+  const t: AdminUserTasksText =
+    currentLanguage === "zh"
+      ? (zh.adminUserTasks as unknown as AdminUserTasksText)
+      : en.adminUserTasks;
 
   const [users, setUsers] = useState<Profile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -366,22 +376,22 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
   async function handleAddAssignment() {
     if (!selectedUser) {
-      setErrorText("Please select a user first.");
+      setErrorText(t.messages.selectUserFirst);
       return;
     }
 
     if (!selectedTaskId) {
-      setErrorText("Please select a task first.");
+      setErrorText(t.messages.selectTaskFirst);
       return;
     }
 
     if (assignments.length >= 80) {
-      setErrorText("This user already has the maximum 80 assigned tasks.");
+      setErrorText(t.messages.maxTasks);
       return;
     }
 
     if (assignedStep < 1 || assignedStep > 80) {
-      setErrorText("Assigned step must be between 1 and 80.");
+      setErrorText(t.messages.stepRange);
       return;
     }
 
@@ -391,8 +401,8 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
     if (stepExists) {
       setErrorText(
-        `Step ${assignedStep} already exists for this user. Delete that step first or choose another step.`
-      );
+  t.messages.stepExists.replace("{step}", String(assignedStep))
+);
       return;
     }
 
@@ -414,7 +424,9 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       return;
     }
 
-    setSuccessText(`Task assigned to Step ${assignedStep}.`);
+    setSuccessText(
+  t.messages.taskAssigned.replace("{step}", String(assignedStep))
+);
     setSaving(false);
     await loadAssignments(selectedUser.id);
   }
@@ -435,7 +447,9 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       return;
     }
 
-    setSuccessText(`Step ${assignment.assigned_step} removed.`);
+    setSuccessText(
+  t.messages.stepRemoved.replace("{step}", String(assignment.assigned_step))
+);
     setSaving(false);
 
     if (selectedUser) {
@@ -462,10 +476,16 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
     }
 
     setSuccessText(
-      assignment.is_active
-        ? `Step ${assignment.assigned_step} deactivated.`
-        : `Step ${assignment.assigned_step} activated.`
-    );
+  assignment.is_active
+    ? t.messages.stepDeactivated.replace(
+        "{step}",
+        String(assignment.assigned_step)
+      )
+    : t.messages.stepActivated.replace(
+        "{step}",
+        String(assignment.assigned_step)
+      )
+);
 
     setSaving(false);
 
@@ -479,10 +499,10 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -491,34 +511,33 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
   return (
   <main className="min-h-screen bg-[#050505] text-white">
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <AdminNav />
+      <AdminNav language={currentLanguage} />
 
       <div className="mb-8 max-w-3xl">
   <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">
-    Admin Control
-  </p>
+  {t.pageTag}
+</p>
 
-  <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
-    User Task Assignment
-  </h1>
+<h1 className="mt-2 text-4xl font-black tracking-tight text-white">
+  {t.title}
+</h1>
 
-  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
-    Assign a personalized campaign task list to each user. Only active task
-    templates connected to active catalog products can be assigned.
-  </p>
+<p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
+  {t.description}
+</p>
 </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Users" value={String(users.length)} />
-          <StatCard label="Task Library" value={String(tasks.length)} />
-          <StatCard
-            label="Assigned"
-            value={selectedUser ? String(assignments.length) : "-"}
-          />
-          <StatCard
-            label="Active Steps"
-            value={selectedUser ? String(activeAssignments.length) : "-"}
-          />
+          <StatCard label={t.stats.users} value={String(users.length)} />
+<StatCard label={t.stats.taskLibrary} value={String(tasks.length)} />
+<StatCard
+  label={t.stats.assigned}
+  value={selectedUser ? String(assignments.length) : "-"}
+/>
+<StatCard
+  label={t.stats.activeSteps}
+  value={selectedUser ? String(activeAssignments.length) : "-"}
+/>
         </div>
 
         {successText && (
@@ -537,7 +556,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
         {loading && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-            Loading assignment center...
+            {t.loading.assignmentCenter}
           </div>
         )}
 
@@ -545,8 +564,8 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
             <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 xl:sticky xl:top-8 xl:self-start">
               <div className="mb-5">
-                <p className="text-sm text-yellow-200/80">Members</p>
-                <h2 className="text-2xl font-black">Select User</h2>
+                <p className="text-sm text-yellow-200/80">{t.usersPanel.members}</p>
+<h2 className="text-2xl font-black">{t.usersPanel.selectUser}</h2>
               </div>
 
               <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3">
@@ -554,7 +573,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                 <input
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
-                  placeholder="Search user..."
+                  placeholder={t.usersPanel.searchPlaceholder}
                   className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
                 />
               </div>
@@ -592,7 +611,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="truncate font-black">
-                {user.display_name || "Gold Member"}
+                {user.display_name || t.usersPanel.fallbackName}
               </p>
 
               <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white/50">
@@ -601,11 +620,11 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
             </div>
 
             <p className="mt-1 truncate text-xs text-white/45">
-              {user.email || "No email"}
+              {user.email || t.usersPanel.noEmail}
             </p>
 
             <p className="mt-1 text-xs text-yellow-300">
-              Step {user.current_step}
+              {t.usersPanel.step} {user.current_step}
             </p>
           </div>
         </div>
@@ -617,25 +636,26 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 {filteredUsers.length === 0 && (
   <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
     <Search className="mx-auto mb-3 h-8 w-8 text-yellow-300" />
-    <p className="font-black">No matching users</p>
-    <p className="mt-1 text-sm text-white/45">
-      Try another name, email, code, or user ID.
-    </p>
+    <p className="font-black">{t.usersPanel.noMatchingUsers}</p>
+<p className="mt-1 text-sm text-white/45">
+  {t.usersPanel.noMatchingUsersDescription}
+</p>
   </div>
 )}
 
 {filteredUsers.length > 0 && (
   <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-3">
     <p className="mb-3 text-center text-xs text-white/45">
-      Showing{" "}
-      <span className="font-black text-white">{userFirstResult}</span>
-      {" - "}
-      <span className="font-black text-white">{userLastResult}</span>
-      {" of "}
-      <span className="font-black text-yellow-300">
-        {filteredUsers.length}
-      </span>{" "}
-      users
+      {t.usersPanel.showing}{" "}
+<span className="font-black text-white">{userFirstResult}</span>
+{" - "}
+<span className="font-black text-white">{userLastResult}</span>
+{" "}
+{t.usersPanel.of}{" "}
+<span className="font-black text-yellow-300">
+  {filteredUsers.length}
+</span>{" "}
+{t.usersPanel.users}
     </p>
 
     <div className="flex items-center justify-center gap-2">
@@ -672,12 +692,12 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                 <div className="mb-5 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-yellow-200/80">
-                      Assignment Builder
+                      {t.builder.title}
                     </p>
                     <h2 className="text-2xl font-black">
                       {selectedUser
-                        ? selectedUser.display_name || "Gold Member"
-                        : "No User Selected"}
+  ? selectedUser.display_name || t.usersPanel.fallbackName
+  : t.builder.noUserSelected}
                     </h2>
                     {selectedUser && (
                       <p className="mt-1 text-sm text-white/45">
@@ -694,7 +714,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_130px_160px]">
                   <div>
                     <p className="mb-2 text-sm font-bold text-white/80">
-                      Select Task Template
+                      {t.builder.selectTaskTemplate}
                     </p>
                     <select
                       value={selectedTaskId}
@@ -702,11 +722,11 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                       className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
                     >
                       {tasks.length === 0 ? (
-  <option value="">No active connected task templates</option>
+  <option value="">{t.builder.noActiveTemplates}</option>
 ) : (
   tasks.map((task) => (
     <option key={task.id} value={task.id}>
-      Step {task.step_number} — {task.products?.name || "Connected Product"} — $
+      {t.usersPanel.step} {task.step_number} — {task.products?.name || t.builder.connectedProduct} — $
       {Number(task.products?.price || task.price).toFixed(2)}
     </option>
   ))
@@ -716,7 +736,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
                   <div>
                     <p className="mb-2 text-sm font-bold text-white/80">
-                      User Step
+                      {t.builder.userStep}
                     </p>
                     <input
                       value={assignedStep}
@@ -737,17 +757,17 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                       className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 font-black text-black disabled:opacity-60"
                     >
                       <Plus className="h-5 w-5" />
-                      Assign
+                      {t.builder.assign}
                     </button>
                   </div>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/50">
-                  Next available step:{" "}
-                  <span className="font-black text-yellow-300">
-                    {nextAvailableStep}
-                  </span>
-                  . Delete an existing step first if you want to reuse that step.
+                  {t.builder.nextAvailableStep}{" "}
+<span className="font-black text-yellow-300">
+  {nextAvailableStep}
+</span>
+. {t.builder.reuseStepNote}
                 </div>
               </div>
 
@@ -755,16 +775,16 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                 <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
   <div>
     <p className="text-sm text-yellow-200/80">
-      Personalized Campaign
-    </p>
-    <h2 className="text-2xl font-black">Assigned Tasks</h2>
-    <p className="mt-1 text-xs text-white/40">
-      Search, filter, sort, activate, deactivate, or remove assigned user steps.
-    </p>
+  {t.assignments.titleTag}
+</p>
+<h2 className="text-2xl font-black">{t.assignments.title}</h2>
+<p className="mt-1 text-xs text-white/40">
+  {t.assignments.description}
+</p>
   </div>
 
   <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
-    {filteredAssignments.length} shown / {assignments.length} total
+    {filteredAssignments.length} {t.assignments.shown} / {assignments.length} {t.assignments.total}
   </div>
 </div>
 
@@ -775,7 +795,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       <input
         value={assignmentSearchText}
         onChange={(event) => setAssignmentSearchText(event.target.value)}
-        placeholder="Search step, task, product, category..."
+        placeholder={t.assignments.searchPlaceholder}
         className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
       />
     </div>
@@ -789,9 +809,9 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="all">All Status</option>
-      <option className="bg-black" value="active">Active</option>
-      <option className="bg-black" value="inactive">Inactive</option>
+      <option className="bg-black" value="all">{t.assignments.allStatus}</option>
+<option className="bg-black" value="active">{t.assignments.active}</option>
+<option className="bg-black" value="inactive">{t.assignments.inactive}</option>
     </select>
 
     <select
@@ -803,9 +823,9 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="all">All Types</option>
-      <option className="bg-black" value="standard">Standard</option>
-      <option className="bg-black" value="lucky_bonus">Lucky Bonus</option>
+      <option className="bg-black" value="all">{t.assignments.allTypes}</option>
+<option className="bg-black" value="standard">{t.assignments.standard}</option>
+<option className="bg-black" value="lucky_bonus">{t.assignments.luckyBonus}</option>
     </select>
 
     <select
@@ -821,10 +841,10 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="step_asc">Step 1-80</option>
-      <option className="bg-black" value="step_desc">Step 80-1</option>
-      <option className="bg-black" value="reward_high">Reward High</option>
-      <option className="bg-black" value="price_high">Price High</option>
+      <option className="bg-black" value="step_asc">{t.assignments.stepAsc}</option>
+<option className="bg-black" value="step_desc">{t.assignments.stepDesc}</option>
+<option className="bg-black" value="reward_high">{t.assignments.rewardHigh}</option>
+<option className="bg-black" value="price_high">{t.assignments.priceHigh}</option>
     </select>
 
     <select
@@ -842,28 +862,27 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
                 {assignmentLoading && (
                   <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-                    Loading assigned tasks...
+                    {t.loading.assignedTasks}
                   </div>
                 )}
 
                 {!assignmentLoading && selectedUser && assignments.length === 0 && (
                   <div className="rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-8 text-center">
                     <Gem className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-                    <p className="font-black">No tasks assigned</p>
-                    <p className="mt-2 text-sm text-yellow-100/65">
-                      This user will see “Campaign List Preparing” on the
-                      Missions page until you assign at least one active task.
-                    </p>
+                    <p className="font-black">{t.assignments.noTasksAssigned}</p>
+<p className="mt-2 text-sm text-yellow-100/65">
+  {t.assignments.noTasksAssignedDescription}
+</p>
                   </div>
                 )}
 
                 {!assignmentLoading && assignments.length > 0 && filteredAssignments.length === 0 && (
   <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
     <Search className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-    <p className="font-black">No matching assigned tasks</p>
-    <p className="mt-2 text-sm text-white/50">
-      Try another search keyword or change the filters.
-    </p>
+    <p className="font-black">{t.assignments.noMatchingAssigned}</p>
+<p className="mt-2 text-sm text-white/50">
+  {t.assignments.noMatchingAssignedDescription}
+</p>
   </div>
 )}
 
@@ -873,13 +892,13 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
   <table className="w-full min-w-[980px] text-left text-sm">
                       <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
                         <tr>
-                          <th className="px-4 py-3">User Step</th>
-                          <th className="px-4 py-3">Task / Product</th>
-                          <th className="px-4 py-3">Type</th>
-                          <th className="px-4 py-3">Price</th>
-                          <th className="px-4 py-3">Reward</th>
-                          <th className="px-4 py-3">Status</th>
-                          <th className="px-4 py-3 text-right">Actions</th>
+                          <th className="px-4 py-3">{t.assignments.userStep}</th>
+<th className="px-4 py-3">{t.assignments.taskProduct}</th>
+<th className="px-4 py-3">{t.assignments.type}</th>
+<th className="px-4 py-3">{t.assignments.price}</th>
+<th className="px-4 py-3">{t.assignments.reward}</th>
+<th className="px-4 py-3">{t.assignments.status}</th>
+<th className="px-4 py-3 text-right">{t.assignments.actions}</th>
                         </tr>
                       </thead>
 
@@ -913,7 +932,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                                           task?.image_url ||
                                           ""
                                         }
-                                        alt={product?.name || task?.title || "Task"}
+                                        alt={product?.name || task?.title || t.assignments.taskProduct}
                                         className="h-full w-full object-cover"
                                       />
                                     ) : (
@@ -925,13 +944,13 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
                                   <div>
                                     <p className="font-black">
-                                      {product?.name || task?.title || "Missing Task"}
+                                      {product?.name || task?.title || t.assignments.missingTask}
                                     </p>
 
                                     <p className="mt-1 text-xs text-white/45">
                                       {product?.category ||
-                                        task?.category ||
-                                        "No category"}
+  task?.category ||
+  t.assignments.noCategory}
                                     </p>
 
                                     {product && (
@@ -955,7 +974,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                                       : "bg-white/10 text-white/70"
                                   }`}
                                 >
-                                  {lucky ? "Lucky Bonus" : "Standard"}
+                                  {lucky ? t.assignments.luckyBonus : t.assignments.standard}
                                 </span>
                               </td>
 
@@ -979,7 +998,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                                       : "bg-red-500/15 text-red-300"
                                   }`}
                                 >
-                                  {assignment.is_active ? "Active" : "Inactive"}
+                                  {assignment.is_active ? t.assignments.active : t.assignments.inactive}
                                 </button>
                               </td>
 
@@ -991,7 +1010,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                                     }
                                     disabled={saving}
                                     className="rounded-xl border border-red-400/30 bg-red-500/10 p-2 text-red-300"
-                                    title="Delete assignment"
+                                    title={t.assignments.deleteAssignment}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </button>
@@ -1006,20 +1025,21 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
                   <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
                     <p>
-                      Showing{" "}
-                      <span className="font-black text-white">
-                        {assignmentFirstResult}
-                      </span>
-                      {" - "}
-                      <span className="font-black text-white">
-                        {assignmentLastResult}
-                      </span>
-                      {" of "}
-                      <span className="font-black text-yellow-300">
-                        {filteredAssignments.length}
-                      </span>{" "}
-                      assigned tasks
-                    </p>
+  {t.assignments.showing}{" "}
+  <span className="font-black text-white">
+    {assignmentFirstResult}
+  </span>
+  {" - "}
+  <span className="font-black text-white">
+    {assignmentLastResult}
+  </span>
+  {" "}
+  {t.assignments.of}{" "}
+  <span className="font-black text-yellow-300">
+    {filteredAssignments.length}
+  </span>{" "}
+  {t.assignments.assignedTasks}
+</p>
 
                     <div className="flex items-center gap-2">
                       <button
@@ -1033,11 +1053,11 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                         className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ChevronLeft className="h-4 w-4" />
-                        Prev
+                        {t.assignments.prev}
                       </button>
 
                       <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-                        Page {assignmentCurrentPage} / {assignmentTotalPages}
+                        {t.assignments.page} {assignmentCurrentPage} / {assignmentTotalPages}
                       </div>
 
                       <button
@@ -1052,7 +1072,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                         }
                         className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        Next
+                        {t.assignments.next}
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>

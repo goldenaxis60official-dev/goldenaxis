@@ -4,6 +4,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -28,6 +30,8 @@ type ManagedUser = Profile & {
   admin_nickname: string | null;
 };
 
+type AdminUsersText = typeof en.adminUsers;
+
 export default function AdminUsersPage() {
   return (
     <RequireAuth>
@@ -37,6 +41,13 @@ export default function AdminUsersPage() {
 }
 
 function AdminUsersContent({ profile }: { profile: Profile }) {
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+  const t: AdminUsersText =
+    currentLanguage === "zh"
+      ? (zh.adminUsers as unknown as AdminUsersText)
+      : en.adminUsers;
+
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchText, setSearchText] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
@@ -200,7 +211,7 @@ useEffect(() => {
     const { error } = await supabase.rpc("admin_adjust_user_balance", {
       input_user_id: selectedUser.id,
       input_amount: adjustAmount,
-      input_note: adjustNote || "Admin balance adjustment",
+      input_note: adjustNote || t.adjustModal.defaultNote,
     });
 
     if (error) {
@@ -209,7 +220,7 @@ useEffect(() => {
       return;
     }
 
-    setSuccessText("User balance adjusted successfully.");
+    setSuccessText(t.messages.balanceAdjusted);
     setSelectedUser(null);
     setAdjustAmount(100);
     setAdjustNote("");
@@ -252,7 +263,7 @@ useEffect(() => {
     )
   );
 
-  setSuccessText("Admin nickname saved successfully.");
+  setSuccessText(t.messages.nicknameSaved);
   setNicknameUser(null);
   setNicknameValue("");
   setActionLoading(false);
@@ -262,17 +273,17 @@ async function handleDeleteUser() {
   if (!deleteUser) return;
 
   if (deleteUser.id === profile.id) {
-    setErrorText("You cannot delete your own admin account.");
+    setErrorText(t.messages.cannotDeleteSelf);
     return;
   }
 
   if (deleteUser.role === "admin") {
-    setErrorText("Admin accounts cannot be deleted from this page.");
+    setErrorText(t.messages.cannotDeleteAdmin);
     return;
   }
 
   if (deleteConfirmText !== "DELETE") {
-    setErrorText("Type DELETE to confirm user removal.");
+    setErrorText(t.messages.typeDelete);
     return;
   }
 
@@ -295,7 +306,7 @@ async function handleDeleteUser() {
     currentUsers.filter((user) => user.id !== deleteUser.id)
   );
 
-  setSuccessText("User removed from User Manager.");
+  setSuccessText(t.messages.userRemoved);
   setDeleteUser(null);
   setDeleteConfirmText("");
   setActionLoading(false);
@@ -306,10 +317,10 @@ async function handleDeleteUser() {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -318,18 +329,17 @@ async function handleDeleteUser() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav />
+        <AdminNav language={currentLanguage} />
 
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>
             <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">User Manager</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Manage users, balances, invite codes, account status, and campaign
-              progress.
-            </p>
+  {t.pageTag}
+</p>
+<h1 className="mt-1 text-3xl font-black">{t.title}</h1>
+<p className="mt-2 max-w-2xl text-sm text-white/50">
+  {t.description}
+</p>
           </div>
 
           <Link
@@ -337,15 +347,15 @@ async function handleDeleteUser() {
             className="flex items-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
           >
             <ListChecks className="h-4 w-4" />
-            User Task Assignment
+            {t.userTaskAssignment}
           </Link>
         </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Users" value={String(users.length)} />
-          <StatCard label="Active" value={String(activeCount)} />
-          <StatCard label="Admins" value={String(adminCount)} />
-          <StatCard label="Total Balance" value={`$${totalBalance.toFixed(2)}`} />
+          <StatCard label={t.stats.users} value={String(users.length)} />
+<StatCard label={t.stats.active} value={String(activeCount)} />
+<StatCard label={t.stats.admins} value={String(adminCount)} />
+<StatCard label={t.stats.totalBalance} value={`$${totalBalance.toFixed(2)}`} />
         </div>
 
         {successText && (
@@ -365,15 +375,15 @@ async function handleDeleteUser() {
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
   <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
     <div>
-      <p className="text-sm text-yellow-200/80">Members</p>
-      <h2 className="text-2xl font-black">Registered Users</h2>
-      <p className="mt-1 text-xs text-white/40">
-        Search, filter, sort, manage balances, labels, and campaign assignment.
-      </p>
+      <p className="text-sm text-yellow-200/80">{t.list.members}</p>
+<h2 className="text-2xl font-black">{t.list.registeredUsers}</h2>
+<p className="mt-1 text-xs text-white/40">
+  {t.list.description}
+</p>
     </div>
 
     <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
-      {filteredUsers.length} shown / {users.length} total
+      {filteredUsers.length} {t.list.shown} / {users.length} {t.list.total}
     </div>
   </div>
 
@@ -383,7 +393,7 @@ async function handleDeleteUser() {
       <input
         value={searchText}
         onChange={(event) => setSearchText(event.target.value)}
-        placeholder="Search name, email, nickname, invite code, ID..."
+        placeholder={t.list.searchPlaceholder}
         className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
       />
     </div>
@@ -396,13 +406,13 @@ async function handleDeleteUser() {
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
       <option className="bg-black" value="all">
-        All Roles
+        {t.list.allRoles}
       </option>
       <option className="bg-black" value="user">
-        Users
+        {t.list.users}
       </option>
       <option className="bg-black" value="admin">
-        Admins
+        {t.list.admins}
       </option>
     </select>
 
@@ -412,7 +422,7 @@ async function handleDeleteUser() {
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
       <option className="bg-black" value="all">
-        All Status
+        {t.list.allStatus}
       </option>
 
       {userStatuses.map((status) => (
@@ -437,19 +447,19 @@ async function handleDeleteUser() {
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
       <option className="bg-black" value="newest">
-        Newest First
+        {t.list.newestFirst}
       </option>
       <option className="bg-black" value="name">
-        Name A-Z
+        {t.list.nameAZ}
       </option>
       <option className="bg-black" value="balance_high">
-        Balance High
+        {t.list.balanceHigh}
       </option>
       <option className="bg-black" value="today_high">
-        Today High
+        {t.list.todayHigh}
       </option>
       <option className="bg-black" value="step_high">
-        Step High
+        {t.list.stepHigh}
       </option>
     </select>
 
@@ -475,17 +485,17 @@ async function handleDeleteUser() {
 
   {loading && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-      Loading users...
+      {t.list.loading}
     </div>
   )}
 
   {!loading && filteredUsers.length === 0 && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
       <Users className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-      <p className="font-black">No users found</p>
-      <p className="mt-2 text-sm text-white/50">
-        Try another search keyword or change the filters.
-      </p>
+      <p className="font-black">{t.list.noUsersFound}</p>
+<p className="mt-2 text-sm text-white/50">
+  {t.list.noUsersFoundDescription}
+</p>
     </div>
   )}
 
@@ -495,15 +505,15 @@ async function handleDeleteUser() {
         <table className="w-full min-w-[1180px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
             <tr>
-              <th className="px-4 py-3">User</th>
-              <th className="px-4 py-3">Admin Nickname</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Balance</th>
-              <th className="px-4 py-3">Today</th>
-              <th className="px-4 py-3">Step</th>
-              <th className="px-4 py-3">Invite Code</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3">{t.list.user}</th>
+<th className="px-4 py-3">{t.list.adminNickname}</th>
+<th className="px-4 py-3">{t.list.role}</th>
+<th className="px-4 py-3">{t.list.balance}</th>
+<th className="px-4 py-3">{t.list.today}</th>
+<th className="px-4 py-3">{t.list.step}</th>
+<th className="px-4 py-3">{t.list.inviteCode}</th>
+<th className="px-4 py-3">{t.list.status}</th>
+<th className="px-4 py-3 text-right">{t.list.actions}</th>
             </tr>
           </thead>
 
@@ -534,10 +544,10 @@ async function handleDeleteUser() {
 
                       <div>
                         <p className="font-black">
-                          {user.display_name || "Gold Member"}
+                          {user.display_name || t.list.fallbackName}
                         </p>
                         <p className="mt-1 text-xs text-white/45">
-                          {user.email || "No email"}
+                          {user.email || t.list.noEmail}
                         </p>
                         <p className="mt-1 max-w-[220px] truncate text-[10px] text-white/30">
                           {user.id}
@@ -554,7 +564,7 @@ async function handleDeleteUser() {
                         </p>
                       ) : (
                         <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/35">
-                          No nickname
+                          {t.list.noNickname}
                         </p>
                       )}
 
@@ -566,7 +576,7 @@ async function handleDeleteUser() {
                         className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-white/45 hover:text-yellow-300"
                       >
                         <Pencil className="h-3 w-3" />
-                        Edit
+                        {t.list.edit}
                       </button>
                     </div>
                   </td>
@@ -616,7 +626,7 @@ async function handleDeleteUser() {
                       <Link
                         href={`/admin/user-tasks?user=${user.id}`}
                         className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-2 text-yellow-300 hover:bg-yellow-400/15"
-                        title="Manage user tasks"
+                        title={t.list.manageUserTasks}
                       >
                         <ListChecks className="h-4 w-4" />
                       </Link>
@@ -628,7 +638,7 @@ async function handleDeleteUser() {
                           setAdjustNote("");
                         }}
                         className="rounded-xl border border-white/10 bg-white/[0.06] p-2 text-white/70 hover:bg-white/[0.1]"
-                        title="Adjust balance"
+                        title={t.list.adjustBalance}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -640,7 +650,7 @@ async function handleDeleteUser() {
   }}
   disabled={user.id === profile.id || user.role === "admin"}
   className="rounded-xl border border-red-400/30 bg-red-500/10 p-2 text-red-300 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-35"
-  title="Remove user"
+  title={t.list.removeUser}
 >
   <Trash2 className="h-4 w-4" />
 </button>
@@ -654,17 +664,18 @@ async function handleDeleteUser() {
       </div>
 
       <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
-        <p>
-          Showing{" "}
-          <span className="font-black text-white">{firstResult}</span>
-          {" - "}
-          <span className="font-black text-white">{lastResult}</span>
-          {" of "}
-          <span className="font-black text-yellow-300">
-            {filteredUsers.length}
-          </span>{" "}
-          users
-        </p>
+          <p>
+  {t.list.showing}{" "}
+  <span className="font-black text-white">{firstResult}</span>
+  {" - "}
+  <span className="font-black text-white">{lastResult}</span>
+  {" "}
+  {t.list.of}{" "}
+  <span className="font-black text-yellow-300">
+    {filteredUsers.length}
+  </span>{" "}
+  {t.list.users}
+</p>
 
         <div className="flex items-center gap-2">
           <button
@@ -674,11 +685,11 @@ async function handleDeleteUser() {
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
-            Prev
+            {t.list.prev}
           </button>
 
           <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-            Page {currentPage} / {totalPages}
+            {t.list.page} {currentPage} / {totalPages}
           </div>
 
           <button
@@ -689,7 +700,7 @@ async function handleDeleteUser() {
             }
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next
+            {t.list.next}
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -703,8 +714,8 @@ async function handleDeleteUser() {
             <div className="w-full max-w-xl rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-yellow-200/80">Admin Action</p>
-                  <h2 className="text-2xl font-black">Adjust Balance</h2>
+                  <p className="text-sm text-yellow-200/80">{t.adjustModal.tag}</p>
+<h2 className="text-2xl font-black">{t.adjustModal.title}</h2>
                 </div>
 
                 <button
@@ -717,21 +728,21 @@ async function handleDeleteUser() {
 
               <div className="mb-5 grid grid-cols-3 gap-3">
                 <MiniBox
-                  label="User"
-                  value={selectedUser.display_name || "Gold Member"}
+                  label={t.adjustModal.user}
+value={selectedUser.display_name || t.list.fallbackName}
                 />
                 <MiniBox
-                  label="Balance"
+                  label={t.adjustModal.balance}
                   value={`$${Number(selectedUser.balance).toFixed(2)}`}
                   color="gold"
                 />
-                <MiniBox label="Step" value={String(selectedUser.current_step)} />
+                <MiniBox label={t.adjustModal.step} value={String(selectedUser.current_step)} />
               </div>
 
               <div className="space-y-4">
                 <div>
                   <p className="mb-2 text-sm font-bold text-white/80">
-                    Adjustment Amount
+                    {t.adjustModal.amount}
                   </p>
                   <input
                     value={adjustAmount}
@@ -743,19 +754,18 @@ async function handleDeleteUser() {
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
                   />
                   <p className="mt-2 text-xs text-white/45">
-                    Use positive amount to add balance. Use negative amount to
-                    deduct balance.
+                    {t.adjustModal.amountHelp}
                   </p>
                 </div>
 
                 <div>
                   <p className="mb-2 text-sm font-bold text-white/80">
-                    Admin Note
+                    {t.adjustModal.note}
                   </p>
                   <textarea
                     value={adjustNote}
                     onChange={(event) => setAdjustNote(event.target.value)}
-                    placeholder="Example: Manual test credit"
+                    placeholder={t.adjustModal.notePlaceholder}
                     className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                   />
                 </div>
@@ -766,7 +776,7 @@ async function handleDeleteUser() {
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
                 >
                   <Save className="h-5 w-5" />
-                  {actionLoading ? "Saving..." : "Save Adjustment"}
+                  {actionLoading ? t.adjustModal.saving : t.adjustModal.saveAdjustment}
                 </button>
               </div>
             </div>
@@ -778,8 +788,8 @@ async function handleDeleteUser() {
     <div className="w-full max-w-lg rounded-[2rem] border border-red-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(239,68,68,0.16)]">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-sm text-red-300/80">Remove Member</p>
-          <h2 className="text-2xl font-black">Delete User?</h2>
+          <p className="text-sm text-red-300/80">{t.deleteModal.tag}</p>
+<h2 className="text-2xl font-black">{t.deleteModal.title}</h2>
         </div>
 
         <button
@@ -795,31 +805,31 @@ async function handleDeleteUser() {
 
       <div className="mb-5 grid grid-cols-2 gap-3">
         <MiniBox
-          label="User"
-          value={deleteUser.display_name || "Gold Member"}
+          label={t.deleteModal.user}
+value={deleteUser.display_name || t.list.fallbackName}
         />
         <MiniBox
-          label="Email"
-          value={deleteUser.email || "No email"}
+          label={t.deleteModal.email}
+value={deleteUser.email || t.list.noEmail}
           color="gold"
         />
       </div>
 
       <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm leading-6 text-red-100/75">
-        This will remove the user from User Manager by marking the profile as
-        deleted. Type <span className="font-black text-red-200">DELETE</span> to
-        confirm.
+        {t.deleteModal.warningStart}{" "}
+<span className="font-black text-red-200">DELETE</span>{" "}
+{t.deleteModal.warningEnd}
       </div>
 
       <div className="mt-5">
         <p className="mb-2 text-sm font-bold text-white/80">
-          Confirm Delete
+          {t.deleteModal.confirmDelete}
         </p>
 
         <input
           value={deleteConfirmText}
           onChange={(event) => setDeleteConfirmText(event.target.value)}
-          placeholder="Type DELETE"
+          placeholder={t.deleteModal.typeDeletePlaceholder}
           className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-red-400/50"
         />
       </div>
@@ -830,7 +840,7 @@ async function handleDeleteUser() {
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/20 px-5 py-4 font-black text-red-100 hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Trash2 className="h-5 w-5" />
-        {actionLoading ? "Removing..." : "Remove User"}
+        {actionLoading ? t.deleteModal.removing : t.deleteModal.removeUser}
       </button>
     </div>
   </div>
@@ -841,8 +851,8 @@ async function handleDeleteUser() {
     <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-sm text-yellow-200/80">Private Admin Label</p>
-          <h2 className="text-2xl font-black">Edit Admin Nickname</h2>
+          <p className="text-sm text-yellow-200/80">{t.nicknameModal.tag}</p>
+<h2 className="text-2xl font-black">{t.nicknameModal.title}</h2>
         </div>
 
         <button
@@ -858,31 +868,30 @@ async function handleDeleteUser() {
 
       <div className="mb-5 grid grid-cols-2 gap-3">
         <MiniBox
-          label="User"
-          value={nicknameUser.display_name || "Gold Member"}
+          label={t.nicknameModal.user}
+value={nicknameUser.display_name || t.list.fallbackName}
         />
         <MiniBox
-          label="Email"
-          value={nicknameUser.email || "No email"}
+          label={t.nicknameModal.email}
+value={nicknameUser.email || t.list.noEmail}
           color="gold"
         />
       </div>
 
       <div>
         <p className="mb-2 text-sm font-bold text-white/80">
-          Admin Nickname
+          {t.nicknameModal.adminNickname}
         </p>
 
         <input
           value={nicknameValue}
           onChange={(event) => setNicknameValue(event.target.value)}
-          placeholder="Example: John's friend / VIP user / Telegram A"
+          placeholder={t.nicknameModal.placeholder}
           className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
         />
 
         <p className="mt-2 text-xs text-white/45">
-          This nickname is private for admin control only. Normal users cannot
-          see this label.
+          {t.nicknameModal.note}
         </p>
       </div>
 
@@ -892,7 +901,7 @@ async function handleDeleteUser() {
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
       >
         <Save className="h-5 w-5" />
-        {actionLoading ? "Saving..." : "Save Nickname"}
+        {actionLoading ? t.nicknameModal.saving : t.nicknameModal.saveNickname}
       </button>
     </div>
   </div>

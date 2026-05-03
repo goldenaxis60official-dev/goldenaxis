@@ -3,6 +3,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -46,6 +48,8 @@ type ChatMessage = {
   created_at: string;
 };
 
+type AdminSupportText = typeof en.adminSupport;
+
 export default function AdminSupportPage() {
   return (
     <RequireAuth>
@@ -55,6 +59,13 @@ export default function AdminSupportPage() {
 }
 
 function AdminSupportContent({ profile }: { profile: Profile }) {
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+  const t: AdminSupportText =
+    currentLanguage === "zh"
+      ? (zh.adminSupport as unknown as AdminSupportText)
+      : en.adminSupport;
+
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
@@ -74,6 +85,13 @@ const [replyText, setReplyText] = useState("");
   const [errorText, setErrorText] = useState("");
 
   const isAdmin = profile.role === "admin";
+  function getSupportFilterLabel(value: SupportFilter) {
+  return t.filters[value];
+}
+
+function getSupportStatusLabel(value: SupportStatus) {
+  return t.status[value];
+}
 
   const selectedTicket = useMemo(() => {
     return tickets.find((ticket) => ticket.id === selectedTicketId) || null;
@@ -224,7 +242,7 @@ useEffect(() => {
     const finalReply = replyText.trim();
 
     if (!finalReply) {
-      setErrorText("Please write a reply first.");
+      setErrorText(t.messages.writeReplyFirst);
       return;
     }
 
@@ -263,7 +281,7 @@ useEffect(() => {
     }
 
     setReplyText("");
-    setSuccessText("Reply sent.");
+    setSuccessText(t.messages.replySent);
     setSending(false);
 
     await loadChat(selectedTicket.id);
@@ -286,7 +304,7 @@ useEffect(() => {
       return;
     }
 
-    setSuccessText("Ticket status updated.");
+    setSuccessText(t.messages.statusUpdated);
     await loadTickets();
   }
 
@@ -295,10 +313,10 @@ useEffect(() => {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -311,17 +329,17 @@ useEffect(() => {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav />
+        <AdminNav language={currentLanguage} />
 
         <div className="mb-6 flex items-center justify-between gap-5">
           <div>
             <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Support Chat Center</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Chat with each user directly and manage ticket status.
-            </p>
+  {t.pageTag}
+</p>
+<h1 className="mt-1 text-3xl font-black">{t.title}</h1>
+<p className="mt-2 max-w-2xl text-sm text-white/50">
+  {t.description}
+</p>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4">
@@ -330,10 +348,10 @@ useEffect(() => {
         </div>
 
         <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Showing" value={String(filteredTickets.length)} />
-          <StatCard label="Open" value={String(openCount)} />
-          <StatCard label="Reviewing" value={String(reviewingCount)} />
-          <StatCard label="Closed" value={String(closedCount)} />
+          <StatCard label={t.stats.showing} value={String(filteredTickets.length)} />
+<StatCard label={t.stats.open} value={String(openCount)} />
+<StatCard label={t.stats.reviewing} value={String(reviewingCount)} />
+<StatCard label={t.stats.closed} value={String(closedCount)} />
         </div>
 
         {successText && (
@@ -355,8 +373,8 @@ useEffect(() => {
             <div className="border-b border-white/10 p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm text-yellow-200/80">Support Queue</p>
-                  <h2 className="text-xl font-black">User Chats</h2>
+                  <p className="text-sm text-yellow-200/80">{t.filters.supportQueue}</p>
+<h2 className="text-xl font-black">{t.filters.userChats}</h2>
                 </div>
               </div>
 
@@ -372,7 +390,7 @@ useEffect(() => {
             : "border-white/10 bg-black/35 text-white/55 hover:bg-white/[0.08]"
         }`}
       >
-        {item}
+        {getSupportFilterLabel(item)}
       </button>
     )
   )}
@@ -384,7 +402,7 @@ useEffect(() => {
     <input
       value={searchText}
       onChange={(event) => setSearchText(event.target.value)}
-      placeholder="Search user, email, ticket..."
+      placeholder={t.filters.searchPlaceholder}
       className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
     />
   </div>
@@ -395,8 +413,8 @@ useEffect(() => {
       onChange={(event) => setSortBy(event.target.value as "newest" | "oldest")}
       className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="newest">Newest</option>
-      <option className="bg-black" value="oldest">Oldest</option>
+      <option className="bg-black" value="newest">{t.filters.newest}</option>
+<option className="bg-black" value="oldest">{t.filters.oldest}</option>
     </select>
 
     <select
@@ -404,38 +422,35 @@ useEffect(() => {
       onChange={(event) => setPageSize(Number(event.target.value))}
       className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value={8}>8 / page</option>
-      <option className="bg-black" value={15}>15 / page</option>
-      <option className="bg-black" value={30}>30 / page</option>
+      <option className="bg-black" value={8}>
+  {t.filters.pageSize.replace("{count}", "8")}
+</option>
+<option className="bg-black" value={15}>
+  {t.filters.pageSize.replace("{count}", "15")}
+</option>
+<option className="bg-black" value={30}>
+  {t.filters.pageSize.replace("{count}", "30")}
+</option>
     </select>
   </div>
 </div>
 
-              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3 py-2">
-                <Search className="h-4 w-4 text-white/35" />
-                <input
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                  placeholder="Search user or ticket..."
-                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
-                />
-              </div>
             </div>
 
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
               {loadingTickets && (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center text-sm text-white/50">
-                  Loading chats...
+                  {t.list.loadingChats}
                 </div>
               )}
 
               {!loadingTickets && filteredTickets.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.04] p-6 text-center">
                   <MessageCircle className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
-                  <p className="text-sm font-black">No chats found</p>
-                  <p className="mt-1 text-xs text-white/45">
-                    User support chats will appear here.
-                  </p>
+                  <p className="text-sm font-black">{t.list.noChatsFound}</p>
+<p className="mt-1 text-xs text-white/45">
+  {t.list.noChatsFoundDescription}
+</p>
                 </div>
               )}
 
@@ -455,9 +470,12 @@ useEffect(() => {
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-black text-white">
-                          {ticket.profiles?.display_name || "Unknown User"}
+                          {ticket.profiles?.display_name || t.list.unknownUser}
                         </p>
-                        <StatusBadge status={ticket.status} />
+                        <StatusBadge
+  status={ticket.status}
+  label={getSupportStatusLabel(ticket.status)}
+/>
                       </div>
 
                       <p className="truncate text-xs font-bold text-yellow-100/75">
@@ -479,15 +497,16 @@ useEffect(() => {
             {!loadingTickets && filteredTickets.length > 0 && (
               <div className="border-t border-white/10 bg-black/30 p-3">
                 <p className="mb-3 text-center text-xs text-white/45">
-                  Showing{" "}
-                  <span className="font-black text-white">{firstResult}</span>
-                  {" - "}
-                  <span className="font-black text-white">{lastResult}</span>
-                  {" of "}
-                  <span className="font-black text-yellow-300">
-                    {filteredTickets.length}
-                  </span>{" "}
-                  chats
+                  {t.list.showing}{" "}
+<span className="font-black text-white">{firstResult}</span>
+{" - "}
+<span className="font-black text-white">{lastResult}</span>
+{" "}
+{t.list.of}{" "}
+<span className="font-black text-yellow-300">
+  {filteredTickets.length}
+</span>{" "}
+{t.list.chats}
                 </p>
 
                 <div className="flex items-center justify-center gap-2">
@@ -528,10 +547,10 @@ useEffect(() => {
               <div className="flex flex-1 items-center justify-center p-8 text-center">
                 <div>
                   <MessageCircle className="mx-auto mb-4 h-14 w-14 text-yellow-300" />
-                  <p className="text-xl font-black">Select a user chat</p>
-                  <p className="mt-2 text-sm text-white/45">
-                    Choose a ticket from the left side to start replying.
-                  </p>
+                  <p className="text-xl font-black">{t.list.selectUserChat}</p>
+<p className="mt-2 text-sm text-white/45">
+  {t.list.selectUserChatDescription}
+</p>
                 </div>
               </div>
             ) : (
@@ -540,13 +559,16 @@ useEffect(() => {
                   <div>
                     <div className="flex items-center gap-3">
                       <h2 className="text-xl font-black">
-                        {selectedTicket.profiles?.display_name || "Unknown User"}
+                        {selectedTicket.profiles?.display_name || t.list.unknownUser}
                       </h2>
-                      <StatusBadge status={selectedTicket.status} />
+                      <StatusBadge
+  status={selectedTicket.status}
+  label={getSupportStatusLabel(selectedTicket.status)}
+/>
                     </div>
 
                     <p className="mt-1 text-sm text-white/45">
-                      {selectedTicket.profiles?.email || "No email"} •{" "}
+                      {selectedTicket.profiles?.email || t.chat.noEmail} •{" "}
                       {selectedTicket.subject}
                     </p>
                   </div>
@@ -558,30 +580,31 @@ useEffect(() => {
                     }
                     className="rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
                   >
-                    <option value="open">Open</option>
-                    <option value="reviewing">Reviewing</option>
-                    <option value="closed">Closed</option>
+                    <option value="open">{t.status.open}</option>
+<option value="reviewing">{t.status.reviewing}</option>
+<option value="closed">{t.status.closed}</option>
                   </select>
                 </div>
 
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(234,179,8,0.08),transparent_35%),#070707] p-5">
                   {loadingChat && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center text-sm text-white/50">
-                      Loading conversation...
+                      {t.chat.loadingConversation}
                     </div>
                   )}
 
                   {!loadingChat && chatMessages.length === 0 && (
                     <div className="space-y-4">
                       <ChatBubble
-                        role="user"
-                        message={selectedTicket.message}
-                        time={selectedTicket.created_at}
-                      />
+  role="user"
+  message={selectedTicket.message}
+  time={selectedTicket.created_at}
+  adminLabel={t.chat.adminSupport}
+  userLabel={t.chat.user}
+/>
 
                       <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/70">
-                        Old ticket message shown as fallback. New replies will
-                        be saved as real chat messages.
+                        {t.chat.fallbackNotice}
                       </div>
                     </div>
                   )}
@@ -589,11 +612,13 @@ useEffect(() => {
                   {!loadingChat &&
                     chatMessages.map((chat) => (
                       <ChatBubble
-                        key={chat.id}
-                        role={chat.sender_role}
-                        message={chat.message}
-                        time={chat.created_at}
-                      />
+  key={chat.id}
+  role={chat.sender_role}
+  message={chat.message}
+  time={chat.created_at}
+  adminLabel={t.chat.adminSupport}
+  userLabel={t.chat.user}
+/>
                     ))}
                 </div>
 
@@ -602,7 +627,7 @@ useEffect(() => {
                     <textarea
                       value={replyText}
                       onChange={(event) => setReplyText(event.target.value)}
-                      placeholder="Type admin reply..."
+                      placeholder={t.chat.replyPlaceholder}
                       className="min-h-20 flex-1 resize-none rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                     />
 
@@ -612,7 +637,7 @@ useEffect(() => {
                       className="flex min-w-36 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.24)] disabled:opacity-60"
                     >
                       <Send className="h-5 w-5" />
-                      {sending ? "Sending..." : "Send"}
+                      {sending ? t.chat.sending : t.chat.send}
                     </button>
                   </div>
                 </div>
@@ -629,10 +654,14 @@ function ChatBubble({
   role,
   message,
   time,
+  adminLabel,
+  userLabel,
 }: {
   role: "user" | "admin";
   message: string;
   time: string;
+  adminLabel: string;
+  userLabel: string;
 }) {
   const isAdmin = role === "admin";
 
@@ -650,7 +679,7 @@ function ChatBubble({
             isAdmin ? "text-yellow-100" : "text-white/65"
           }`}
         >
-          {isAdmin ? "Admin Support" : "User"}
+          {isAdmin ? adminLabel : userLabel}
         </p>
 
         <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
@@ -676,7 +705,13 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: SupportStatus }) {
+function StatusBadge({
+  status,
+  label,
+}: {
+  status: SupportStatus;
+  label: string;
+}) {
   const styles =
     status === "closed"
       ? "bg-emerald-400/10 text-emerald-300"
@@ -686,7 +721,7 @@ function StatusBadge({ status }: { status: SupportStatus }) {
 
   return (
     <span className={`rounded-full px-3 py-1 text-xs font-black ${styles}`}>
-      {status}
+      {label}
     </span>
   );
 }

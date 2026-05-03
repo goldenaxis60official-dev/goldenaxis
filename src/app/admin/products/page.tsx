@@ -1,6 +1,10 @@
+//src>app>admin>products>page.tsx
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -36,6 +40,8 @@ type ProductForm = {
   is_active: boolean;
 };
 
+type AdminProductsText = typeof en.adminProducts;
+
 const emptyForm: ProductForm = {
   name: "",
   category: "Gold Jewelry",
@@ -59,6 +65,12 @@ export default function AdminProductsPage() {
 
 function AdminProductsContent({ profile }: { profile: Profile }) {
   const isAdmin = profile.role === "admin";
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+const t: AdminProductsText =
+  currentLanguage === "zh"
+    ? (zh.adminProducts as unknown as AdminProductsText)
+    : en.adminProducts;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<ProductForm>(emptyForm);
@@ -259,7 +271,11 @@ useEffect(() => {
       };
     });
 
-    setSuccessText(`${uploadedUrls.length} image uploaded.`);
+    setSuccessText(
+  `${uploadedUrls.length} ${
+    uploadedUrls.length > 1 ? t.messages.imagesUploaded : t.messages.imageUploaded
+  }`
+);
     setUploading(false);
   }
 
@@ -283,19 +299,19 @@ useEffect(() => {
     setSuccessText("");
 
     if (!form.name.trim()) {
-      setErrorText("Product name is required.");
+      setErrorText(t.validation.productNameRequired);
       setSaving(false);
       return;
     }
 
     if (Number(form.price) <= 0) {
-      setErrorText("Product price must be greater than 0.");
+      setErrorText(t.validation.priceRequired);
       setSaving(false);
       return;
     }
 
     if (Number(form.rating) < 0 || Number(form.rating) > 5) {
-      setErrorText("Rating must be between 0 and 5.");
+      setErrorText(t.validation.ratingRange);
       setSaving(false);
       return;
     }
@@ -325,7 +341,7 @@ useEffect(() => {
         return;
       }
 
-      setSuccessText("Product updated successfully.");
+      setSuccessText(t.messages.productUpdated);
     } else {
       const { error } = await supabase.from("products").insert(payload);
 
@@ -335,7 +351,7 @@ useEffect(() => {
         return;
       }
 
-      setSuccessText("Product created successfully.");
+      setSuccessText(t.messages.productCreated);
     }
 
     setSaving(false);
@@ -358,7 +374,7 @@ useEffect(() => {
     }
 
     setSuccessText(
-      product.is_active ? "Product hidden successfully." : "Product activated."
+      product.is_active ? t.messages.productHidden : t.messages.productActivated
     );
 
     loadProducts();
@@ -387,8 +403,11 @@ useEffect(() => {
 
   if (linkedTasks && linkedTasks.length > 0) {
     setErrorText(
-      `This product is connected to Task Step ${linkedTasks[0].step_number}. Hide it instead, or remove the product connection from Task Library first.`
-    );
+  t.messages.linkedTaskBlock.replace(
+    "{step}",
+    String(linkedTasks[0].step_number)
+  )
+);
     setDeleting(false);
     setDeleteTarget(null);
     return;
@@ -411,7 +430,7 @@ useEffect(() => {
 
   setDeleteTarget(null);
   setDeleting(false);
-  setSuccessText("Product deleted successfully.");
+  setSuccessText(t.messages.productDeleted);
   loadProducts();
 }
 
@@ -420,10 +439,10 @@ useEffect(() => {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -432,31 +451,28 @@ useEffect(() => {
   return (
   <main className="min-h-screen bg-[#050505] text-white">
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <AdminNav />
+      <AdminNav language={currentLanguage} />
 
       <div className="mb-8 max-w-3xl">
   <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">
-    Admin Control
+    {t.pageTag}
   </p>
 
   <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
-    Product Customization
+    {t.title}
   </h1>
 
   <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
-    Manage gold and jewel campaign products, gallery photos, product value,
-    rating stars, reviews, descriptions, and product visibility.
-  </p>
+  {t.description}
+</p>
 </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Products" value={String(products.length)} />
-          <StatCard label="Active" value={String(activeProducts)} />
-          <StatCard
-            label="Hidden"
-            value={String(products.length - activeProducts)}
+          <StatCard label={t.stats.totalProducts} value={String(products.length)} />
+          <StatCard label={t.stats.active} value={String(activeProducts)} />
+          <StatCard label={t.stats.hidden} value={String(products.length - activeProducts)}
           />
-          <StatCard label="Storage" value="Gallery Ready" />
+          <StatCard label={t.stats.storage} value={t.stats.galleryReady} />
         </div>
 
         {successText && (
@@ -559,10 +575,10 @@ useEffect(() => {
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-sm text-yellow-200/80">
-                  {form.id ? "Edit Product" : "Create Product"}
+                  {form.id ? t.form.editProduct : t.form.createProduct}
                 </p>
                 <h2 className="text-2xl font-black">
-                  {form.id ? "Product Settings" : "New Product"}
+                  {form.id ? t.form.productSettings : t.form.newProduct}
                 </h2>
               </div>
 
@@ -572,158 +588,161 @@ useEffect(() => {
             </div>
 
             <div className="space-y-4">
-              <TextInput
-                label="Product Name"
-                value={form.name}
-                placeholder="18K Royal Gold Bracelet"
-                onChange={(value) => setForm({ ...form, name: value })}
-              />
+  <TextInput
+    label={t.form.productName}
+    value={form.name}
+    placeholder={t.form.productNamePlaceholder}
+    onChange={(value) => setForm({ ...form, name: value })}
+  />
 
-              <div className="grid grid-cols-2 gap-3">
-                <TextInput
-                  label="Category"
-                  value={form.category}
-                  placeholder="Gold Jewelry"
-                  onChange={(value) => setForm({ ...form, category: value })}
-                />
+  <div className="grid grid-cols-2 gap-3">
+    <TextInput
+      label={t.form.category}
+      value={form.category}
+      placeholder={t.form.categoryPlaceholder}
+      onChange={(value) => setForm({ ...form, category: value })}
+    />
 
-                <TextInput
-                  label="Currency"
-                  value={form.currency}
-                  placeholder="USD"
-                  onChange={(value) => setForm({ ...form, currency: value })}
-                />
-              </div>
+    <TextInput
+      label={t.form.currency}
+      value={form.currency}
+      placeholder={t.form.currencyPlaceholder}
+      onChange={(value) => setForm({ ...form, currency: value })}
+    />
+  </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <NumberInput
-                  label="Price"
-                  value={form.price}
-                  step="0.01"
-                  onChange={(value) => setForm({ ...form, price: value })}
-                />
+  <div className="grid grid-cols-3 gap-3">
+    <NumberInput
+      label={t.form.price}
+      value={form.price}
+      step="0.01"
+      onChange={(value) => setForm({ ...form, price: value })}
+    />
 
-                <NumberInput
-                  label="Rating"
-                  value={form.rating}
-                  step="0.1"
-                  onChange={(value) => setForm({ ...form, rating: value })}
-                />
+    <NumberInput
+      label={t.form.rating}
+      value={form.rating}
+      step="0.1"
+      onChange={(value) => setForm({ ...form, rating: value })}
+    />
 
-                <NumberInput
-                  label="Reviews"
-                  value={form.reviews_count}
-                  onChange={(value) =>
-                    setForm({ ...form, reviews_count: value })
-                  }
-                />
-              </div>
+    <NumberInput
+      label={t.form.reviews}
+      value={form.reviews_count}
+      onChange={(value) => setForm({ ...form, reviews_count: value })}
+    />
+  </div>
 
-              <div>
-                <p className="mb-2 text-sm font-bold text-white/80">
-                  Description
-                </p>
-                <textarea
-                  value={form.description}
-                  placeholder="Premium polished jewel item prepared for campaign promotion."
-                  onChange={(event) =>
-                    setForm({ ...form, description: event.target.value })
-                  }
-                  className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-                />
-              </div>
+  <div>
+    <p className="mb-2 text-sm font-bold text-white/80">
+      {t.form.description}
+    </p>
 
-              <div>
-                <p className="mb-2 text-sm font-bold text-white/80">
-                  Product Gallery
-                </p>
+    <textarea
+      value={form.description}
+      placeholder={t.form.descriptionPlaceholder}
+      onChange={(event) =>
+        setForm({ ...form, description: event.target.value })
+      }
+      className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+    />
+  </div>
 
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-yellow-400/30 bg-yellow-400/10 px-4 py-5 text-sm font-black text-yellow-300 hover:bg-yellow-400/15">
-                  <ImagePlus className="h-5 w-5" />
-                  {uploading ? "Uploading..." : "Upload Images"}
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) => handleUpload(event.target.files)}
-                  />
-                </label>
+  <div>
+    <p className="mb-2 text-sm font-bold text-white/80">
+      {t.form.productGallery}
+    </p>
 
-                {form.images.length > 0 && (
-                  <div className="mt-3 grid grid-cols-3 gap-3">
-                    {form.images.map((image) => (
-                      <div
-                        key={image}
-                        className={`relative overflow-hidden rounded-2xl border ${
-                          form.main_image === image
-                            ? "border-yellow-400"
-                            : "border-white/10"
-                        }`}
-                      >
-                        <img
-                          src={image}
-                          alt="Product"
-                          className="h-24 w-full object-cover"
-                        />
+    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-yellow-400/30 bg-yellow-400/10 px-4 py-5 text-sm font-black text-yellow-300 hover:bg-yellow-400/15">
+      <ImagePlus className="h-5 w-5" />
+      {uploading ? t.form.uploading : t.form.uploadImages}
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm({ ...form, main_image: image })
-                          }
-                          className="absolute bottom-1 left-1 rounded-full bg-black/75 px-2 py-1 text-[10px] font-bold text-white"
-                        >
-                          Main
-                        </button>
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => handleUpload(event.target.files)}
+      />
+    </label>
 
-                        <button
-                          type="button"
-                          onClick={() => removeImage(image)}
-                          className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+    {form.images.length > 0 && (
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        {form.images.map((image) => (
+          <div
+            key={image}
+            className={`relative overflow-hidden rounded-2xl border ${
+              form.main_image === image
+                ? "border-yellow-400"
+                : "border-white/10"
+            }`}
+          >
+            <img
+              src={image}
+              alt="Product"
+              className="h-24 w-full object-cover"
+            />
 
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 p-4">
-                <input
-                  type="checkbox"
-                  checked={form.is_active}
-                  onChange={(event) =>
-                    setForm({ ...form, is_active: event.target.checked })
-                  }
-                />
-                <span className="font-bold text-white/80">Active Product</span>
-              </label>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, main_image: image })}
+              className="absolute bottom-1 left-1 rounded-full bg-black/75 px-2 py-1 text-[10px] font-bold text-white"
+            >
+              {t.form.main}
+            </button>
 
-              <button
-                onClick={handleSaveProduct}
-                disabled={saving || uploading}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
-              >
-                <Save className="h-5 w-5" />
-                {saving ? "Saving..." : form.id ? "Update Product" : "Create Product"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => removeImage(image)}
+              className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 p-4">
+    <input
+      type="checkbox"
+      checked={form.is_active}
+      onChange={(event) =>
+        setForm({ ...form, is_active: event.target.checked })
+      }
+    />
+    <span className="font-bold text-white/80">{t.form.activeProduct}</span>
+  </label>
+
+  <button
+    onClick={handleSaveProduct}
+    disabled={saving || uploading}
+    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
+  >
+    <Save className="h-5 w-5" />
+    {saving
+      ? t.form.saving
+      : form.id
+        ? t.form.updateProduct
+        : t.form.createProductButton}
+  </button>
+</div>
+
           </section>
 
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
   <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
     <div>
-      <p className="text-sm text-yellow-200/80">Catalog</p>
-      <h2 className="text-2xl font-black">Product List</h2>
-      <p className="mt-1 text-xs text-white/40">
-        Search, filter, sort, and manage products without scrolling through a long list.
-      </p>
+      <p className="text-sm text-yellow-200/80">{t.list.catalog}</p>
+<h2 className="text-2xl font-black">{t.list.title}</h2>
+<p className="mt-1 text-xs text-white/40">
+  {t.list.description}
+</p>
     </div>
 
     <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
-      {filteredProducts.length} shown / {products.length} total
+      {filteredProducts.length} {t.list.shown} / {products.length} {t.list.total}
     </div>
   </div>
 
@@ -733,7 +752,7 @@ useEffect(() => {
       <input
         value={searchQuery}
         onChange={(event) => setSearchQuery(event.target.value)}
-        placeholder="Search product, category, currency..."
+        placeholder={t.list.searchPlaceholder}
         className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
       />
     </div>
@@ -745,15 +764,9 @@ useEffect(() => {
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="all">
-        All Status
-      </option>
-      <option className="bg-black" value="active">
-        Active Only
-      </option>
-      <option className="bg-black" value="hidden">
-        Hidden Only
-      </option>
+      <option className="bg-black" value="all">{t.list.allStatus}</option>
+<option className="bg-black" value="active">{t.list.activeOnly}</option>
+<option className="bg-black" value="hidden">{t.list.hiddenOnly}</option>
     </select>
 
     <select
@@ -761,9 +774,7 @@ useEffect(() => {
       onChange={(event) => setCategoryFilter(event.target.value)}
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="all">
-        All Categories
-      </option>
+      <option className="bg-black" value="all">{t.list.allCategories}</option>
 
       {categories.map((category) => (
         <option key={category} className="bg-black" value={category}>
@@ -786,21 +797,11 @@ useEffect(() => {
       }
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
-      <option className="bg-black" value="newest">
-        Newest First
-      </option>
-      <option className="bg-black" value="name">
-        Name A-Z
-      </option>
-      <option className="bg-black" value="price_high">
-        Price High
-      </option>
-      <option className="bg-black" value="price_low">
-        Price Low
-      </option>
-      <option className="bg-black" value="rating">
-        Top Rating
-      </option>
+      <option className="bg-black" value="newest">{t.list.newestFirst}</option>
+<option className="bg-black" value="name">{t.list.nameAZ}</option>
+<option className="bg-black" value="price_high">{t.list.priceHigh}</option>
+<option className="bg-black" value="price_low">{t.list.priceLow}</option>
+<option className="bg-black" value="rating">{t.list.topRating}</option>
     </select>
 
     <select
@@ -822,27 +823,27 @@ useEffect(() => {
 
   {loading && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-      Loading products...
+      {t.list.loading}
     </div>
   )}
 
   {!loading && products.length === 0 && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
       <Gem className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-      <p className="font-black">No products yet</p>
-      <p className="mt-2 text-sm text-white/50">
-        Create your first gold or jewel product.
-      </p>
+      <p className="font-black">{t.list.noProducts}</p>
+<p className="mt-2 text-sm text-white/50">
+  {t.list.noProductsDescription}
+</p>
     </div>
   )}
 
   {!loading && products.length > 0 && filteredProducts.length === 0 && (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
       <Search className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-      <p className="font-black">No matching products</p>
-      <p className="mt-2 text-sm text-white/50">
-        Try another search keyword or change the filters.
-      </p>
+      <p className="font-black">{t.list.noMatching}</p>
+<p className="mt-2 text-sm text-white/50">
+  {t.list.noMatchingDescription}
+</p>
     </div>
   )}
 
@@ -852,12 +853,12 @@ useEffect(() => {
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
             <tr>
-              <th className="px-4 py-3">Product</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Price</th>
-              <th className="px-4 py-3">Rating</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3">{t.list.product}</th>
+<th className="px-4 py-3">{t.list.category}</th>
+<th className="px-4 py-3">{t.list.price}</th>
+<th className="px-4 py-3">{t.list.rating}</th>
+<th className="px-4 py-3">{t.list.status}</th>
+<th className="px-4 py-3 text-right">{t.list.actions}</th>
             </tr>
           </thead>
 
@@ -886,10 +887,7 @@ useEffect(() => {
                     <div>
                       <p className="font-black">{product.name}</p>
                       <p className="mt-1 text-xs text-white/45">
-                        {Array.isArray(product.images)
-                          ? product.images.length
-                          : 0}{" "}
-                        photos
+                        {Array.isArray(product.images) ? product.images.length : 0} {t.list.photos}
                       </p>
                     </div>
                   </div>
@@ -923,7 +921,7 @@ useEffect(() => {
                         : "bg-red-500/15 text-red-300"
                     }`}
                   >
-                    {product.is_active ? "Active" : "Hidden"}
+                    {product.is_active ? t.list.active : t.list.hidden}
                   </span>
                 </td>
 
@@ -936,7 +934,7 @@ useEffect(() => {
                       title="Edit product"
                     >
                       <Pencil className="h-4 w-4" />
-                      Edit
+                      {t.list.edit}
                     </button>
 
                     <button
@@ -944,7 +942,7 @@ useEffect(() => {
                       onClick={() => toggleProductStatus(product)}
                       className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/[0.1]"
                     >
-                      {product.is_active ? "Hide" : "Activate"}
+                      {product.is_active ? t.list.hide : t.list.activate}
                     </button>
 
                     <button
@@ -954,7 +952,7 @@ useEffect(() => {
                       title="Delete product"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Delete
+                      {t.list.delete}
                     </button>
                   </div>
                 </td>
@@ -966,15 +964,16 @@ useEffect(() => {
 
       <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
         <p>
-          Showing{" "}
-          <span className="font-black text-white">{firstResult}</span>
-          {" - "}
-          <span className="font-black text-white">{lastResult}</span>
-          {" of "}
-          <span className="font-black text-yellow-300">
-            {filteredProducts.length}
-          </span>{" "}
-          products
+          {t.list.showing}{" "}
+<span className="font-black text-white">{firstResult}</span>
+{" - "}
+<span className="font-black text-white">{lastResult}</span>
+{" "}
+{t.list.of}{" "}
+<span className="font-black text-yellow-300">
+  {filteredProducts.length}
+</span>{" "}
+{t.list.products}
         </p>
 
         <div className="flex items-center gap-2">
@@ -985,11 +984,11 @@ useEffect(() => {
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
-            Prev
+            {t.list.prev}
           </button>
 
           <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-            Page {currentPage} / {totalPages}
+            {t.list.page} {currentPage} / {totalPages}
           </div>
 
           <button
@@ -1000,7 +999,7 @@ useEffect(() => {
             }
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next
+            {t.list.next}
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>

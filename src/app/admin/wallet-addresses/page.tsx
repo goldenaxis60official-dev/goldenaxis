@@ -3,6 +3,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
@@ -27,6 +29,7 @@ type WalletAddressRow = {
   qr_image_url: string | null;
   active: boolean;
 };
+type AdminWalletAddressesText = typeof en.adminWalletAddresses;
 
 const walletOptions: Array<{ asset: WalletAsset; network: WalletNetwork }> = [
   { asset: "USDT", network: "TRC20" },
@@ -49,6 +52,12 @@ export default function AdminWalletAddressesPage() {
 
 function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
   const isAdmin = profile.role === "admin";
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
+
+  const t: AdminWalletAddressesText =
+    currentLanguage === "zh"
+      ? (zh.adminWalletAddresses as unknown as AdminWalletAddressesText)
+      : en.adminWalletAddresses;
 
   const [rows, setRows] = useState<Record<string, WalletAddressRow>>({});
   const [loading, setLoading] = useState(true);
@@ -155,7 +164,11 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
     qr_image_url: data.publicUrl,
   });
 
-  setSuccessText(`${asset} ${network} QR image uploaded. Click Save Address to keep it.`);
+  setSuccessText(
+  t.messages.qrUploaded
+    .replace("{asset}", asset)
+    .replace("{network}", network)
+);
   setSavingKey(null);
 }
 
@@ -186,7 +199,11 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText(`${asset} ${network} wallet address saved.`);
+    setSuccessText(
+  t.messages.addressSaved
+    .replace("{asset}", asset)
+    .replace("{network}", network)
+);
     setSavingKey(null);
     loadAddresses();
   }
@@ -196,10 +213,10 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -208,18 +225,17 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav />
+        <AdminNav language={currentLanguage} />
 
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>
             <p className="text-sm font-bold text-yellow-200/80">
-              Admin Control
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Wallet Addresses</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Set the deposit wallet addresses shown inside the user support
-              wallet assistant.
-            </p>
+  {t.pageTag}
+</p>
+<h1 className="mt-1 text-3xl font-black">{t.title}</h1>
+<p className="mt-2 max-w-2xl text-sm text-white/50">
+  {t.description}
+</p>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4">
@@ -243,13 +259,13 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
 
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
           <div className="mb-5">
-            <p className="text-sm text-yellow-200/80">Deposit Settings</p>
-            <h2 className="text-2xl font-black">USDT / USDC Network Address</h2>
+            <p className="text-sm text-yellow-200/80">{t.section.tag}</p>
+<h2 className="text-2xl font-black">{t.section.title}</h2>
           </div>
 
           {loading ? (
             <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-              Loading wallet settings...
+              {t.section.loading}
             </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
@@ -268,7 +284,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                           {item.asset}
                         </p>
                         <h3 className="mt-1 text-xl font-black">
-                          {item.network} Address
+                          {t.form.addressTitle.replace("{network}", item.network)}
                         </h3>
                       </div>
 
@@ -282,13 +298,13 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                             })
                           }
                         />
-                        Active
+                        {t.form.active}
                       </label>
                     </div>
 
                     <div className="mb-4">
                       <p className="mb-2 text-sm font-bold text-white/80">
-                        Deposit Address
+                        {t.form.depositAddress}
                       </p>
                       <textarea
                         value={row?.address || ""}
@@ -297,14 +313,16 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                             address: event.target.value,
                           })
                         }
-                        placeholder={`Enter ${item.asset} ${item.network} deposit address`}
+                        placeholder={t.form.depositAddressPlaceholder
+  .replace("{asset}", item.asset)
+  .replace("{network}", item.network)}
                         className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                       />
                     </div>
 
                     <div className="mb-4">
   <p className="mb-2 text-sm font-bold text-white/80">
-    QR Image
+    {t.form.qrImage}
   </p>
 
   {row?.qr_image_url ? (
@@ -317,7 +335,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
 
       <div className="min-w-0">
         <p className="text-sm font-bold text-white">
-          QR image uploaded
+          {t.form.qrImageUploaded}
         </p>
         <p className="mt-1 truncate text-xs text-white/45">
           {row.qr_image_url}
@@ -332,13 +350,13 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
           }
           className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-200"
         >
-          Remove QR
+          {t.form.removeQr}
         </button>
       </div>
     </div>
   ) : (
     <div className="mb-3 rounded-2xl border border-dashed border-white/10 bg-black/25 p-4 text-center text-sm text-white/45">
-      No QR image uploaded
+      {t.form.noQrImage}
     </div>
   )}
 
@@ -357,7 +375,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
 
                     <div className="mb-5">
                       <p className="mb-2 text-sm font-bold text-white/80">
-                        Note / Instruction
+                        {t.form.note}
                       </p>
                       <input
                         value={row?.memo || ""}
@@ -366,7 +384,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                             memo: event.target.value,
                           })
                         }
-                        placeholder="Example: Only send using this network."
+                        placeholder={t.form.notePlaceholder}
                         className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                       />
                     </div>
@@ -377,7 +395,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                       className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
                     >
                       <Save className="h-5 w-5" />
-                      {savingKey === key ? "Saving..." : "Save Address"}
+                      {savingKey === key ? t.form.saving : t.form.saveAddress}
                     </button>
                   </div>
                 );
