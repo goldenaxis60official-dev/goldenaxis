@@ -1,6 +1,6 @@
 // src/lib/referral.ts
 
-export function normalizeTeamCode(value: string) {
+export function normalizeReferralCode(value: string) {
   return value
     .trim()
     .toUpperCase()
@@ -8,12 +8,12 @@ export function normalizeTeamCode(value: string) {
     .slice(0, 20);
 }
 
-export function isValidTeamCode(value: string) {
-  const code = normalizeTeamCode(value);
+export function isValidReferralCode(value: string) {
+  const code = normalizeReferralCode(value);
   return /^[A-Z0-9_-]{4,20}$/.test(code);
 }
 
-export function generateTeamCode(length = 6) {
+export function generateReferralCode(length = 6) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
 

@@ -16,12 +16,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { generateTeamCode } from "@/lib/referral";
+import { generateReferralCode } from "@/lib/referral";
 
 type PendingSignup = {
   email: string;
   displayName: string;
-  teamCode: string;
+  referralCode: string;
 };
 
 export default function VerifyEmailPage() {
@@ -87,13 +87,13 @@ checkExistingSession();
     const finalEmail = userEmail || email;
     const finalDisplayName =
     pending?.displayName || metadata.display_name || finalEmail.split("@")[0];
-    const finalTeamCode = (
-      pending?.teamCode ||
-      metadata.team_code ||
-      ""
-    )
-      .trim()
-      .toUpperCase();
+    const finalReferralCode = (
+  pending?.referralCode ||
+  metadata.referral_code ||
+  ""
+)
+  .trim()
+  .toUpperCase();
 
     const { data: existingProfile } = await supabase
       .from("profiles")
@@ -102,38 +102,46 @@ checkExistingSession();
       .maybeSingle();
 
     if (!existingProfile) {
-      const legacyCode = generateTeamCode();
+  const newUserReferralCode = generateReferralCode();
 
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: userId,
-        email: finalEmail,
-        display_name: finalDisplayName,
-        referral_code: legacyCode,
-        referred_by: null,
-        terms_accepted: true,
-        role: "user",
-        balance: 0,
-        today_earnings: 0,
-        total_earnings: 0,
-        current_step: 1,
-        credit_score: 100,
-        status: "active",
-      });
+  let referredBy: string | null = null;
 
-      if (profileError) {
-        throw new Error(profileError.message);
-      }
+  if (finalReferralCode) {
+    const { data: referrerProfile, error: referrerError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("referral_code", finalReferralCode)
+      .maybeSingle();
 
-            if (finalTeamCode) {
-        const { error: joinError } = await supabase.rpc("join_team_by_code", {
-          _team_code: finalTeamCode,
-        });
-
-        if (joinError) {
-          console.warn("Team code join skipped:", joinError.message);
-        }
-      }
+    if (referrerError) {
+      console.warn("Referral lookup skipped:", referrerError.message);
     }
+
+    if (referrerProfile?.id && referrerProfile.id !== userId) {
+      referredBy = referrerProfile.id;
+    }
+  }
+
+  const { error: profileError } = await supabase.from("profiles").insert({
+    id: userId,
+    email: finalEmail,
+    display_name: finalDisplayName,
+    referral_code: newUserReferralCode,
+    referred_by: referredBy,
+    terms_accepted: true,
+    role: "user",
+    balance: 0,
+    today_earnings: 0,
+    total_earnings: 0,
+    current_step: 1,
+    credit_score: 100,
+    status: "active",
+  });
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+}
 
     localStorage.removeItem("ga60_pending_signup");
 

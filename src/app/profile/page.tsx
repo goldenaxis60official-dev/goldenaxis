@@ -17,7 +17,6 @@ import {
   Download,
   Upload,
   History,
-  Users,
   Headphones,
   ShieldCheck,
   LogOut,
@@ -31,24 +30,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-type TeamSummary = {
-  team_id: string;
-  team_code: string;
-  team_name: string | null;
-  team_count: number;
-  total_reward: number;
-  user_role: string;
-};
-
 const menuItems = [
-  {
-    key: "teamCenter",
-    icon: Users,
-    href: "/team",
-    featured: true,
-    danger: false,
-    subtitleKey: "teamCenter",
-  },
   {
     key: "customerSupport",
     icon: Headphones,
@@ -141,8 +123,7 @@ function ProfileContent({ profile }: { profile: Profile }) {
 
   const t = messages[language];
 
-  const [assignedTotal, setAssignedTotal] = useState<number | null>(null);
-const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+const [assignedTotal, setAssignedTotal] = useState<number | null>(null);
 const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -166,25 +147,6 @@ const [copied, setCopied] = useState(false);
       loadAssignedCount();
     }
   }, [profile.id, profile.role]);
-
-  useEffect(() => {
-  async function loadTeamSummary() {
-    const { data, error } = await supabase.rpc("get_my_team_summary");
-
-    if (error) {
-      console.error(error.message);
-      setTeamSummary(null);
-      return;
-    }
-
-    const row = Array.isArray(data) ? data[0] : data;
-    setTeamSummary((row || null) as TeamSummary | null);
-  }
-
-  if (profile.role === "user") {
-    loadTeamSummary();
-  }
-}, [profile.id, profile.role]);
 
 async function handleLanguageChange(nextLanguage: Language) {
   if (nextLanguage === language || savingLanguage) return;
@@ -227,10 +189,10 @@ setSavingLanguage(false);
     router.push(item.href);
   }
 
-  async function copyTeamCode() {
-  if (!teamSummary?.team_code) return;
+  async function copyReferralCode() {
+  if (!profile.referral_code) return;
 
-  await navigator.clipboard.writeText(teamSummary.team_code);
+  await navigator.clipboard.writeText(profile.referral_code);
   setCopied(true);
 
   setTimeout(() => {
@@ -292,66 +254,59 @@ function openTelegramSupport() {
         </LuxuryCard>
 
         <LuxuryCard goldGlow className="mb-6 p-5">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white/50">{t.profile.campaignBalance}</p>
-              <h2 className="mt-1 text-3xl font-black">
-                ${Number(profile.balance).toFixed(2)}
-              </h2>
-            </div>
+  <div className="mb-5 flex items-center justify-between">
+    <div>
+      <p className="text-sm text-white/50">{t.profile.campaignBalance}</p>
+      <h2 className="mt-1 text-3xl font-black">
+        ${Number(profile.balance).toFixed(2)}
+      </h2>
+    </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
-              <Wallet className="h-7 w-7" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <button
-  type="button"
-  onClick={() => {
-    if (teamSummary?.team_code) {
-      copyTeamCode();
-    } else {
-      router.push("/team");
-    }
-  }}
-  className="rounded-[1.25rem] border border-yellow-400/25 bg-yellow-400/10 px-3 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)] active:scale-[0.98]"
->
-  <div className="flex items-center justify-between gap-2">
-    <p className="text-xs text-yellow-100/60">{t.profile.teamCenter}</p>
-    {copied ? (
-  <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
-) : teamSummary?.team_code ? (
-  <Copy className="h-3.5 w-3.5 text-white/35" />
-) : (
-  <ChevronRight className="h-3.5 w-3.5 text-yellow-200/60" />
-)}
+    <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
+      <Wallet className="h-7 w-7" />
+    </div>
   </div>
 
-  <p className="mt-1 truncate font-black text-yellow-300">
-    {teamSummary?.team_code || t.profile.noTeam}
-  </p>
-</button>
+  <div className="grid grid-cols-3 gap-3 text-center">
+    <button
+      type="button"
+      onClick={copyReferralCode}
+      className="rounded-[1.25rem] border border-yellow-400/25 bg-yellow-400/10 px-3 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)] active:scale-[0.98]"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-yellow-100/60">Referral Code</p>
 
-            <StatCard
-  label={t.profile.today}
-  value={`$${Number(profile.today_earnings).toFixed(2)}`}
-  color="green"
-/>
+        {copied ? (
+          <CheckCircle className="h-3.5 w-3.5 text-emerald-300" />
+        ) : (
+          <Copy className="h-3.5 w-3.5 text-white/35" />
+        )}
+      </div>
 
-<StatCard
-  label={t.profile.missions}
-  value={`${completedCount}/${missionTotalText}`}
-  color="blue"
-/>
-          </div>
+      <p className="mt-1 truncate font-black text-yellow-300">
+        {profile.referral_code}
+      </p>
+    </button>
 
-          {copied && (
-            <p className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-200">
-              {t.profile.teamCodeCopied}
-            </p>
-          )}
-               </LuxuryCard>
+    <StatCard
+      label={t.profile.today}
+      value={`$${Number(profile.today_earnings).toFixed(2)}`}
+      color="green"
+    />
+
+    <StatCard
+      label={t.profile.missions}
+      value={`${completedCount}/${missionTotalText}`}
+      color="blue"
+    />
+  </div>
+
+  {copied && (
+    <p className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-200">
+      Referral code copied
+    </p>
+  )}
+</LuxuryCard>
 
         <button
           type="button"

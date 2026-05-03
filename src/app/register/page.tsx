@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
-  UsersRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -27,7 +26,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [teamCode, setTeamCode] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [accepted, setAccepted] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -74,7 +73,7 @@ if (!cleanDisplayName) {
   setErrorText("Display name is required.");
   return;
 }
-  const cleanTeamCode = teamCode.trim().toUpperCase();
+  const cleanReferralCode = referralCode.trim().toUpperCase();
 
   if (!cleanEmail || !password) {
     setErrorText("Email and password are required.");
@@ -90,13 +89,13 @@ if (!cleanDisplayName) {
 
   try {
     localStorage.setItem(
-      "ga60_pending_signup",
-      JSON.stringify({
-        email: cleanEmail,
-        displayName: cleanDisplayName,
-        teamCode: cleanTeamCode,
-      })
-    );
+  "ga60_pending_signup",
+  JSON.stringify({
+    email: cleanEmail,
+    displayName: cleanDisplayName,
+    referralCode: cleanReferralCode,
+  })
+);
 
     const { error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
@@ -104,9 +103,9 @@ if (!cleanDisplayName) {
       options: {
         emailRedirectTo: `${window.location.origin}/verify-email`,
         data: {
-          display_name: cleanDisplayName,
-          team_code: cleanTeamCode,
-        },
+  display_name: cleanDisplayName,
+  referral_code: cleanReferralCode,
+},
       },
     });
 
@@ -166,7 +165,7 @@ if (!cleanDisplayName) {
 
               <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/50">
                 Create your Golden Axis 60 member account to access assigned
-campaign tasks, account records, team activity, and support.
+campaign tasks, account records, referral benefits, and support.
               </p>
             </div>
 
@@ -244,26 +243,26 @@ campaign tasks, account records, team activity, and support.
                 </label>
 
                 <label className="block">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <span className="block text-xs font-bold text-white/45">
-                      Team Code
-                    </span>
-                    <span className="text-[10px] font-bold text-white/30">
-                      Optional
-                    </span>
-                  </div>
+  <div className="mb-2 flex items-center justify-between gap-3">
+    <span className="block text-xs font-bold text-white/45">
+      Referral Code
+    </span>
+    <span className="text-[10px] font-bold text-white/30">
+      Optional
+    </span>
+  </div>
 
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
-                    <UsersRound className="h-5 w-5 text-yellow-300/80" />
-                    <input
-                      value={teamCode}
-                      onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
-                      placeholder="Enter team code"
-                      autoComplete="off"
-                      className="w-full bg-transparent text-sm uppercase tracking-wider text-white outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-white/25"
-                    />
-                  </div>
-                </label>
+  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
+    <Sparkles className="h-5 w-5 text-yellow-300/80" />
+    <input
+      value={referralCode}
+      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+      placeholder="Enter referral code"
+      autoComplete="off"
+      className="w-full bg-transparent text-sm uppercase tracking-wider text-white outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-white/25"
+    />
+  </div>
+</label>
 
                 <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/65">
                   <input
@@ -323,7 +322,7 @@ platform protection.
 
             <div className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-yellow-400/15 bg-yellow-400/5 px-4 py-3 text-xs text-yellow-100/65">
               <CheckCircle2 className="h-4 w-4 text-yellow-300" />
-              Team code can also be joined later from Team Center.
+              Referral code is optional and can be entered during registration.
             </div>
 
             <p className="mt-6 text-center text-sm text-white/50">
