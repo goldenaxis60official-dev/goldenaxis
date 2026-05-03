@@ -223,12 +223,13 @@ useEffect(() => {
   }
 
   useEffect(() => {
-  if (hasPageAccess) {
-    loadTickets();
+  if (selectedTicketId) {
+    loadChat(selectedTicketId);
+    setReplyText("");
   } else {
-    setLoadingTickets(false);
+    setChatMessages([]);
   }
-}, [hasPageAccess]);
+}, [selectedTicketId]);
 
   useEffect(() => {
   if (!hasPageAccess) return;
@@ -512,13 +513,21 @@ useEffect(() => {
 />
                       </div>
 
-                      <p className="truncate text-xs font-bold text-yellow-100/75">
-                        {ticket.subject}
-                      </p>
+                      <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2">
+  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200/65">
+    Request Reason
+  </p>
+  <p className="mt-1 truncate text-sm font-black text-yellow-100">
+    {ticket.subject}
+  </p>
+</div>
 
-                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/45">
-                        {ticket.message}
-                      </p>
+<p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-white/30">
+  Latest Message
+</p>
+<p className="mt-1 line-clamp-2 text-xs leading-5 text-white/55">
+  {ticket.message}
+</p>
 
                       <p className="mt-3 text-[11px] text-white/30">
                         {new Date(ticket.created_at).toLocaleString()}
@@ -590,35 +599,43 @@ useEffect(() => {
             ) : (
               <>
                 <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-black/25 px-5 py-4">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xl font-black">
-                        {selectedTicket.profiles?.display_name || t.list.unknownUser}
-                      </h2>
-                      <StatusBadge
-  status={selectedTicket.status}
-  label={getSupportStatusLabel(selectedTicket.status)}
-/>
-                    </div>
+  <div className="min-w-0">
+    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/25 bg-yellow-400/10 px-4 py-2">
+      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200/65">
+        Request Reason
+      </span>
+      <span className="text-sm font-black text-yellow-100">
+        {selectedTicket.subject}
+      </span>
+    </div>
 
-                    <p className="mt-1 text-sm text-white/45">
-                      {selectedTicket.profiles?.email || t.chat.noEmail} •{" "}
-                      {selectedTicket.subject}
-                    </p>
-                  </div>
+    <div className="flex items-center gap-3">
+      <h2 className="truncate text-xl font-black">
+        {selectedTicket.profiles?.display_name || t.list.unknownUser}
+      </h2>
+      <StatusBadge
+        status={selectedTicket.status}
+        label={getSupportStatusLabel(selectedTicket.status)}
+      />
+    </div>
 
-                  <select
-                    value={selectedTicket.status}
-                    onChange={(event) =>
-                      handleStatusChange(event.target.value as SupportStatus)
-                    }
-                    className="rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
-                  >
-                    <option value="open">{t.status.open}</option>
-<option value="reviewing">{t.status.reviewing}</option>
-<option value="closed">{t.status.closed}</option>
-                  </select>
-                </div>
+    <p className="mt-1 text-sm text-white/45">
+      {selectedTicket.profiles?.email || t.chat.noEmail}
+    </p>
+  </div>
+
+  <select
+    value={selectedTicket.status}
+    onChange={(event) =>
+      handleStatusChange(event.target.value as SupportStatus)
+    }
+    className="rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+  >
+    <option value="open">{t.status.open}</option>
+    <option value="reviewing">{t.status.reviewing}</option>
+    <option value="closed">{t.status.closed}</option>
+  </select>
+</div>
 
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(234,179,8,0.08),transparent_35%),#070707] p-5">
                   {loadingChat && (
