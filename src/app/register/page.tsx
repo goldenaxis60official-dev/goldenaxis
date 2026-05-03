@@ -63,7 +63,7 @@ export default function RegisterPage() {
   setErrorText("");
 
   if (!accepted) {
-    setErrorText("Please accept the platform agreement first.");
+    setErrorText("Please accept the member agreement first.");
     return;
   }
 
@@ -157,7 +157,7 @@ if (!cleanDisplayName) {
 
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] font-bold text-yellow-100/80">
                 <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
-                Premium Campaign Access
+                Official Member Registration
               </div>
 
               <h1 className="text-4xl font-black tracking-tight">
@@ -165,8 +165,8 @@ if (!cleanDisplayName) {
               </h1>
 
               <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/50">
-                Join Golden Axis 60 to access assigned promotional missions,
-                wallet records, and team campaign activity.
+                Create your Golden Axis 60 member account to access assigned
+campaign tasks, account records, team activity, and support.
               </p>
             </div>
 
@@ -273,8 +273,8 @@ if (!cleanDisplayName) {
                     className="mt-1 h-4 w-4 accent-yellow-400"
                   />
                   <span className="leading-5">
-                    I agree this platform uses promotional campaign credits and
-                   rewards.
+                    I agree to the Golden Axis 60 member agreement, campaign rules,
+and account review process.
                   </span>
                 </label>
 
@@ -311,10 +311,11 @@ if (!cleanDisplayName) {
 
                 <div>
                   <p className="text-sm font-bold text-white/85">
-                    Verified member setup
+                   Member account setup
                   </p>
                   <p className="mt-1 text-xs leading-5 text-white/45">
-                    Your account is created as a standard member profile.
+                    Your account is created securely and may be reviewed for normal
+platform protection.
                   </p>
                 </div>
               </div>
@@ -338,9 +339,19 @@ if (!cleanDisplayName) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 text-center text-[11px] text-white/30">
-          © Golden Axis 60 · Official Registration Portal
-        </div>
+        <div className="px-5 pb-5 text-center text-[11px] text-white/35">
+  <p>© Golden Axis 60 · Official Member Portal</p>
+
+  <div className="mt-2 flex items-center justify-center gap-3">
+    <Link href="/terms" className="hover:text-yellow-300">
+      Terms
+    </Link>
+    <span className="text-white/20">•</span>
+    <Link href="/login" className="hover:text-yellow-300">
+      Login
+    </Link>
+  </div>
+</div>
       </div>
     </main>
   );

@@ -3,6 +3,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -234,7 +235,7 @@ checkExistingSession();
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-yellow-300 border-t-transparent" />
-          <p className="text-sm text-white/60">Checking verification...</p>
+          <p className="text-sm text-white/60">Checking secure verification...</p>
         </div>
       </main>
     );
@@ -273,7 +274,7 @@ checkExistingSession();
 
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] font-bold text-yellow-100/80">
                 <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
-                Verify Member Access
+                Official Email Verification
               </div>
 
               <h1 className="text-4xl font-black tracking-tight">
@@ -394,9 +395,19 @@ checkExistingSession();
           </div>
         </div>
 
-        <div className="px-5 pb-5 text-center text-[11px] text-white/30">
-          © Golden Axis 60 · Official Verification Portal
-        </div>
+        <div className="px-5 pb-5 text-center text-[11px] text-white/35">
+  <p>© Golden Axis 60 · Official Member Portal</p>
+
+  <div className="mt-2 flex items-center justify-center gap-3">
+    <Link href="/login" className="hover:text-yellow-300">
+      Login
+    </Link>
+    <span className="text-white/20">•</span>
+    <Link href="/terms" className="hover:text-yellow-300">
+      Terms
+    </Link>
+  </div>
+</div>
       </div>
     </main>
   );

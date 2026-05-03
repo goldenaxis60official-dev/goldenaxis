@@ -60,7 +60,7 @@ export default function LoginPage() {
     const cleanLoginId = loginId.trim();
 
 if (!cleanLoginId || !password) {
-  setErrorText("Please enter your email/display name and password.");
+  setErrorText("Please enter your email or display name and password.");
   setLoading(false);
   return;
 }
@@ -76,7 +76,7 @@ if (!cleanLoginId.includes("@")) {
   );
 
   if (nameError || !foundEmail) {
-    setErrorText("Display name not found.");
+    setErrorText("We could not verify those login details.");
     setLoading(false);
     return;
   }
@@ -178,7 +178,7 @@ setErrorText(message);
 
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] font-bold text-yellow-100/80">
                 <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
-                Premium Campaign Access
+                Official Member Access
               </div>
 
               <h1 className="text-4xl font-black tracking-tight">
@@ -186,8 +186,8 @@ setErrorText(message);
               </h1>
 
               <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/50">
-                Login to continue your assigned promotional missions and wallet
-                activity.
+                Login to continue your assigned campaign tasks, account records,
+and support messages.
               </p>
             </div>
 
@@ -283,8 +283,8 @@ setErrorText(message);
                     Protected member access
                   </p>
                   <p className="mt-1 text-xs leading-5 text-white/45">
-                    Your campaign account, wallet records, and mission history
-                    are managed through a secure login session.
+                    Your member account, activity records, and support messages
+are protected through a secure login session.
                   </p>
                 </div>
               </div>
@@ -303,9 +303,19 @@ setErrorText(message);
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 text-center text-[11px] text-white/30">
-          © Golden Axis 60 · Official Access Portal
-        </div>
+        <div className="px-5 pb-5 text-center text-[11px] text-white/35">
+  <p>© Golden Axis 60 · Official Member Portal</p>
+
+  <div className="mt-2 flex items-center justify-center gap-3">
+    <Link href="/terms" className="hover:text-yellow-300">
+      Terms
+    </Link>
+    <span className="text-white/20">•</span>
+    <Link href="/support" className="hover:text-yellow-300">
+      Support
+    </Link>
+  </div>
+</div>
       </div>
     </main>
   );
