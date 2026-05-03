@@ -35,11 +35,11 @@ type UserTaskAssignment = {
 
 const quickActions = [
   { key: "startMission", icon: PlayCircle, href: "/missions" },
-  { key: "history", icon: History, href: "/history" },
   { key: "deposit", icon: Wallet, href: "/deposit" },
   { key: "team", icon: Users, href: "/team" },
-  { key: "security", icon: ShieldCheck, href: "/terms" },
+  { key: "history", icon: History, href: "/history" },
   { key: "support", icon: Headphones, href: "/support" },
+  { key: "security", icon: ShieldCheck, href: "/terms" },
 ] as const;
 
 export default function HomePage() {
@@ -130,25 +130,98 @@ const nextTaskCategory =
   const nextTaskImage =
     nextProduct?.main_image || nextTask?.image_url || "";
 
-  const nextReward = nextTask
+    const nextReward = nextTask
     ? Number(nextTask.price) *
       Number(nextTask.commission_rate) *
       Number(nextTask.multiplier)
     : 0;
 
-  return (
+  const liveText =
+    lang === "zh"
+      ? {
+          centerOnline: "活动中心在线",
+          liveCampaign: "实时活动状态",
+          online: "在线",
+          supportAvailable: "支持可用",
+          assignedCampaigns: "已分配任务",
+          currentStep: "当前步骤",
+          progressUpdates: "每次任务确认后，活动进度会自动更新。",
+          updatedJustNow: "刚刚更新",
+          ready: "可开始",
+          pending: "待准备",
+          completed: "已完成",
+          checking: "检查中",
+          wallet: "钱包",
+          codeCenter: "团队码",
+          records: "记录",
+          available247: "24/7",
+          awaiting: "等待分配",
+          campaignMatching: "活动匹配中",
+          verificationQueue: "验证队列",
+          walletReady: "钱包就绪",
+        }
+      : {
+          centerOnline: "Campaign Center Online",
+          liveCampaign: "Live Campaign Status",
+          online: "Online",
+          supportAvailable: "Support Available",
+          assignedCampaigns: "Assigned Campaigns",
+          currentStep: "Current Step",
+          progressUpdates:
+            "Your campaign progress updates after each verified mission.",
+          updatedJustNow: "Updated just now",
+          ready: "Ready",
+          pending: "Pending",
+          completed: "Completed",
+          checking: "Checking",
+          wallet: "Wallet",
+          codeCenter: "Code Center",
+          records: "Records",
+          available247: "24/7",
+          awaiting: "Awaiting",
+          campaignMatching: "Campaign Matching in Progress",
+          verificationQueue: "Verification Queue",
+          walletReady: "Wallet Ready",
+        };
+
+  const missionStatusLabel = loadingTasks
+    ? liveText.checking
+    : assignedTotal > 0 && nextTask
+      ? liveText.ready
+      : assignedTotal === 0
+        ? liveText.pending
+        : liveText.completed;
+
+  const actionStatus = {
+    startMission: missionStatusLabel,
+    deposit: liveText.wallet,
+    team: liveText.codeCenter,
+    history: liveText.records,
+    support: liveText.available247,
+    security: `${t.home.creditScore} ${profile.credit_score}`,
+  } as const;
+
+    return (
     <AppShell>
-      <section className="relative px-5 pb-6 pt-8">
+      <section className="relative px-5 pb-4 pt-8">
         <div className="absolute right-6 top-8 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs text-yellow-200">
           {t.home.creditScore} {profile.credit_score}
         </div>
 
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_25px_rgba(212,175,55,0.25)]">
-            <Gem className="h-6 w-6 text-yellow-300" />
+        <div className="mb-5 flex items-center gap-3">
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_25px_rgba(212,175,55,0.25)]">
+            <div className="absolute inset-0 rounded-2xl bg-yellow-300/20 blur-xl" />
+            <Gem className="relative h-6 w-6 text-yellow-300" />
           </div>
 
           <div>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.8)]" />
+              <p className="text-xs font-semibold text-emerald-200">
+                {liveText.centerOnline}
+              </p>
+            </div>
+
             <p className="text-sm text-yellow-200/80">{t.home.welcomeBack}</p>
             <h1 className="text-2xl font-bold tracking-tight">
               {profile.display_name || t.home.goldMember}
@@ -156,16 +229,80 @@ const nextTaskCategory =
           </div>
         </div>
 
+        <LuxuryCard className="mb-4 px-4 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-yellow-300" />
+              <p className="text-sm font-black text-white/85">
+                {liveText.liveCampaign}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 text-[11px] font-bold text-emerald-200">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+              {liveText.online}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <p className="text-[11px] text-white/45">
+                {liveText.supportAvailable}
+              </p>
+              <p className="mt-1 text-sm font-black text-emerald-300">
+                {liveText.available247}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <p className="text-[11px] text-white/45">
+                {liveText.assignedCampaigns}
+              </p>
+              <p className="mt-1 text-sm font-black text-sky-300">
+                {loadingTasks ? "..." : assignedTotal}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <p className="text-[11px] text-white/45">
+                {liveText.currentStep}
+              </p>
+              <p className="mt-1 text-sm font-black text-yellow-300">
+                {t.common.step} {profile.current_step}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <p className="text-[11px] text-white/45">Status</p>
+              <p className="mt-1 text-sm font-black text-white">
+                {missionStatusLabel}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs leading-5 text-white/45">
+            {liveText.progressUpdates}
+          </p>
+        </LuxuryCard>
+
         <LuxuryCard goldGlow className="p-5">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-white/55">{t.home.campaignBalance}</p>
+              <div className="mb-1 flex items-center gap-2">
+                <p className="text-sm text-white/55">
+                  {t.home.campaignBalance}
+                </p>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/45">
+                  {liveText.updatedJustNow}
+                </span>
+              </div>
+
               <h2 className="mt-1 text-4xl font-black tracking-tight">
                 ${Number(profile.balance).toFixed(2)}
               </h2>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
+            <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black shadow-[0_12px_30px_rgba(234,179,8,0.28)]">
               <Wallet className="h-7 w-7" />
             </div>
           </div>
@@ -192,7 +329,7 @@ const nextTaskCategory =
         </LuxuryCard>
       </section>
 
-      <section className="px-5">
+      <section className="px-5 pb-5">
         <LuxuryCard className="px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -202,51 +339,30 @@ const nextTaskCategory =
               </p>
             </div>
 
-            <p className="text-xs text-yellow-300">
-              {t.common.step} {profile.current_step}
+            <p className="text-xs font-bold text-yellow-300">
+              {assignedTotal > 0
+                ? `${Math.round(progressPercent)}%`
+                : liveText.awaiting}
             </p>
           </div>
 
           <div className="h-3 overflow-hidden rounded-full bg-black/40">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-yellow-200"
+              className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-yellow-200 transition-all duration-700"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
-          <p className="mt-3 text-xs leading-5 text-white/50">
-            {t.home.progressNote}
-          </p>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="text-xs leading-5 text-white/50">
+              {t.home.progressNote}
+            </p>
+
+            <p className="shrink-0 text-xs font-black text-white/70">
+              {completedCount}/{assignedTotal || "-"}
+            </p>
+          </div>
         </LuxuryCard>
-      </section>
-
-      <section className="px-5 py-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-bold">{t.home.quickAccess}</h3>
-          <span className="text-xs text-yellow-300">{t.home.memberTools}</span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          {quickActions.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <button
-                key={item.key}
-                onClick={() => router.push(item.href)}
-                className="group rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.075),rgba(255,255,255,0.025))] p-4 text-center shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition active:scale-[0.97] hover:border-yellow-400/40 hover:bg-yellow-400/10"
-              >
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 text-black shadow-[0_10px_28px_rgba(234,179,8,0.28)] transition group-hover:scale-105">
-                  <Icon className="h-6 w-6" />
-                </div>
-
-                <p className="text-xs font-medium text-white/80">
-                  {t.home.quickActions[item.key]}
-                </p>
-              </button>
-            );
-          })}
-        </div>
       </section>
 
       <section className="px-5 pb-6">
@@ -255,7 +371,7 @@ const nextTaskCategory =
 
           <div className="flex items-center gap-1 text-xs text-yellow-300">
             <Trophy className="h-4 w-4" />
-            Step {profile.current_step}
+            {t.common.step} {profile.current_step}
           </div>
         </div>
 
@@ -267,18 +383,36 @@ const nextTaskCategory =
 
         {!loadingTasks && assignedTotal === 0 && (
           <LuxuryCard goldGlow className="p-5 text-center">
-            <Clock className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
-            <h4 className="font-black">{t.home.preparingTitle}</h4>
-            <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
-  {t.home.preparingNote}
-</p>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 shadow-[0_0_30px_rgba(234,179,8,0.18)]">
+              <Clock className="h-7 w-7 text-yellow-300" />
+            </div>
 
-<button
-  onClick={() => router.push("/support")}
-  className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
->
-  {t.common.contactSupport}
-</button>
+            <h4 className="font-black">{liveText.campaignMatching}</h4>
+
+            <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+              {t.home.preparingNote}
+            </p>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-bold">
+              <div className="rounded-2xl border border-white/10 bg-black/25 px-2 py-2 text-white/60">
+                {liveText.verificationQueue}
+              </div>
+
+              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 px-2 py-2 text-emerald-200">
+                {liveText.supportAvailable}
+              </div>
+
+              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-2 py-2 text-yellow-200">
+                {liveText.walletReady}
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push("/support")}
+              className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
+            >
+              {t.common.contactSupport}
+            </button>
           </LuxuryCard>
         )}
 
@@ -321,18 +455,30 @@ const nextTaskCategory =
                   }`}
                 >
                   {nextTask.task_type === "lucky_bonus"
-  ? t.common.luckyBonus
-  : t.common.standard}
+                    ? t.common.luckyBonus
+                    : t.common.standard}
                 </span>
+              </div>
+
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-yellow-200/80">
+                  {nextTaskCategory}
+                </p>
+                <h4 className="mt-1 line-clamp-2 text-xl font-black text-white">
+                  {nextTaskName}
+                </h4>
               </div>
             </div>
 
             <div className="p-4">
-              <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <h4 className="text-lg font-black">{nextTaskName}</h4>
-                  <p className="mt-1 text-sm text-white/45">
-                    {nextTaskCategory} {t.common.campaign}
+                  <p className="text-xs text-white/45">
+                    {t.common.campaign} • {t.common.step}{" "}
+                    {profile.current_step}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-emerald-300">
+                    {missionStatusLabel}
                   </p>
                 </div>
 
@@ -348,7 +494,7 @@ const nextTaskCategory =
 
               <button
                 onClick={() => router.push("/missions")}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
               >
                 {t.home.continueMission}
                 <ArrowRight className="h-4 w-4" />
@@ -356,6 +502,39 @@ const nextTaskCategory =
             </div>
           </LuxuryCard>
         )}
+      </section>
+
+      <section className="px-5 pb-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-bold">{t.home.quickAccess}</h3>
+          <span className="text-xs text-yellow-300">{t.home.memberTools}</span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {quickActions.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <button
+                key={item.key}
+                onClick={() => router.push(item.href)}
+                className="group rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.075),rgba(255,255,255,0.025))] p-4 text-center shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition active:scale-[0.97] hover:border-yellow-400/40 hover:bg-yellow-400/10"
+              >
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 text-black shadow-[0_10px_28px_rgba(234,179,8,0.28)] transition group-hover:scale-105">
+                  <Icon className="h-6 w-6" />
+                </div>
+
+                <p className="text-xs font-black text-white/85">
+                  {t.home.quickActions[item.key]}
+                </p>
+
+                <p className="mt-1 truncate text-[10px] font-semibold text-yellow-200/60">
+                  {actionStatus[item.key]}
+                </p>
+              </button>
+            );
+          })}
+        </div>
       </section>
     </AppShell>
   );
