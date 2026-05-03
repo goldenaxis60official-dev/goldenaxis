@@ -21,7 +21,7 @@ import { supabase } from "@/lib/supabaseClient";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -33,19 +33,38 @@ export default function LoginPage() {
     setErrorText("");
     setLoading(true);
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanLoginId = loginId.trim();
 
-    if (!cleanEmail || !password) {
-      setErrorText("Please enter your email and password.");
-      setLoading(false);
-      return;
+if (!cleanLoginId || !password) {
+  setErrorText("Please enter your email/display name and password.");
+  setLoading(false);
+  return;
+}
+
+let loginEmail = cleanLoginId.toLowerCase();
+
+if (!cleanLoginId.includes("@")) {
+  const { data: foundEmail, error: nameError } = await supabase.rpc(
+    "get_email_by_display_name",
+    {
+      input_display_name: cleanLoginId,
     }
+  );
+
+  if (nameError || !foundEmail) {
+    setErrorText("Display name not found.");
+    setLoading(false);
+    return;
+  }
+
+  loginEmail = foundEmail.toLowerCase();
+}
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
+  email: loginEmail,
+  password,
+});
 
       if (error) throw error;
 
@@ -80,20 +99,18 @@ if (
   message.toLowerCase().includes("email not confirmed") ||
   message.toLowerCase().includes("not confirmed")
 ) {
-  const cleanEmail = email.trim().toLowerCase();
+  if (loginEmail) {
+  await supabase.auth.resend({
+    type: "signup",
+    email: loginEmail,
+    options: {
+      emailRedirectTo: `${window.location.origin}/verify-email`,
+    },
+  });
 
-  if (cleanEmail) {
-    await supabase.auth.resend({
-      type: "signup",
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: `${window.location.origin}/verify-email`,
-      },
-    });
-
-    router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}`);
-    return;
-  }
+  router.replace(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
+  return;
+}
 }
 
 setErrorText(message);
@@ -159,19 +176,19 @@ setErrorText(message);
               <div className="space-y-4">
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-white/45">
-                    Email Address
+                    Email or Name
                   </span>
 
                   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
                     <Mail className="h-5 w-5 text-yellow-300/80" />
                     <input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com"
-                      type="email"
-                      autoComplete="email"
-                      className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
-                    />
+  value={loginId}
+  onChange={(e) => setLoginId(e.target.value)}
+  placeholder="Email or display name"
+  type="text"
+  autoComplete="username"
+  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
+/>
                   </div>
                 </label>
 

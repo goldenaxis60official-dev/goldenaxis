@@ -44,7 +44,12 @@ export default function RegisterPage() {
   }
 
   const cleanEmail = email.trim().toLowerCase();
-  const cleanDisplayName = displayName.trim() || "Gold Member";
+  const cleanDisplayName = displayName.trim();
+
+if (!cleanDisplayName) {
+  setErrorText("Display name is required.");
+  return;
+}
   const cleanTeamCode = teamCode.trim().toUpperCase();
 
   if (!cleanEmail || !password) {

@@ -85,7 +85,7 @@ checkExistingSession();
 
     const finalEmail = userEmail || email;
     const finalDisplayName =
-      pending?.displayName || metadata.display_name || "Gold Member";
+    pending?.displayName || metadata.display_name || finalEmail.split("@")[0];
     const finalTeamCode = (
       pending?.teamCode ||
       metadata.team_code ||
