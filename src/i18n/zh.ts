@@ -16,27 +16,75 @@ export const zh = {
   profile: "我的",
 },
 
-  home: {
+    home: {
     openingAdmin: "正在打开控制中心...",
     creditScore: "信用分",
     welcomeBack: "欢迎回来",
     goldMember: "黄金会员",
+
     campaignBalance: "推广余额",
     today: "今日收益",
     mission: "任务",
     assigned: "已分配",
+
     campaignProgress: "推广进度",
     progressNote: "完成已分配的黄金与珠宝推广任务，即可解锁奖励。",
+
     quickAccess: "快捷入口",
     memberTools: "会员工具",
+
     nextMission: "下一个任务",
     loadingMission: "正在加载任务预览...",
     preparingTitle: "任务列表准备中",
-    preparingNote: "您的专属推广任务列表正在准备中。请等待任务准备完成，或联系客服确认。",
+    preparingNote:
+      "您的专属推广任务列表正在准备中。请等待任务准备完成，或联系客服确认。",
     allCompleted: "全部任务已完成",
     allCompletedNote: "您已完成所有已分配的推广任务。",
     pendingReview: "等待审核",
     continueMission: "继续任务",
+
+    live: {
+      centerOnline: "活动中心在线",
+      liveCampaign: "实时活动状态",
+      online: "在线",
+      supportAvailable: "客服在线",
+      assignedCampaigns: "已分配任务",
+      currentStep: "当前步骤",
+      status: "状态",
+      support: "客服",
+      assigned: "已分配",
+      step: "步骤",
+      progressUpdates: "每次任务确认后，推广进度会自动更新。",
+      updatedJustNow: "刚刚更新",
+      ready: "可开始",
+      pending: "待准备",
+      completed: "已完成",
+      checking: "检查中",
+      awaiting: "等待分配",
+      campaignMatching: "活动匹配中",
+      verificationQueue: "验证队列",
+      walletReady: "钱包就绪",
+    },
+
+    actionStatus: {
+      wallet: "钱包",
+      codeCenter: "团队码",
+      records: "记录",
+      available247: "24/7",
+    },
+
+    recentActivity: {
+      title: "最近动态",
+      liveRecords: "实时记录",
+      noActivityTitle: "暂无推广动态",
+      noActivityNote: "开始第一个任务或提交钱包申请后，账户记录会显示在这里。",
+      missionRewardConfirmed: "任务奖励已确认",
+      campaignCompleted: "推广已完成",
+      campaignMissionCompleted: "已完成一个推广任务",
+      withdrawalRequestSubmitted: "提现申请已提交",
+      depositRequestSubmitted: "充值申请已提交",
+      walletReview: "钱包申请正在平台确认中",
+    },
 
     quickActions: {
       startMission: "开始任务",

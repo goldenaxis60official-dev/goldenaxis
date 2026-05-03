@@ -24,6 +24,7 @@ import {
   History,
   ArrowRight,
   Clock,
+  Activity,
 } from "lucide-react";
 
 type UserTaskAssignment = {
@@ -31,6 +32,15 @@ type UserTaskAssignment = {
   assigned_step: number;
   is_active: boolean;
   tasks: Task | null;
+};
+
+type RecentActivityItem = {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+  tone: "gold" | "green" | "blue";
 };
 
 const quickActions = [
@@ -56,8 +66,13 @@ function HomeContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
   const t = messages[lang];
 
-  const [assignments, setAssignments] = useState<UserTaskAssignment[]>([]);
+  const liveText = t.home.live;
+  const actionText = t.home.actionStatus;
+  const recentText = t.home.recentActivity;
+
+    const [assignments, setAssignments] = useState<UserTaskAssignment[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
+  const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([]);
 
   useEffect(() => {
     if (profile.role === "admin") {
@@ -65,13 +80,13 @@ function HomeContent({ profile }: { profile: Profile }) {
     }
   }, [profile.role, router]);
 
-  useEffect(() => {
-    async function loadAssignedTasks() {
+    useEffect(() => {
+    async function loadHomeData() {
       if (profile.role === "admin") return;
 
       setLoadingTasks(true);
 
-      const { data } = await supabase
+      const { data: assignmentData } = await supabase
         .from("user_task_assignments")
         .select(
           `
@@ -88,12 +103,68 @@ function HomeContent({ profile }: { profile: Profile }) {
         .eq("is_active", true)
         .order("assigned_step", { ascending: true });
 
-      setAssignments((data || []) as unknown as UserTaskAssignment[]);
+      setAssignments((assignmentData || []) as unknown as UserTaskAssignment[]);
       setLoadingTasks(false);
+
+      const activities: RecentActivityItem[] = [];
+
+      const { data: latestHistory } = await supabase
+        .from("task_history")
+        .select("id, reward_amount, created_at, product_snapshot")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestHistory) {
+        const snapshot = latestHistory.product_snapshot as
+          | { name?: string; category?: string }
+          | null;
+
+        activities.push({
+          id: `history-${latestHistory.id}`,
+          title: recentText.missionRewardConfirmed,
+          description: snapshot?.name
+            ? `${snapshot.name} ${recentText.campaignCompleted}`
+            : recentText.campaignMissionCompleted,
+          status: `+$${Number(latestHistory.reward_amount || 0).toFixed(2)}`,
+          created_at: latestHistory.created_at,
+          tone: "green",
+        });
+      }
+
+      const { data: latestWallet } = await supabase
+        .from("wallet_requests")
+        .select("id, type, amount, status, created_at")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestWallet) {
+          activities.push({
+          id: `wallet-${latestWallet.id}`,
+          title:
+            ["withdraw", "withdrawal"].includes(String(latestWallet.type))
+              ? recentText.withdrawalRequestSubmitted
+              : recentText.depositRequestSubmitted,
+          description: recentText.walletReview,
+          status: String(latestWallet.status || liveText.pending),
+          created_at: latestWallet.created_at,
+          tone: "gold",
+        });
+      }
+
+      setRecentActivities(
+        activities.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+      );
     }
 
-    loadAssignedTasks();
-  }, [profile.id, profile.role]);
+    loadHomeData();
+    }, [profile.id, profile.role, recentText, liveText.pending]);
 
   if (profile.role === "admin") {
     return (
@@ -136,54 +207,6 @@ const nextTaskCategory =
       Number(nextTask.multiplier)
     : 0;
 
-  const liveText =
-    lang === "zh"
-      ? {
-          centerOnline: "活动中心在线",
-          liveCampaign: "实时活动状态",
-          online: "在线",
-          supportAvailable: "支持可用",
-          assignedCampaigns: "已分配任务",
-          currentStep: "当前步骤",
-          progressUpdates: "每次任务确认后，活动进度会自动更新。",
-          updatedJustNow: "刚刚更新",
-          ready: "可开始",
-          pending: "待准备",
-          completed: "已完成",
-          checking: "检查中",
-          wallet: "钱包",
-          codeCenter: "团队码",
-          records: "记录",
-          available247: "24/7",
-          awaiting: "等待分配",
-          campaignMatching: "活动匹配中",
-          verificationQueue: "验证队列",
-          walletReady: "钱包就绪",
-        }
-      : {
-          centerOnline: "Campaign Center Online",
-          liveCampaign: "Live Campaign Status",
-          online: "Online",
-          supportAvailable: "Support Available",
-          assignedCampaigns: "Assigned Campaigns",
-          currentStep: "Current Step",
-          progressUpdates:
-            "Your campaign progress updates after each verified mission.",
-          updatedJustNow: "Updated just now",
-          ready: "Ready",
-          pending: "Pending",
-          completed: "Completed",
-          checking: "Checking",
-          wallet: "Wallet",
-          codeCenter: "Code Center",
-          records: "Records",
-          available247: "24/7",
-          awaiting: "Awaiting",
-          campaignMatching: "Campaign Matching in Progress",
-          verificationQueue: "Verification Queue",
-          walletReady: "Wallet Ready",
-        };
-
   const missionStatusLabel = loadingTasks
     ? liveText.checking
     : assignedTotal > 0 && nextTask
@@ -192,12 +215,12 @@ const nextTaskCategory =
         ? liveText.pending
         : liveText.completed;
 
-  const actionStatus = {
+    const actionStatus = {
     startMission: missionStatusLabel,
-    deposit: liveText.wallet,
-    team: liveText.codeCenter,
-    history: liveText.records,
-    support: liveText.available247,
+    deposit: actionText.wallet,
+    team: actionText.codeCenter,
+    history: actionText.records,
+    support: actionText.available247,
     security: `${t.home.creditScore} ${profile.credit_score}`,
   } as const;
 
@@ -246,28 +269,28 @@ const nextTaskCategory =
 
           <div className="grid grid-cols-4 gap-2">
             <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
-              <p className="text-[10px] text-white/40">Support</p>
+              <p className="text-[10px] text-white/40">{liveText.support}</p>
               <p className="mt-1 text-xs font-black text-emerald-300">
-                {liveText.available247}
+                {actionText.available247}
               </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
-              <p className="text-[10px] text-white/40">Assigned</p>
+              <p className="text-[10px] text-white/40">{liveText.assigned}</p>
               <p className="mt-1 text-xs font-black text-sky-300">
                 {loadingTasks ? "..." : assignedTotal}
               </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
-              <p className="text-[10px] text-white/40">Step</p>
+              <p className="text-[10px] text-white/40">{liveText.step}</p>
               <p className="mt-1 text-xs font-black text-yellow-300">
                 {profile.current_step}
               </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
-              <p className="text-[10px] text-white/40">Status</p>
+              <p className="text-[10px] text-white/40">{liveText.status}</p>
               <p className="mt-1 truncate text-xs font-black text-white">
                 {missionStatusLabel}
               </p>
@@ -356,6 +379,68 @@ const nextTaskCategory =
               {completedCount}/{assignedTotal || "-"}
             </p>
           </div>
+        </LuxuryCard>
+      </section>
+
+            <section className="px-5 pb-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-bold">{recentText.title}</h3>
+<span className="text-xs text-yellow-300">{recentText.liveRecords}</span>
+        </div>
+
+        <LuxuryCard className="p-4">
+          {recentActivities.length > 0 ? (
+            <div className="space-y-3">
+              {recentActivities.slice(0, 2).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/25 p-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+                        item.tone === "green"
+                          ? "bg-emerald-300/10 text-emerald-300"
+                          : item.tone === "blue"
+                            ? "bg-sky-300/10 text-sky-300"
+                            : "bg-yellow-300/10 text-yellow-300"
+                      }`}
+                    >
+                      <Activity className="h-5 w-5" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-white/85">
+                        {item.title}
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-white/45">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2.5 py-1 text-[11px] font-black text-yellow-200">
+                    {item.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-yellow-300/10 text-yellow-300">
+                <Activity className="h-5 w-5" />
+              </div>
+
+              <div>
+                <p className="text-sm font-black text-white/85">
+                  {recentText.noActivityTitle}
+                </p>
+                <p className="mt-1 text-[11px] leading-5 text-white/45">
+                  {recentText.noActivityNote}
+                </p>
+              </div>
+            </div>
+          )}
         </LuxuryCard>
       </section>
 

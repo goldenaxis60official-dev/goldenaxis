@@ -16,20 +16,24 @@ export const en = {
   profile: "Profile",
 },
 
-  home: {
+    home: {
     openingAdmin: "Opening control center...",
     creditScore: "Credit Score",
     welcomeBack: "Welcome back",
     goldMember: "Gold Member",
+
     campaignBalance: "Campaign Balance",
     today: "Today",
     mission: "Mission",
     assigned: "Assigned",
+
     campaignProgress: "Campaign Progress",
     progressNote:
       "Complete assigned gold and jewel campaign missions to unlock rewards.",
+
     quickAccess: "Quick Access",
     memberTools: "Member Tools",
+
     nextMission: "Next Mission",
     loadingMission: "Loading mission preview...",
     preparingTitle: "Campaign List Preparing",
@@ -39,6 +43,51 @@ export const en = {
     allCompletedNote: "You have completed all assigned campaign missions.",
     pendingReview: "Pending Review",
     continueMission: "Continue Mission",
+
+    live: {
+      centerOnline: "Campaign Center Online",
+      liveCampaign: "Live Campaign Status",
+      online: "Online",
+      supportAvailable: "Support Available",
+      assignedCampaigns: "Assigned Campaigns",
+      currentStep: "Current Step",
+      status: "Status",
+      support: "Support",
+      assigned: "Assigned",
+      step: "Step",
+      progressUpdates:
+        "Your campaign progress updates after each verified mission.",
+      updatedJustNow: "Updated just now",
+      ready: "Ready",
+      pending: "Pending",
+      completed: "Completed",
+      checking: "Checking",
+      awaiting: "Awaiting",
+      campaignMatching: "Campaign Matching in Progress",
+      verificationQueue: "Verification Queue",
+      walletReady: "Wallet Ready",
+    },
+
+    actionStatus: {
+      wallet: "Wallet",
+      codeCenter: "Code Center",
+      records: "Records",
+      available247: "24/7",
+    },
+
+    recentActivity: {
+      title: "Recent Activity",
+      liveRecords: "Live Records",
+      noActivityTitle: "No recent campaign activity yet",
+      noActivityNote:
+        "Start your first mission or submit a wallet request to build account records.",
+      missionRewardConfirmed: "Mission reward confirmed",
+      campaignCompleted: "campaign completed",
+      campaignMissionCompleted: "A campaign mission was completed",
+      withdrawalRequestSubmitted: "Withdrawal request submitted",
+      depositRequestSubmitted: "Deposit request submitted",
+      walletReview: "Wallet request is under platform review",
+    },
 
     quickActions: {
       startMission: "Start Mission",
