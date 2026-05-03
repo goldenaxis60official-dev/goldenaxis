@@ -12,11 +12,14 @@ import { supabase } from "@/lib/supabaseClient";
 import type { Transaction } from "@/types/transaction";
 import type { Profile } from "@/types/profile";
 import {
+  AlertCircle,
   ArrowDownCircle,
   ArrowUpCircle,
+  ChevronLeft,
+  ChevronRight,
   Gem,
-  AlertCircle,
   ReceiptText,
+  Search,
 } from "lucide-react";
 
 type TransactionFilter = "all" | "in" | "out";
@@ -44,8 +47,44 @@ function TransactionsContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
   const t = messages[lang];
 
+  const ui =
+    lang === "zh"
+    ? {
+        searchPlaceholder: "搜索交易、说明或类型...",
+        newest: "最新优先",
+        oldest: "最旧优先",
+        amountHigh: "金额最高",
+        amountLow: "金额最低",
+        showing: "显示",
+        of: "共",
+        records: "条记录",
+        page: "页",
+        prev: "上一页",
+        next: "下一页",
+      }
+    : {
+        searchPlaceholder: "Search transaction, note, or type...",
+        newest: "Newest First",
+        oldest: "Oldest First",
+        amountHigh: "Amount High",
+        amountLow: "Amount Low",
+        showing: "Showing",
+        of: "of",
+        records: "records",
+        page: "Page",
+        prev: "Prev",
+        next: "Next",
+      };
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [filter, setFilter] = useState<TransactionFilter>("all");
+const [filter, setFilter] = useState<TransactionFilter>("all");
+
+const [searchText, setSearchText] = useState("");
+const [sortBy, setSortBy] = useState<
+  "newest" | "oldest" | "amount_high" | "amount_low"
+>("newest");
+const [currentPage, setCurrentPage] = useState(1);
+const [pageSize, setPageSize] = useState(5);
 
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
@@ -75,16 +114,72 @@ function TransactionsContent({ profile }: { profile: Profile }) {
   }, [profile.id]);
 
   const filteredTransactions = useMemo(() => {
-    if (filter === "in") {
-      return transactions.filter((item) => Number(item.amount) >= 0);
+  const keyword = searchText.trim().toLowerCase();
+
+  const result = transactions.filter((item) => {
+    const amount = Number(item.amount);
+
+    const matchesDirection =
+      filter === "all" ||
+      (filter === "in" && amount >= 0) ||
+      (filter === "out" && amount < 0);
+
+    const label = getTransactionLabel(item.type, t.transactions.labels);
+
+    const matchesSearch =
+      !keyword ||
+      label.toLowerCase().includes(keyword) ||
+      item.type.toLowerCase().includes(keyword) ||
+      item.description?.toLowerCase().includes(keyword) ||
+      String(item.amount).includes(keyword);
+
+    return matchesDirection && matchesSearch;
+  });
+
+  return [...result].sort((a, b) => {
+    if (sortBy === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     }
 
-    if (filter === "out") {
-      return transactions.filter((item) => Number(item.amount) < 0);
+    if (sortBy === "amount_high") {
+      return Math.abs(Number(b.amount)) - Math.abs(Number(a.amount));
     }
 
-    return transactions;
-  }, [filter, transactions]);
+    if (sortBy === "amount_low") {
+      return Math.abs(Number(a.amount)) - Math.abs(Number(b.amount));
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}, [filter, transactions, searchText, sortBy, t.transactions.labels]);
+
+const totalPages = Math.max(
+  1,
+  Math.ceil(filteredTransactions.length / pageSize)
+);
+
+const paginatedTransactions = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  return filteredTransactions.slice(start, start + pageSize);
+}, [filteredTransactions, currentPage, pageSize]);
+
+const firstResult =
+  filteredTransactions.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+const lastResult = Math.min(
+  currentPage * pageSize,
+  filteredTransactions.length
+);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [filter, searchText, sortBy, pageSize]);
+
+useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
 
   const totalIn = transactions
     .filter((item) => Number(item.amount) > 0)
@@ -155,7 +250,80 @@ function TransactionsContent({ profile }: { profile: Profile }) {
               {item.label}
             </button>
           ))}
-        </div>
+                </div>
+
+        {transactions.length > 0 && (
+          <LuxuryCard className="mb-5 p-4">
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <input
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder={ui.searchPlaceholder}
+                  className="w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={sortBy}
+                  onChange={(event) =>
+                    setSortBy(
+                      event.target.value as
+                        | "newest"
+                        | "oldest"
+                        | "amount_high"
+                        | "amount_low"
+                    )
+                  }
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value="newest">
+                    {ui.newest}
+                  </option>
+                  <option className="bg-black" value="oldest">
+                    {ui.oldest}
+                  </option>
+                  <option className="bg-black" value="amount_high">
+                    {ui.amountHigh}
+                  </option>
+                  <option className="bg-black" value="amount_low">
+                    {ui.amountLow}
+                  </option>
+                </select>
+
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value={5}>
+                    5
+                  </option>
+                  <option className="bg-black" value={10}>
+                    10
+                  </option>
+                  <option className="bg-black" value={20}>
+                    20
+                  </option>
+                </select>
+              </div>
+
+              <p className="text-center text-xs text-white/45">
+                {ui.showing}{" "}
+                <span className="font-black text-white">{firstResult}</span>
+                {" - "}
+                <span className="font-black text-white">{lastResult}</span>{" "}
+                {ui.of}{" "}
+                <span className="font-black text-yellow-300">
+                  {filteredTransactions.length}
+                </span>{" "}
+                {ui.records}
+              </p>
+            </div>
+          </LuxuryCard>
+        )}
 
         <div className="mb-5 grid grid-cols-3 gap-3">
   <StatCard label={t.transactions.all} value={String(transactions.length)} color="white" />
@@ -197,7 +365,7 @@ function TransactionsContent({ profile }: { profile: Profile }) {
         )}
 
         <div className="space-y-4 pb-6">
-          {filteredTransactions.map((item) => {
+          {paginatedTransactions.map((item) => {
             const amount = Number(item.amount);
             const positive = isPositiveAmount(amount);
 
@@ -263,7 +431,41 @@ function TransactionsContent({ profile }: { profile: Profile }) {
               </LuxuryCard>
             );
           })}
-        </div>
+                </div>
+
+        {!loading && !errorText && filteredTransactions.length > 0 && (
+          <LuxuryCard className="mb-6 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(1, page - 1))
+                }
+                className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:opacity-35"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {ui.prev}
+              </button>
+
+              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+                {ui.page} {currentPage} / {totalPages}
+              </div>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
+                className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:opacity-35"
+              >
+                {ui.next}
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </LuxuryCard>
+        )}
       </section>
     </AppShell>
   );

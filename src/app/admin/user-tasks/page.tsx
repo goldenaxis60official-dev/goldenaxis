@@ -12,6 +12,8 @@ import type { Task } from "@/types/task";
 import {
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   Gem,
   ListChecks,
@@ -56,6 +58,20 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
   const [assignedStep, setAssignedStep] = useState(1);
 
   const [searchText, setSearchText] = useState("");
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+
+const [assignmentSearchText, setAssignmentSearchText] = useState("");
+const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<
+  "all" | "active" | "inactive"
+>("all");
+const [assignmentTypeFilter, setAssignmentTypeFilter] = useState<
+  "all" | "standard" | "lucky_bonus"
+>("all");
+const [assignmentSortBy, setAssignmentSortBy] = useState<
+  "step_asc" | "step_desc" | "reward_high" | "price_high"
+>("step_asc");
+const [assignmentCurrentPage, setAssignmentCurrentPage] = useState(1);
+const [assignmentPageSize, setAssignmentPageSize] = useState(10);
 
   const [loading, setLoading] = useState(true);
   const [assignmentLoading, setAssignmentLoading] = useState(false);
@@ -97,6 +113,136 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
       );
     });
   }, [users, searchText]);
+
+  const userPageSize = 8;
+
+const userTotalPages = Math.max(
+  1,
+  Math.ceil(filteredUsers.length / userPageSize)
+);
+
+const paginatedUsers = useMemo(() => {
+  const start = (userCurrentPage - 1) * userPageSize;
+  return filteredUsers.slice(start, start + userPageSize);
+}, [filteredUsers, userCurrentPage]);
+
+const userFirstResult =
+  filteredUsers.length === 0 ? 0 : (userCurrentPage - 1) * userPageSize + 1;
+
+const userLastResult = Math.min(
+  userCurrentPage * userPageSize,
+  filteredUsers.length
+);
+
+function getAssignmentReward(assignment: UserTaskAssignment) {
+  const task = assignment.tasks;
+
+  if (!task) return 0;
+
+  return (
+    Number(task.price) *
+    Number(task.commission_rate) *
+    Number(task.multiplier)
+  );
+}
+
+const filteredAssignments = useMemo(() => {
+  const keyword = assignmentSearchText.toLowerCase().trim();
+
+  const result = assignments.filter((assignment) => {
+    const task = assignment.tasks;
+    const product = task?.products;
+
+    const matchesSearch =
+      !keyword ||
+      String(assignment.assigned_step).includes(keyword) ||
+      task?.title?.toLowerCase().includes(keyword) ||
+      task?.category?.toLowerCase().includes(keyword) ||
+      task?.task_type?.toLowerCase().includes(keyword) ||
+      product?.name?.toLowerCase().includes(keyword) ||
+      product?.category?.toLowerCase().includes(keyword);
+
+    const matchesStatus =
+      assignmentStatusFilter === "all" ||
+      (assignmentStatusFilter === "active" && assignment.is_active) ||
+      (assignmentStatusFilter === "inactive" && !assignment.is_active);
+
+    const matchesType =
+      assignmentTypeFilter === "all" ||
+      task?.task_type === assignmentTypeFilter;
+
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  return [...result].sort((a, b) => {
+    if (assignmentSortBy === "step_desc") {
+      return Number(b.assigned_step) - Number(a.assigned_step);
+    }
+
+    if (assignmentSortBy === "reward_high") {
+      return getAssignmentReward(b) - getAssignmentReward(a);
+    }
+
+    if (assignmentSortBy === "price_high") {
+      return Number(b.tasks?.price || 0) - Number(a.tasks?.price || 0);
+    }
+
+    return Number(a.assigned_step) - Number(b.assigned_step);
+  });
+}, [
+  assignments,
+  assignmentSearchText,
+  assignmentStatusFilter,
+  assignmentTypeFilter,
+  assignmentSortBy,
+]);
+
+const assignmentTotalPages = Math.max(
+  1,
+  Math.ceil(filteredAssignments.length / assignmentPageSize)
+);
+
+const paginatedAssignments = useMemo(() => {
+  const start = (assignmentCurrentPage - 1) * assignmentPageSize;
+  return filteredAssignments.slice(start, start + assignmentPageSize);
+}, [filteredAssignments, assignmentCurrentPage, assignmentPageSize]);
+
+const assignmentFirstResult =
+  filteredAssignments.length === 0
+    ? 0
+    : (assignmentCurrentPage - 1) * assignmentPageSize + 1;
+
+const assignmentLastResult = Math.min(
+  assignmentCurrentPage * assignmentPageSize,
+  filteredAssignments.length
+);
+
+useEffect(() => {
+  setUserCurrentPage(1);
+}, [searchText]);
+
+useEffect(() => {
+  if (userCurrentPage > userTotalPages) {
+    setUserCurrentPage(userTotalPages);
+  }
+}, [userCurrentPage, userTotalPages]);
+
+useEffect(() => {
+  setAssignmentCurrentPage(1);
+}, [
+  assignmentSearchText,
+  assignmentStatusFilter,
+  assignmentTypeFilter,
+  assignmentSortBy,
+  assignmentPageSize,
+  selectedUserId,
+]);
+
+useEffect(() => {
+  if (assignmentCurrentPage > assignmentTotalPages) {
+    setAssignmentCurrentPage(assignmentTotalPages);
+  }
+}, [assignmentCurrentPage, assignmentTotalPages]);
 
   async function loadBaseData() {
     setLoading(true);
@@ -397,7 +543,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
 
         {!loading && (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
-            <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
+            <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 xl:sticky xl:top-8 xl:self-start">
               <div className="mb-5">
                 <p className="text-sm text-yellow-200/80">Members</p>
                 <h2 className="text-2xl font-black">Select User</h2>
@@ -413,60 +559,112 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                 />
               </div>
 
-              <div className="max-h-[640px] space-y-3 overflow-y-auto pr-1">
-                {filteredUsers.map((user) => {
-                  const selected = user.id === selectedUserId;
-                  const isUserAdmin = user.role === "admin";
+              <div className="max-h-[590px] space-y-3 overflow-y-auto pr-1">
+  {paginatedUsers.map((user) => {
+    const selected = user.id === selectedUserId;
+    const isUserAdmin = user.role === "admin";
 
-                  return (
-                    <button
-                      key={user.id}
-                      onClick={() => setSelectedUserId(user.id)}
-                      className={`w-full rounded-2xl border p-4 text-left transition ${
-                        selected
-                          ? "border-yellow-400/50 bg-yellow-400/10"
-                          : "border-white/10 bg-white/[0.04] hover:bg-white/[0.07]"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                            isUserAdmin
-                              ? "bg-yellow-400/10 text-yellow-300"
-                              : "bg-blue-400/10 text-blue-300"
-                          }`}
-                        >
-                          {isUserAdmin ? (
-                            <Crown className="h-5 w-5" />
-                          ) : (
-                            <Users className="h-5 w-5" />
-                          )}
-                        </div>
+    return (
+      <button
+        key={user.id}
+        onClick={() => setSelectedUserId(user.id)}
+        className={`w-full rounded-2xl border p-4 text-left transition ${
+          selected
+            ? "border-yellow-400/50 bg-yellow-400/10"
+            : "border-white/10 bg-white/[0.04] hover:bg-white/[0.07]"
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+              isUserAdmin
+                ? "bg-yellow-400/10 text-yellow-300"
+                : "bg-blue-400/10 text-blue-300"
+            }`}
+          >
+            {isUserAdmin ? (
+              <Crown className="h-5 w-5" />
+            ) : (
+              <Users className="h-5 w-5" />
+            )}
+          </div>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="truncate font-black">
-                              {user.display_name || "Gold Member"}
-                            </p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="truncate font-black">
+                {user.display_name || "Gold Member"}
+              </p>
 
-                            <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white/50">
-                              {user.role}
-                            </span>
-                          </div>
+              <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white/50">
+                {user.role}
+              </span>
+            </div>
 
-                          <p className="mt-1 truncate text-xs text-white/45">
-                            {user.email || "No email"}
-                          </p>
+            <p className="mt-1 truncate text-xs text-white/45">
+              {user.email || "No email"}
+            </p>
 
-                          <p className="mt-1 text-xs text-yellow-300">
-                            Step {user.current_step}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+            <p className="mt-1 text-xs text-yellow-300">
+              Step {user.current_step}
+            </p>
+          </div>
+        </div>
+      </button>
+    );
+  })}
+</div>
+
+{filteredUsers.length === 0 && (
+  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+    <Search className="mx-auto mb-3 h-8 w-8 text-yellow-300" />
+    <p className="font-black">No matching users</p>
+    <p className="mt-1 text-sm text-white/45">
+      Try another name, email, code, or user ID.
+    </p>
+  </div>
+)}
+
+{filteredUsers.length > 0 && (
+  <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-3">
+    <p className="mb-3 text-center text-xs text-white/45">
+      Showing{" "}
+      <span className="font-black text-white">{userFirstResult}</span>
+      {" - "}
+      <span className="font-black text-white">{userLastResult}</span>
+      {" of "}
+      <span className="font-black text-yellow-300">
+        {filteredUsers.length}
+      </span>{" "}
+      users
+    </p>
+
+    <div className="flex items-center justify-center gap-2">
+      <button
+        type="button"
+        disabled={userCurrentPage === 1}
+        onClick={() => setUserCurrentPage((page) => Math.max(1, page - 1))}
+        className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+
+      <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+        {userCurrentPage} / {userTotalPages}
+      </div>
+
+      <button
+        type="button"
+        disabled={userCurrentPage === userTotalPages}
+        onClick={() =>
+          setUserCurrentPage((page) => Math.min(userTotalPages, page + 1))
+        }
+        className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  </div>
+)}
             </section>
 
             <section className="space-y-6">
@@ -493,7 +691,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                   </div>
                 </div>
 
-                <div className="grid grid-cols-[1fr_130px_160px] gap-4">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_130px_160px]">
                   <div>
                     <p className="mb-2 text-sm font-bold text-white/80">
                       Select Task Template
@@ -554,14 +752,93 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
               </div>
 
               <div className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-yellow-200/80">
-                      Personalized Campaign
-                    </p>
-                    <h2 className="text-2xl font-black">Assigned Tasks</h2>
-                  </div>
-                </div>
+                <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
+  <div>
+    <p className="text-sm text-yellow-200/80">
+      Personalized Campaign
+    </p>
+    <h2 className="text-2xl font-black">Assigned Tasks</h2>
+    <p className="mt-1 text-xs text-white/40">
+      Search, filter, sort, activate, deactivate, or remove assigned user steps.
+    </p>
+  </div>
+
+  <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
+    {filteredAssignments.length} shown / {assignments.length} total
+  </div>
+</div>
+
+{assignments.length > 0 && (
+  <div className="mb-5 grid grid-cols-1 gap-3 xl:grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.6fr]">
+    <div className="relative">
+      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+      <input
+        value={assignmentSearchText}
+        onChange={(event) => setAssignmentSearchText(event.target.value)}
+        placeholder="Search step, task, product, category..."
+        className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+      />
+    </div>
+
+    <select
+      value={assignmentStatusFilter}
+      onChange={(event) =>
+        setAssignmentStatusFilter(
+          event.target.value as "all" | "active" | "inactive"
+        )
+      }
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="all">All Status</option>
+      <option className="bg-black" value="active">Active</option>
+      <option className="bg-black" value="inactive">Inactive</option>
+    </select>
+
+    <select
+      value={assignmentTypeFilter}
+      onChange={(event) =>
+        setAssignmentTypeFilter(
+          event.target.value as "all" | "standard" | "lucky_bonus"
+        )
+      }
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="all">All Types</option>
+      <option className="bg-black" value="standard">Standard</option>
+      <option className="bg-black" value="lucky_bonus">Lucky Bonus</option>
+    </select>
+
+    <select
+      value={assignmentSortBy}
+      onChange={(event) =>
+        setAssignmentSortBy(
+          event.target.value as
+            | "step_asc"
+            | "step_desc"
+            | "reward_high"
+            | "price_high"
+        )
+      }
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="step_asc">Step 1-80</option>
+      <option className="bg-black" value="step_desc">Step 80-1</option>
+      <option className="bg-black" value="reward_high">Reward High</option>
+      <option className="bg-black" value="price_high">Price High</option>
+    </select>
+
+    <select
+      value={assignmentPageSize}
+      onChange={(event) => setAssignmentPageSize(Number(event.target.value))}
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value={10}>10</option>
+      <option className="bg-black" value={25}>25</option>
+      <option className="bg-black" value={50}>50</option>
+      <option className="bg-black" value={80}>80</option>
+    </select>
+  </div>
+)}
 
                 {assignmentLoading && (
                   <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
@@ -580,10 +857,21 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                   </div>
                 )}
 
-                {!assignmentLoading && assignments.length > 0 && (
-                  <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-white/[0.06] text-xs uppercase tracking-wide text-white/45">
+                {!assignmentLoading && assignments.length > 0 && filteredAssignments.length === 0 && (
+  <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
+    <Search className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
+    <p className="font-black">No matching assigned tasks</p>
+    <p className="mt-2 text-sm text-white/50">
+      Try another search keyword or change the filters.
+    </p>
+  </div>
+)}
+
+{!assignmentLoading && filteredAssignments.length > 0 && (
+  <>
+    <div className="max-h-[620px] overflow-auto rounded-[1.5rem] border border-white/10">
+  <table className="w-full min-w-[980px] text-left text-sm">
+                      <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
                         <tr>
                           <th className="px-4 py-3">User Step</th>
                           <th className="px-4 py-3">Task / Product</th>
@@ -596,7 +884,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                       </thead>
 
                       <tbody className="divide-y divide-white/10">
-                        {assignments.map((assignment) => {
+                        {paginatedAssignments.map((assignment) => {
                           const task = assignment.tasks;
                           const product = task?.products;
                           const lucky = task?.task_type === "lucky_bonus";
@@ -608,7 +896,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                             : 0;
 
                           return (
-                            <tr key={assignment.id} className="bg-black/20">
+                            <tr key={assignment.id} className="bg-black/20 transition hover:bg-white/[0.04]">
                               <td className="px-4 py-4">
                                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">
                                   {assignment.assigned_step}
@@ -713,9 +1001,64 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
                           );
                         })}
                       </tbody>
-                    </table>
+                                        </table>
                   </div>
-                )}
+
+                  <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
+                    <p>
+                      Showing{" "}
+                      <span className="font-black text-white">
+                        {assignmentFirstResult}
+                      </span>
+                      {" - "}
+                      <span className="font-black text-white">
+                        {assignmentLastResult}
+                      </span>
+                      {" of "}
+                      <span className="font-black text-yellow-300">
+                        {filteredAssignments.length}
+                      </span>{" "}
+                      assigned tasks
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={assignmentCurrentPage === 1}
+                        onClick={() =>
+                          setAssignmentCurrentPage((page) =>
+                            Math.max(1, page - 1)
+                          )
+                        }
+                        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Prev
+                      </button>
+
+                      <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+                        Page {assignmentCurrentPage} / {assignmentTotalPages}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={
+                          assignmentCurrentPage === assignmentTotalPages
+                        }
+                        onClick={() =>
+                          setAssignmentCurrentPage((page) =>
+                            Math.min(assignmentTotalPages, page + 1)
+                          )
+                        }
+                        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                                    </div>
+  </>
+)}
               </div>
             </section>
           </div>

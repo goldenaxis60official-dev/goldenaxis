@@ -5,7 +5,7 @@
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import { getLanguage, messages } from "@/i18n";
 import StatCard from "@/components/ui/StatCard";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -13,18 +13,20 @@ import { supabase } from "@/lib/supabaseClient";
 import type { WalletRequest } from "@/types/walletRequest";
 import type { Profile } from "@/types/profile";
 import {
-  ClipboardList,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
   Upload,
   Download,
   Clock,
   CheckCircle,
   XCircle,
-  ArrowDownCircle,
-  ArrowUpCircle,
+  Search,
 } from "lucide-react";
 
 type RequestFilter = "all" | "deposit_credit" | "withdrawal";
+type StatusFilter = "all" | "pending" | "approved" | "rejected";
 
 function getTypeLabel(
   type: WalletRequest["type"],
@@ -61,7 +63,43 @@ export default function WalletRecordsPage() {
 
 function WalletRecordsContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
-  const t = messages[lang];
+const t = messages[lang];
+
+const ui =
+  lang === "zh"
+    ? {
+        searchPlaceholder: "搜索记录、方式、备注或状态...",
+        allStatus: "全部状态",
+        newest: "最新优先",
+        oldest: "最旧优先",
+        amountHigh: "金额最高",
+        amountLow: "金额最低",
+        showing: "显示",
+        of: "共",
+        records: "条记录",
+        page: "页",
+        prev: "上一页",
+        next: "下一页",
+        noMatchTitle: "没有匹配记录",
+        noMatchNote: "请尝试其他关键词或更改筛选条件。",
+      }
+    : {
+        searchPlaceholder: "Search record, method, note, or status...",
+        allStatus: "All Status",
+        newest: "Newest First",
+        oldest: "Oldest First",
+        amountHigh: "Amount High",
+        amountLow: "Amount Low",
+        showing: "Showing",
+        of: "of",
+        records: "records",
+        page: "Page",
+        prev: "Prev",
+        next: "Next",
+        noMatchTitle: "No matching records",
+        noMatchNote: "Try another keyword or change the filters.",
+      };
+  
 
   const searchParams = useSearchParams();
   const defaultType = searchParams.get("type");
@@ -73,6 +111,14 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
       : "all"
   );
 
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+const [searchText, setSearchText] = useState("");
+const [sortBy, setSortBy] = useState<
+  "newest" | "oldest" | "amount_high" | "amount_low"
+>("newest");
+const [currentPage, setCurrentPage] = useState(1);
+const [pageSize, setPageSize] = useState(5);
+
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
@@ -81,17 +127,11 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
       setLoading(true);
       setErrorText("");
 
-      let query = supabase
-        .from("wallet_requests")
-        .select("*")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false });
-
-      if (filter !== "all") {
-        query = query.eq("type", filter);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase
+  .from("wallet_requests")
+  .select("*")
+  .eq("user_id", profile.id)
+  .order("created_at", { ascending: false });
 
       if (error) {
         setErrorText(error.message);
@@ -104,7 +144,77 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
     }
 
     loadRecords();
-  }, [filter, profile.id]);
+  }, [profile.id]);
+
+  const filteredRecords = useMemo(() => {
+  const keyword = searchText.trim().toLowerCase();
+
+  const result = records.filter((item) => {
+    const typeLabel = getTypeLabel(item.type, t.walletRecords.types);
+    const statusLabel = t.walletRecords.statuses[item.status];
+
+    const matchesType = filter === "all" || item.type === filter;
+    const matchesStatus =
+      statusFilter === "all" || item.status === statusFilter;
+
+    const matchesSearch =
+      !keyword ||
+      typeLabel.toLowerCase().includes(keyword) ||
+      statusLabel.toLowerCase().includes(keyword) ||
+      item.method?.toLowerCase().includes(keyword) ||
+      item.note?.toLowerCase().includes(keyword) ||
+      item.admin_note?.toLowerCase().includes(keyword) ||
+      String(item.amount).includes(keyword);
+
+    return matchesType && matchesStatus && matchesSearch;
+  });
+
+  return [...result].sort((a, b) => {
+    if (sortBy === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+
+    if (sortBy === "amount_high") {
+      return Number(b.amount || 0) - Number(a.amount || 0);
+    }
+
+    if (sortBy === "amount_low") {
+      return Number(a.amount || 0) - Number(b.amount || 0);
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}, [
+  records,
+  filter,
+  statusFilter,
+  searchText,
+  sortBy,
+  t.walletRecords.types,
+  t.walletRecords.statuses,
+]);
+
+const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
+
+const paginatedRecords = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  return filteredRecords.slice(start, start + pageSize);
+}, [filteredRecords, currentPage, pageSize]);
+
+const firstResult =
+  filteredRecords.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+const lastResult = Math.min(currentPage * pageSize, filteredRecords.length);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [filter, statusFilter, searchText, sortBy, pageSize]);
+
+useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
 
   const pendingCount = records.filter((item) => item.status === "pending").length;
   const approvedCount = records.filter(
@@ -185,7 +295,101 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
               {item.label}
             </button>
           ))}
-        </div>
+                </div>
+
+        {records.length > 0 && (
+          <LuxuryCard className="mb-5 p-4">
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <input
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder={ui.searchPlaceholder}
+                  className="w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={statusFilter}
+                  onChange={(event) =>
+                    setStatusFilter(event.target.value as StatusFilter)
+                  }
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value="all">
+                    {ui.allStatus}
+                  </option>
+                  <option className="bg-black" value="pending">
+                    {t.walletRecords.pending}
+                  </option>
+                  <option className="bg-black" value="approved">
+                    {t.walletRecords.approved}
+                  </option>
+                  <option className="bg-black" value="rejected">
+                    {t.walletRecords.rejected}
+                  </option>
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(event) =>
+                    setSortBy(
+                      event.target.value as
+                        | "newest"
+                        | "oldest"
+                        | "amount_high"
+                        | "amount_low"
+                    )
+                  }
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value="newest">
+                    {ui.newest}
+                  </option>
+                  <option className="bg-black" value="oldest">
+                    {ui.oldest}
+                  </option>
+                  <option className="bg-black" value="amount_high">
+                    {ui.amountHigh}
+                  </option>
+                  <option className="bg-black" value="amount_low">
+                    {ui.amountLow}
+                  </option>
+                </select>
+
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value={5}>
+                    5
+                  </option>
+                  <option className="bg-black" value={10}>
+                    10
+                  </option>
+                  <option className="bg-black" value={20}>
+                    20
+                  </option>
+                </select>
+              </div>
+
+              <p className="text-center text-xs text-white/45">
+                {ui.showing}{" "}
+                <span className="font-black text-white">{firstResult}</span>
+                {" - "}
+                <span className="font-black text-white">{lastResult}</span>{" "}
+                {ui.of}{" "}
+                <span className="font-black text-yellow-300">
+                  {filteredRecords.length}
+                </span>{" "}
+                {ui.records}
+              </p>
+            </div>
+          </LuxuryCard>
+        )}
 
         {loading && (
           <LuxuryCard className="p-5 text-center text-white/60">
@@ -210,8 +414,16 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
           </LuxuryCard>
         )}
 
+        {!loading && !errorText && records.length > 0 && filteredRecords.length === 0 && (
+  <LuxuryCard className="p-6 text-center">
+    <Search className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
+    <p className="font-bold">{ui.noMatchTitle}</p>
+    <p className="mt-2 text-sm text-white/50">{ui.noMatchNote}</p>
+  </LuxuryCard>
+)}
+
         <div className="space-y-4 pb-6">
-          {records.map((item) => {
+          {paginatedRecords.map((item) => {
             const StatusIcon = getStatusIcon(item.status);
             const isDeposit = item.type === "deposit_credit";
 
@@ -292,7 +504,41 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
               </LuxuryCard>
             );
           })}
-        </div>
+                </div>
+
+        {!loading && !errorText && filteredRecords.length > 0 && (
+          <LuxuryCard className="mb-6 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(1, page - 1))
+                }
+                className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:opacity-35"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {ui.prev}
+              </button>
+
+              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+                {ui.page} {currentPage} / {totalPages}
+              </div>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
+                className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:opacity-35"
+              >
+                {ui.next}
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </LuxuryCard>
+        )}
       </section>
     </AppShell>
   );

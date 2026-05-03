@@ -626,4 +626,106 @@ walletRecords: {
   reviewed: "已审核",
 },
 
+adminDashboard: {
+  accessRequiredTitle: "需要管理权限",
+  accessRequiredDescription: "此页面仅限管理账户访问。",
+  language: "语言",
+english: "English",
+chinese: "中文",
+languageUpdated: "语言已更新。",
+
+  controlCenter: "控制中心",
+  title: "管理仪表板",
+  description:
+    "用于管理产品目录、任务库、用户任务分配、钱包请求和客服消息的网页控制面板。",
+
+  loggedInAs: "当前登录",
+  fallbackName: "管理员",
+  adminControl: "Golden Axis 60 管理控制",
+  noEmail: "无邮箱",
+
+  changePassword: "修改密码",
+  logout: "退出登录",
+
+  passwordMinError: "密码至少需要 6 个字符。",
+  passwordMismatchError: "两次输入的密码不一致。",
+  passwordUpdated: "密码已成功更新。",
+
+  stats: {
+    users: "用户",
+    products: "产品",
+    taskLibrary: "任务库",
+    assigned: "已分配",
+    pendingWallet: "待处理钱包",
+    completed: "已完成",
+  },
+
+  modules: "管理模块",
+  controlPages: "控制页面",
+  openPage: "打开页面",
+
+  security: "账户安全",
+  newPassword: "新密码",
+  confirmPassword: "确认密码",
+  newPasswordPlaceholder: "请输入新密码",
+  confirmPasswordPlaceholder: "请再次输入新密码",
+  updating: "更新中...",
+  updatePassword: "更新密码",
+
+  cards: {
+    productCatalog: {
+      title: "产品目录",
+      description:
+        "创建和管理黄金/珠宝产品、图库图片、价格、评分、评价数量和描述。",
+      tag: "目录",
+    },
+    taskLibrary: {
+      title: "任务库",
+      description:
+        "将产品模板连接到任务逻辑、奖励规则、佣金比例和幸运奖励类型。",
+      tag: "模板",
+    },
+    userTaskAssignment: {
+      title: "用户任务分配",
+      description:
+        "为每个用户分配 1 到 80 个自定义推广任务。",
+      tag: "个性化",
+    },
+    userManager: {
+      title: "用户管理",
+      description:
+        "查看用户、余额、团队代码、账户状态和当前推广进度。",
+      tag: "成员",
+    },
+    walletRequests: {
+      title: "钱包请求",
+      description:
+        "审核用户充值额度和提现请求。",
+      tag: "财务",
+    },
+    supportMessages: {
+      title: "客服消息",
+      description: "查看并回复用户客服消息。",
+      tag: "客服",
+    },
+    sequenceBuilder: {
+      title: "序列生成器",
+      description:
+        "旧版全局任务生成器。请谨慎使用，因为产品目录现在是主系统。",
+      tag: "旧版",
+    },
+  },
+},
+adminNav: {
+  title: "管理控制",
+  dashboard: "仪表板",
+  products: "产品",
+  taskLibrary: "任务库",
+  userTasks: "用户任务",
+  users: "用户",
+  wallet: "钱包",
+  walletAddresses: "钱包地址",
+  support: "客服",
+},
+
 } as const;

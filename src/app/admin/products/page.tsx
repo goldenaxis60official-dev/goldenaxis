@@ -9,10 +9,13 @@ import type { Product } from "@/types/product";
 import {
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Gem,
   ImagePlus,
   Pencil,
   Save,
+  Search,
   ShieldCheck,
   Star,
   Trash2,
@@ -69,11 +72,96 @@ const [successText, setSuccessText] = useState("");
 
 const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 const [deleting, setDeleting] = useState(false);
+const [searchQuery, setSearchQuery] = useState("");
+const [statusFilter, setStatusFilter] = useState<"all" | "active" | "hidden">("all");
+const [categoryFilter, setCategoryFilter] = useState("all");
+const [sortBy, setSortBy] = useState<
+  "newest" | "name" | "price_high" | "price_low" | "rating"
+>("newest");
+const [currentPage, setCurrentPage] = useState(1);
+const [pageSize, setPageSize] = useState(10);
 
   const activeProducts = useMemo(
     () => products.filter((product) => product.is_active).length,
     [products]
   );
+
+  const categories = useMemo(() => {
+  return Array.from(
+    new Set(
+      products
+        .map((product) => product.category)
+        .filter(Boolean)
+    )
+  );
+}, [products]);
+
+const filteredProducts = useMemo(() => {
+  const term = searchQuery.trim().toLowerCase();
+
+  const result = products.filter((product) => {
+    const matchesSearch =
+      !term ||
+      product.name.toLowerCase().includes(term) ||
+      product.category.toLowerCase().includes(term) ||
+      product.currency.toLowerCase().includes(term) ||
+      (product.description || "").toLowerCase().includes(term);
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && product.is_active) ||
+      (statusFilter === "hidden" && !product.is_active);
+
+    const matchesCategory =
+      categoryFilter === "all" || product.category === categoryFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  return [...result].sort((a, b) => {
+    if (sortBy === "name") {
+      return a.name.localeCompare(b.name);
+    }
+
+    if (sortBy === "price_high") {
+      return Number(b.price) - Number(a.price);
+    }
+
+    if (sortBy === "price_low") {
+      return Number(a.price) - Number(b.price);
+    }
+
+    if (sortBy === "rating") {
+      return Number(b.rating) - Number(a.rating);
+    }
+
+    return (
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  });
+}, [products, searchQuery, statusFilter, categoryFilter, sortBy]);
+
+const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+
+const paginatedProducts = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  return filteredProducts.slice(start, start + pageSize);
+}, [filteredProducts, currentPage, pageSize]);
+
+const firstResult =
+  filteredProducts.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+const lastResult = Math.min(currentPage * pageSize, filteredProducts.length);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery, statusFilter, categoryFilter, sortBy, pageSize]);
+
+useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
 
   async function loadProducts() {
     setLoading(true);
@@ -467,7 +555,7 @@ const [deleting, setDeleting] = useState(false);
 )}
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
-          <section className="rounded-[2rem] border border-yellow-400/20 bg-white/[0.045] p-5 shadow-[0_0_45px_rgba(212,175,55,0.08)]">
+          <section className="rounded-[2rem] border border-yellow-400/20 bg-white/[0.045] p-5 shadow-[0_0_45px_rgba(212,175,55,0.08)] xl:sticky xl:top-8 xl:self-start">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-sm text-yellow-200/80">
@@ -625,144 +713,301 @@ const [deleting, setDeleting] = useState(false);
           </section>
 
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-200/80">Catalog</p>
-                <h2 className="text-2xl font-black">Product List</h2>
-              </div>
-            </div>
+  <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
+    <div>
+      <p className="text-sm text-yellow-200/80">Catalog</p>
+      <h2 className="text-2xl font-black">Product List</h2>
+      <p className="mt-1 text-xs text-white/40">
+        Search, filter, sort, and manage products without scrolling through a long list.
+      </p>
+    </div>
 
-            {loading && (
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-                Loading products...
-              </div>
-            )}
+    <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
+      {filteredProducts.length} shown / {products.length} total
+    </div>
+  </div>
 
-            {!loading && products.length === 0 && (
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
-                <Gem className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-                <p className="font-black">No products yet</p>
-                <p className="mt-2 text-sm text-white/50">
-                  Create your first gold or jewel product.
-                </p>
-              </div>
-            )}
+  <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1.4fr_0.8fr_0.9fr_0.9fr_0.6fr]">
+    <div className="relative">
+      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+      <input
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder="Search product, category, currency..."
+        className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+      />
+    </div>
 
-            {!loading && products.length > 0 && (
-              <div className="overflow-x-auto rounded-[1.5rem] border border-white/10">
-  <table className="min-w-[820px] w-full text-left text-sm">
-                  <thead className="bg-white/[0.06] text-xs uppercase tracking-wide text-white/45">
-                    <tr>
-                      <th className="px-4 py-3">Product</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Price</th>
-                      <th className="px-4 py-3">Rating</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
+    <select
+      value={statusFilter}
+      onChange={(event) =>
+        setStatusFilter(event.target.value as "all" | "active" | "hidden")
+      }
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="all">
+        All Status
+      </option>
+      <option className="bg-black" value="active">
+        Active Only
+      </option>
+      <option className="bg-black" value="hidden">
+        Hidden Only
+      </option>
+    </select>
 
-                  <tbody className="divide-y divide-white/10">
-                    {products.map((product) => (
-                      <tr key={product.id} className="bg-black/20">
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-14 w-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06]">
-                              {product.main_image ? (
-                                <img
-                                  src={product.main_image}
-                                  alt={product.name}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                  <Gem className="h-6 w-6 text-yellow-300" />
-                                </div>
-                              )}
-                            </div>
+    <select
+      value={categoryFilter}
+      onChange={(event) => setCategoryFilter(event.target.value)}
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="all">
+        All Categories
+      </option>
 
-                            <div>
-                              <p className="font-black">{product.name}</p>
-                              <p className="mt-1 text-xs text-white/45">
-                                {Array.isArray(product.images)
-                                  ? product.images.length
-                                  : 0}{" "}
-                                photos
-                              </p>
-                            </div>
-                          </div>
-                        </td>
+      {categories.map((category) => (
+        <option key={category} className="bg-black" value={category}>
+          {category}
+        </option>
+      ))}
+    </select>
 
-                        <td className="px-4 py-4 text-white/70">
-                          {product.category}
-                        </td>
+    <select
+      value={sortBy}
+      onChange={(event) =>
+        setSortBy(
+          event.target.value as
+            | "newest"
+            | "name"
+            | "price_high"
+            | "price_low"
+            | "rating"
+        )
+      }
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="newest">
+        Newest First
+      </option>
+      <option className="bg-black" value="name">
+        Name A-Z
+      </option>
+      <option className="bg-black" value="price_high">
+        Price High
+      </option>
+      <option className="bg-black" value="price_low">
+        Price Low
+      </option>
+      <option className="bg-black" value="rating">
+        Top Rating
+      </option>
+    </select>
 
-                        <td className="px-4 py-4 font-bold text-yellow-300">
-                          {product.currency} {Number(product.price).toFixed(2)}
-                        </td>
+    <select
+      value={pageSize}
+      onChange={(event) => setPageSize(Number(event.target.value))}
+      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value={10}>
+        10
+      </option>
+      <option className="bg-black" value={25}>
+        25
+      </option>
+      <option className="bg-black" value={50}>
+        50
+      </option>
+    </select>
+  </div>
 
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-1 text-yellow-300">
-                            <Star className="h-4 w-4 fill-current" />
-                            <span className="font-bold">
-                              {Number(product.rating).toFixed(1)}
-                            </span>
-                            <span className="text-xs text-white/40">
-                              ({product.reviews_count})
-                            </span>
-                          </div>
-                        </td>
+  {loading && (
+    <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
+      Loading products...
+    </div>
+  )}
 
-                        <td className="px-4 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-black ${
-                              product.is_active
-                                ? "bg-emerald-400/15 text-emerald-300"
-                                : "bg-red-500/15 text-red-300"
-                            }`}
-                          >
-                            {product.is_active ? "Active" : "Hidden"}
-                          </span>
-                        </td>
+  {!loading && products.length === 0 && (
+    <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
+      <Gem className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
+      <p className="font-black">No products yet</p>
+      <p className="mt-2 text-sm text-white/50">
+        Create your first gold or jewel product.
+      </p>
+    </div>
+  )}
 
-                        <td className="px-4 py-4">
-                          <div className="flex justify-end gap-2">
-  <button
-    type="button"
-    onClick={() => editProduct(product)}
-    className="flex items-center gap-2 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-300 hover:bg-yellow-400/15"
-    title="Edit product"
-  >
-    <Pencil className="h-4 w-4" />
-    Edit
-  </button>
+  {!loading && products.length > 0 && filteredProducts.length === 0 && (
+    <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
+      <Search className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
+      <p className="font-black">No matching products</p>
+      <p className="mt-2 text-sm text-white/50">
+        Try another search keyword or change the filters.
+      </p>
+    </div>
+  )}
 
-  <button
-    type="button"
-    onClick={() => toggleProductStatus(product)}
-    className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/[0.1]"
-  >
-    {product.is_active ? "Hide" : "Activate"}
-  </button>
+  {!loading && filteredProducts.length > 0 && (
+    <>
+      <div className="max-h-[640px] overflow-auto rounded-[1.5rem] border border-white/10">
+        <table className="w-full min-w-[900px] text-left text-sm">
+          <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
+            <tr>
+              <th className="px-4 py-3">Product</th>
+              <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">Price</th>
+              <th className="px-4 py-3">Rating</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
 
-  <button
-    type="button"
-    onClick={() => setDeleteTarget(product)}
-    className="flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 hover:bg-red-500/15"
-    title="Delete product"
-  >
-    <Trash2 className="h-4 w-4" />
-    Delete
-  </button>
-</div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+          <tbody className="divide-y divide-white/10">
+            {paginatedProducts.map((product) => (
+              <tr
+                key={product.id}
+                className="bg-black/20 transition hover:bg-white/[0.04]"
+              >
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06]">
+                      {product.main_image ? (
+                        <img
+                          src={product.main_image}
+                          alt={product.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Gem className="h-6 w-6 text-yellow-300" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="font-black">{product.name}</p>
+                      <p className="mt-1 text-xs text-white/45">
+                        {Array.isArray(product.images)
+                          ? product.images.length
+                          : 0}{" "}
+                        photos
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4 text-white/70">
+                  {product.category}
+                </td>
+
+                <td className="px-4 py-4 font-bold text-yellow-300">
+                  {product.currency} {Number(product.price).toFixed(2)}
+                </td>
+
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-1 text-yellow-300">
+                    <Star className="h-4 w-4 fill-current" />
+                    <span className="font-bold">
+                      {Number(product.rating).toFixed(1)}
+                    </span>
+                    <span className="text-xs text-white/40">
+                      ({product.reviews_count})
+                    </span>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4">
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-black ${
+                      product.is_active
+                        ? "bg-emerald-400/15 text-emerald-300"
+                        : "bg-red-500/15 text-red-300"
+                    }`}
+                  >
+                    {product.is_active ? "Active" : "Hidden"}
+                  </span>
+                </td>
+
+                <td className="px-4 py-4">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => editProduct(product)}
+                      className="flex items-center gap-2 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-300 hover:bg-yellow-400/15"
+                      title="Edit product"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleProductStatus(product)}
+                      className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/[0.1]"
+                    >
+                      {product.is_active ? "Hide" : "Activate"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(product)}
+                      className="flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 hover:bg-red-500/15"
+                      title="Delete product"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
+        <p>
+          Showing{" "}
+          <span className="font-black text-white">{firstResult}</span>
+          {" - "}
+          <span className="font-black text-white">{lastResult}</span>
+          {" of "}
+          <span className="font-black text-yellow-300">
+            {filteredProducts.length}
+          </span>{" "}
+          products
+        </p>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Prev
+          </button>
+
+          <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+            Page {currentPage} / {totalPages}
+          </div>
+
+          <button
+            type="button"
+            disabled={currentPage === totalPages}
+            onClick={() =>
+              setCurrentPage((page) => Math.min(totalPages, page + 1))
+            }
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </>
+  )}
+</section>
         </div>
       </div>
     </main>

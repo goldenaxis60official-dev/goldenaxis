@@ -5,11 +5,19 @@
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import { getLanguage, messages } from "@/i18n";
 import StatCard from "@/components/ui/StatCard";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
-import { CheckCircle, Gem, AlertCircle, Star } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Gem,
+  Search,
+  Star,
+} from "lucide-react";
 import type { Profile } from "@/types/profile";
 
 type ProductSnapshot = {
@@ -58,9 +66,55 @@ export default function HistoryPage() {
 function HistoryContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
   const t = messages[lang];
+  const ui =
+  lang === "zh"
+    ? {
+        searchPlaceholder: "搜索任务、产品或步骤...",
+        allTypes: "全部类型",
+        newest: "最新优先",
+        oldest: "最旧优先",
+        commissionHigh: "佣金最高",
+        valueHigh: "价值最高",
+        perPage: "每页",
+        showing: "显示",
+        of: "共",
+        records: "条记录",
+        noMatchTitle: "没有匹配记录",
+        noMatchNote: "请尝试其他关键词或更改筛选条件。",
+        page: "页",
+        prev: "上一页",
+        next: "下一页",
+      }
+    : {
+        searchPlaceholder: "Search task, product, or step...",
+        allTypes: "All Types",
+        newest: "Newest First",
+        oldest: "Oldest First",
+        commissionHigh: "Commission High",
+        valueHigh: "Value High",
+        perPage: "Per Page",
+        showing: "Showing",
+        of: "of",
+        records: "records",
+        noMatchTitle: "No matching records",
+        noMatchNote: "Try another keyword or change the filters.",
+        page: "Page",
+        prev: "Prev",
+        next: "Next",
+      };
   const [history, setHistory] = useState<HistoryRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorText, setErrorText] = useState("");
+const [loading, setLoading] = useState(true);
+const [errorText, setErrorText] = useState("");
+
+const [searchText, setSearchText] = useState("");
+const [typeFilter, setTypeFilter] = useState<
+  "all" | "standard" | "lucky_bonus"
+>("all");
+const [sortBy, setSortBy] = useState<
+  "newest" | "oldest" | "commission_high" | "value_high"
+>("newest");
+const [currentPage, setCurrentPage] = useState(1);
+const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     async function loadHistory() {
@@ -90,7 +144,8 @@ function HistoryContent({ profile }: { profile: Profile }) {
           )
         `
         )
-        .order("created_at", { ascending: false });
+        .eq("user_id", profile.id)
+.order("created_at", { ascending: false });
 
       if (error) {
         setErrorText(error.message);
@@ -103,7 +158,7 @@ function HistoryContent({ profile }: { profile: Profile }) {
     }
 
     loadHistory();
-  }, []);
+  }, [profile.id]);
 
   function getTask(item: HistoryRow) {
     if (Array.isArray(item.tasks)) {
@@ -121,6 +176,76 @@ function HistoryContent({ profile }: { profile: Profile }) {
       Number(item.multiplier_applied || 1) > 1
     );
   }
+
+  const filteredHistory = useMemo(() => {
+  const keyword = searchText.trim().toLowerCase();
+
+  const result = history.filter((item) => {
+    const task = getTask(item);
+    const snapshot = item.product_snapshot;
+    const lucky = isLuckyHistory(item);
+
+    const productName =
+      snapshot?.name ||
+      task?.title ||
+      `${t.history.step} ${item.step_number}`;
+
+    const productCategory =
+      snapshot?.category || task?.category || t.history.campaign;
+
+    const matchesSearch =
+      !keyword ||
+      String(item.step_number).includes(keyword) ||
+      item.status.toLowerCase().includes(keyword) ||
+      productName.toLowerCase().includes(keyword) ||
+      productCategory.toLowerCase().includes(keyword);
+
+    const matchesType =
+      typeFilter === "all" ||
+      (typeFilter === "lucky_bonus" && lucky) ||
+      (typeFilter === "standard" && !lucky);
+
+    return matchesSearch && matchesType;
+  });
+
+  return [...result].sort((a, b) => {
+    if (sortBy === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+
+    if (sortBy === "commission_high") {
+      return Number(b.commission_earned || 0) - Number(a.commission_earned || 0);
+    }
+
+    if (sortBy === "value_high") {
+      return Number(b.task_price || 0) - Number(a.task_price || 0);
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}, [history, searchText, typeFilter, sortBy, t.history.step, t.history.campaign]);
+
+const totalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
+
+const paginatedHistory = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  return filteredHistory.slice(start, start + pageSize);
+}, [filteredHistory, currentPage, pageSize]);
+
+const firstResult =
+  filteredHistory.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+const lastResult = Math.min(currentPage * pageSize, filteredHistory.length);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchText, typeFilter, sortBy, pageSize]);
+
+useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
 
   return (
     <AppShell>
@@ -152,6 +277,102 @@ function HistoryContent({ profile }: { profile: Profile }) {
   />
 </div>
 
+        {history.length > 0 && (
+          <LuxuryCard className="mb-5 p-4">
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <input
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder={ui.searchPlaceholder}
+                  className="w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={typeFilter}
+                  onChange={(event) =>
+                    setTypeFilter(
+                      event.target.value as
+                        | "all"
+                        | "standard"
+                        | "lucky_bonus"
+                    )
+                  }
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value="all">
+                    {ui.allTypes}
+                  </option>
+                  <option className="bg-black" value="standard">
+                    {t.history.standard}
+                  </option>
+                  <option className="bg-black" value="lucky_bonus">
+                    {t.history.luckyBonus}
+                  </option>
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(event) =>
+                    setSortBy(
+                      event.target.value as
+                        | "newest"
+                        | "oldest"
+                        | "commission_high"
+                        | "value_high"
+                    )
+                  }
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value="newest">
+                    {ui.newest}
+                  </option>
+                  <option className="bg-black" value="oldest">
+                    {ui.oldest}
+                  </option>
+                  <option className="bg-black" value="commission_high">
+                    {ui.commissionHigh}
+                  </option>
+                  <option className="bg-black" value="value_high">
+                    {ui.valueHigh}
+                  </option>
+                </select>
+
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="rounded-2xl border border-white/10 bg-black/35 px-3 py-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                >
+                  <option className="bg-black" value={5}>
+                    5
+                  </option>
+                  <option className="bg-black" value={10}>
+                    10
+                  </option>
+                  <option className="bg-black" value={20}>
+                    20
+                  </option>
+                </select>
+              </div>
+
+              <p className="text-center text-xs text-white/45">
+                {ui.showing}{" "}
+                <span className="font-black text-white">{firstResult}</span>
+                {" - "}
+                <span className="font-black text-white">{lastResult}</span>{" "}
+                {ui.of}{" "}
+                <span className="font-black text-yellow-300">
+                  {filteredHistory.length}
+                </span>{" "}
+                {ui.records}
+              </p>
+            </div>
+          </LuxuryCard>
+        )}
+
         {loading && (
           <LuxuryCard className="p-5 text-center text-white/60">
   {t.history.loadingRecords}
@@ -175,8 +396,18 @@ function HistoryContent({ profile }: { profile: Profile }) {
 </LuxuryCard>
         )}
 
+        {!loading && !errorText && history.length > 0 && filteredHistory.length === 0 && (
+  <LuxuryCard className="p-6 text-center">
+    <Search className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
+    <p className="font-black">{ui.noMatchTitle}</p>
+    <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+      {ui.noMatchNote}
+    </p>
+  </LuxuryCard>
+)}
+
         <div className="space-y-4 pb-6">
-          {history.map((item) => {
+          {paginatedHistory.map((item) => {
             const task = getTask(item);
             const snapshot = item.product_snapshot;
             const lucky = isLuckyHistory(item);
@@ -309,7 +540,41 @@ const productCategory =
               </LuxuryCard>
             );
           })}
-        </div>
+                </div>
+
+        {!loading && !errorText && filteredHistory.length > 0 && (
+          <LuxuryCard className="mb-6 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(1, page - 1))
+                }
+                className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:opacity-35"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {ui.prev}
+              </button>
+
+              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+                {ui.page} {currentPage} / {totalPages}
+              </div>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
+                className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:opacity-35"
+              >
+                {ui.next}
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </LuxuryCard>
+        )}
       </section>
     </AppShell>
   );

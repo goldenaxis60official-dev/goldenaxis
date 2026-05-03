@@ -10,6 +10,8 @@ import type { Profile } from "@/types/profile";
 import {
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Headphones,
   MessageCircle,
   Search,
@@ -58,8 +60,11 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   const [filter, setFilter] = useState<SupportFilter>("open");
-  const [searchText, setSearchText] = useState("");
-  const [replyText, setReplyText] = useState("");
+const [searchText, setSearchText] = useState("");
+const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+const [currentPage, setCurrentPage] = useState(1);
+const [pageSize, setPageSize] = useState(8);
+const [replyText, setReplyText] = useState("");
 
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
@@ -75,45 +80,89 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
   }, [tickets, selectedTicketId]);
 
   const filteredTickets = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase();
+  const keyword = searchText.trim().toLowerCase();
 
-    if (!keyword) return tickets;
+  const result = tickets.filter((ticket) => {
+    const name = ticket.profiles?.display_name || "";
+    const email = ticket.profiles?.email || "";
 
-    return tickets.filter((ticket) => {
-      const name = ticket.profiles?.display_name || "";
-      const email = ticket.profiles?.email || "";
+    const matchesStatus = filter === "all" || ticket.status === filter;
 
-      return (
-        ticket.subject.toLowerCase().includes(keyword) ||
-        ticket.message.toLowerCase().includes(keyword) ||
-        name.toLowerCase().includes(keyword) ||
-        email.toLowerCase().includes(keyword)
-      );
-    });
-  }, [tickets, searchText]);
+    const matchesSearch =
+      !keyword ||
+      ticket.subject.toLowerCase().includes(keyword) ||
+      ticket.message.toLowerCase().includes(keyword) ||
+      name.toLowerCase().includes(keyword) ||
+      email.toLowerCase().includes(keyword) ||
+      ticket.id.toLowerCase().includes(keyword);
+
+    return matchesStatus && matchesSearch;
+  });
+
+  return [...result].sort((a, b) => {
+    if (sortBy === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}, [tickets, filter, searchText, sortBy]);
+
+const totalPages = Math.max(1, Math.ceil(filteredTickets.length / pageSize));
+
+const paginatedTickets = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  return filteredTickets.slice(start, start + pageSize);
+}, [filteredTickets, currentPage, pageSize]);
+
+const firstResult =
+  filteredTickets.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+const lastResult = Math.min(currentPage * pageSize, filteredTickets.length);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [filter, searchText, sortBy, pageSize]);
+
+useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
+
+useEffect(() => {
+  if (loadingTickets) return;
+
+  if (filteredTickets.length === 0) {
+    setSelectedTicketId(null);
+    setChatMessages([]);
+    return;
+  }
+
+  if (
+    !selectedTicketId ||
+    !filteredTickets.some((ticket) => ticket.id === selectedTicketId)
+  ) {
+    setSelectedTicketId(filteredTickets[0].id);
+  }
+}, [filteredTickets, selectedTicketId, loadingTickets]);
 
   async function loadTickets() {
     setLoadingTickets(true);
     setErrorText("");
 
-    let query = supabase
-      .from("support_messages")
-      .select(
-        `
-        *,
-        profiles (
-          display_name,
-          email
-        )
-      `
-      )
-      .order("created_at", { ascending: false });
-
-    if (filter !== "all") {
-      query = query.eq("status", filter);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase
+  .from("support_messages")
+  .select(
+    `
+    *,
+    profiles (
+      display_name,
+      email
+    )
+  `
+  )
+  .order("created_at", { ascending: false });
 
     if (error) {
       setErrorText(error.message);
@@ -155,12 +204,12 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
   }
 
   useEffect(() => {
-    if (isAdmin) {
-      loadTickets();
-    } else {
-      setLoadingTickets(false);
-    }
-  }, [isAdmin, filter]);
+  if (isAdmin) {
+    loadTickets();
+  } else {
+    setLoadingTickets(false);
+  }
+}, [isAdmin]);
 
   useEffect(() => {
     if (selectedTicketId) {
@@ -280,7 +329,7 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
           </div>
         </div>
 
-        <div className="mb-5 grid grid-cols-4 gap-4">
+        <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Showing" value={String(filteredTickets.length)} />
           <StatCard label="Open" value={String(openCount)} />
           <StatCard label="Reviewing" value={String(reviewingCount)} />
@@ -301,7 +350,7 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
           </div>
         )}
 
-        <section className="grid h-[calc(100vh-280px)] min-h-[650px] grid-cols-[360px_1fr] overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035]">
+        <section className="grid min-h-[720px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] xl:h-[calc(100vh-280px)] xl:grid-cols-[390px_1fr]">
           <aside className="flex min-h-0 flex-col border-r border-white/10 bg-black/25">
             <div className="border-b border-white/10 p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -311,23 +360,56 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
                 </div>
               </div>
 
-              <div className="mb-4 grid grid-cols-4 gap-2">
-                {(["open", "reviewing", "closed", "all"] as SupportFilter[]).map(
-                  (item) => (
-                    <button
-                      key={item}
-                      onClick={() => setFilter(item)}
-                      className={`rounded-xl border px-3 py-2 text-xs font-black capitalize ${
-                        filter === item
-                          ? "border-yellow-400 bg-yellow-400 text-black"
-                          : "border-white/10 bg-black/35 text-white/55 hover:bg-white/[0.08]"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  )
-                )}
-              </div>
+              <div className="mb-4 grid grid-cols-2 gap-2">
+  {(["open", "reviewing", "closed", "all"] as SupportFilter[]).map(
+    (item) => (
+      <button
+        key={item}
+        onClick={() => setFilter(item)}
+        className={`rounded-xl border px-3 py-2 text-xs font-black capitalize ${
+          filter === item
+            ? "border-yellow-400 bg-yellow-400 text-black"
+            : "border-white/10 bg-black/35 text-white/55 hover:bg-white/[0.08]"
+        }`}
+      >
+        {item}
+      </button>
+    )
+  )}
+</div>
+
+<div className="space-y-3">
+  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3 py-2">
+    <Search className="h-4 w-4 text-white/35" />
+    <input
+      value={searchText}
+      onChange={(event) => setSearchText(event.target.value)}
+      placeholder="Search user, email, ticket..."
+      className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
+    />
+  </div>
+
+  <div className="grid grid-cols-2 gap-2">
+    <select
+      value={sortBy}
+      onChange={(event) => setSortBy(event.target.value as "newest" | "oldest")}
+      className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value="newest">Newest</option>
+      <option className="bg-black" value="oldest">Oldest</option>
+    </select>
+
+    <select
+      value={pageSize}
+      onChange={(event) => setPageSize(Number(event.target.value))}
+      className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+    >
+      <option className="bg-black" value={8}>8 / page</option>
+      <option className="bg-black" value={15}>15 / page</option>
+      <option className="bg-black" value={30}>30 / page</option>
+    </select>
+  </div>
+</div>
 
               <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3 py-2">
                 <Search className="h-4 w-4 text-white/35" />
@@ -358,7 +440,7 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
               )}
 
               {!loadingTickets &&
-                filteredTickets.map((ticket) => {
+  paginatedTickets.map((ticket) => {
                   const active = selectedTicketId === ticket.id;
 
                   return (
@@ -392,7 +474,53 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
                     </button>
                   );
                 })}
-            </div>
+                        </div>
+
+            {!loadingTickets && filteredTickets.length > 0 && (
+              <div className="border-t border-white/10 bg-black/30 p-3">
+                <p className="mb-3 text-center text-xs text-white/45">
+                  Showing{" "}
+                  <span className="font-black text-white">{firstResult}</span>
+                  {" - "}
+                  <span className="font-black text-white">{lastResult}</span>
+                  {" of "}
+                  <span className="font-black text-yellow-300">
+                    {filteredTickets.length}
+                  </span>{" "}
+                  chats
+                </p>
+
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                    className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+                    {currentPage} / {totalPages}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.min(totalPages, page + 1)
+                      )
+                    }
+                    className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </aside>
 
           <div className="flex min-h-0 flex-col">

@@ -646,4 +646,108 @@ walletRecords: {
   reviewed: "Reviewed",
 },
 
+adminDashboard: {
+  accessRequiredTitle: "Admin Access Required",
+  accessRequiredDescription: "This page is only available for admin accounts.",
+  language: "Language",
+english: "English",
+chinese: "中文",
+languageUpdated: "Language updated.",
+
+  controlCenter: "Control Center",
+  title: "Admin Dashboard",
+  description:
+    "Web control panel for product catalog, task library, user task assignment, wallet requests, and support messages.",
+
+  loggedInAs: "Logged in as",
+  fallbackName: "Admin",
+  adminControl: "Golden Axis 60 Admin Control",
+  noEmail: "No email",
+
+  changePassword: "Change Password",
+  logout: "Logout",
+
+  passwordMinError: "Password must be at least 6 characters.",
+  passwordMismatchError: "Passwords do not match.",
+  passwordUpdated: "Password updated successfully.",
+
+  stats: {
+    users: "Users",
+    products: "Products",
+    taskLibrary: "Task Library",
+    assigned: "Assigned",
+    pendingWallet: "Pending Wallet",
+    completed: "Completed",
+  },
+
+  modules: "Admin Modules",
+  controlPages: "Control Pages",
+  openPage: "Open Page",
+
+  security: "Admin Security",
+  newPassword: "New Password",
+  confirmPassword: "Confirm Password",
+  newPasswordPlaceholder: "Enter new password",
+  confirmPasswordPlaceholder: "Confirm new password",
+  updating: "Updating...",
+  updatePassword: "Update Password",
+
+  cards: {
+    productCatalog: {
+      title: "Product Catalog",
+      description:
+        "Create and manage gold/jewel products, gallery images, prices, ratings, reviews, and descriptions.",
+      tag: "Catalog",
+    },
+    taskLibrary: {
+      title: "Task Library",
+      description:
+        "Connect product templates to task logic, reward rules, commission rate, and lucky bonus type.",
+      tag: "Templates",
+    },
+    userTaskAssignment: {
+      title: "User Task Assignment",
+      description:
+        "Assign custom campaign mission lists to each user from 1 to 80 tasks.",
+      tag: "Personalized",
+    },
+    userManager: {
+      title: "User Manager",
+      description:
+        "View users, balances, team codes, account status, and current campaign progress.",
+      tag: "Members",
+    },
+    walletRequests: {
+      title: "Wallet Requests",
+      description:
+        "Approve or reject user deposit credit and withdrawal requests.",
+      tag: "Finance",
+    },
+    supportMessages: {
+      title: "Support Messages",
+      description: "Read and reply to user support messages.",
+      tag: "Support",
+    },
+    sequenceBuilder: {
+      title: "Sequence Builder",
+      description:
+        "Legacy global task generator. Use carefully because product catalog is now the main system.",
+      tag: "Legacy",
+    },
+  },
+  
+},
+
+adminNav: {
+  title: "Admin Control",
+  dashboard: "Dashboard",
+  products: "Products",
+  taskLibrary: "Task Library",
+  userTasks: "User Tasks",
+  users: "Users",
+  wallet: "Wallet",
+  walletAddresses: "Wallet Addresses",
+  support: "Support",
+},
+
 } as const;

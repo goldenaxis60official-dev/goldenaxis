@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { en } from "@/i18n/en";
+import { zh } from "@/i18n/zh";
 import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "./AdminNav";
@@ -14,6 +16,7 @@ import {
   Crown,
   Headphones,
   KeyRound,
+  Languages,
   ListChecks,
   LogOut,
   Package,
@@ -33,64 +36,61 @@ type AdminStats = {
   completedTasks: number;
 };
 
-const adminCards = [
-  {
-    title: "Product Catalog",
-    description:
-      "Create and manage gold/jewel products, gallery images, prices, ratings, reviews, and descriptions.",
-    href: "/admin/products",
-    icon: Package,
-    tag: "Catalog",
-  },
-  {
-    title: "Task Library",
-    description:
-      "Connect product templates to task logic, reward rules, commission rate, and lucky bonus type.",
-    href: "/admin/tasks",
-    icon: ClipboardList,
-    tag: "Templates",
-  },
-  {
-    title: "User Task Assignment",
-    description:
-      "Assign custom campaign mission lists to each user from 1 to 80 tasks.",
-    href: "/admin/user-tasks",
-    icon: ListChecks,
-    tag: "Personalized",
-  },
-  {
-    title: "User Manager",
-    description:
-      "View users, balances, invite codes, account status, and current campaign progress.",
-    href: "/admin/users",
-    icon: Users,
-    tag: "Members",
-  },
-  {
-    title: "Wallet Requests",
-    description:
-      "Approve or reject user deposit credit and withdrawal requests.",
-    href: "/admin/wallet-requests",
-    icon: Wallet,
-    tag: "Finance",
-  },
-  {
-    title: "Support Messages",
-    description:
-      "Read user support tickets",
-    href: "/admin/support",
-    icon: Headphones,
-    tag: "Support",
-  },
-  {
-    title: "Sequence Builder",
-    description:
-      "Legacy global task generator. Use carefully because product catalog is now the main system.",
-    href: "/admin/sequence-builder",
-    icon: Crown,
-    tag: "Legacy",
-  },
-];
+type AdminDashboardText = (typeof en)["adminDashboard"];
+
+function getAdminCards(t: AdminDashboardText) {
+  return [
+    {
+      title: t.cards.productCatalog.title,
+      description: t.cards.productCatalog.description,
+      href: "/admin/products",
+      icon: Package,
+      tag: t.cards.productCatalog.tag,
+    },
+    {
+      title: t.cards.taskLibrary.title,
+      description: t.cards.taskLibrary.description,
+      href: "/admin/tasks",
+      icon: ClipboardList,
+      tag: t.cards.taskLibrary.tag,
+    },
+    {
+      title: t.cards.userTaskAssignment.title,
+      description: t.cards.userTaskAssignment.description,
+      href: "/admin/user-tasks",
+      icon: ListChecks,
+      tag: t.cards.userTaskAssignment.tag,
+    },
+    {
+      title: t.cards.userManager.title,
+      description: t.cards.userManager.description,
+      href: "/admin/users",
+      icon: Users,
+      tag: t.cards.userManager.tag,
+    },
+    {
+      title: t.cards.walletRequests.title,
+      description: t.cards.walletRequests.description,
+      href: "/admin/wallet-requests",
+      icon: Wallet,
+      tag: t.cards.walletRequests.tag,
+    },
+    {
+      title: t.cards.supportMessages.title,
+      description: t.cards.supportMessages.description,
+      href: "/admin/support",
+      icon: Headphones,
+      tag: t.cards.supportMessages.tag,
+    },
+    {
+      title: t.cards.sequenceBuilder.title,
+      description: t.cards.sequenceBuilder.description,
+      href: "/admin/sequence-builder",
+      icon: Crown,
+      tag: t.cards.sequenceBuilder.tag,
+    },
+  ];
+}
 
 export default function AdminPage() {
   return (
@@ -108,6 +108,9 @@ function AdminContent({ profile }: { profile: Profile }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountLoading, setAccountLoading] = useState(false);
   const [successText, setSuccessText] = useState("");
+  const [currentLanguage, setCurrentLanguage] = useState<"en" | "zh">(
+  profile.language === "zh" ? "zh" : "en"
+);
   const [stats, setStats] = useState<AdminStats>({
     users: 0,
     activeTasks: 0,
@@ -121,6 +124,13 @@ function AdminContent({ profile }: { profile: Profile }) {
   const [errorText, setErrorText] = useState("");
 
   const isAdmin = profile.role === "admin";
+
+const t: AdminDashboardText =
+  currentLanguage === "zh"
+    ? (zh.adminDashboard as unknown as AdminDashboardText)
+    : en.adminDashboard;
+
+const adminCards = getAdminCards(t);
 
   useEffect(() => {
     async function loadStats() {
@@ -197,17 +207,44 @@ function AdminContent({ profile }: { profile: Profile }) {
     loadStats();
   }, [isAdmin]);
 
+  async function handleLanguageChange(nextLanguage: "en" | "zh") {
+  setErrorText("");
+  setSuccessText("");
+
+  const nextT: AdminDashboardText =
+  nextLanguage === "zh"
+    ? (zh.adminDashboard as unknown as AdminDashboardText)
+    : en.adminDashboard;
+
+  setCurrentLanguage(nextLanguage);
+
+  localStorage.setItem("golden-axis-language", nextLanguage);
+  window.dispatchEvent(new Event("golden-axis-language-change"));
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ language: nextLanguage })
+    .eq("id", profile.id);
+
+  if (error) {
+    setErrorText(error.message);
+    return;
+  }
+
+  setSuccessText(nextT.languageUpdated);
+}
+
     async function handleChangePassword() {
     setErrorText("");
     setSuccessText("");
 
     if (newPassword.length < 6) {
-      setErrorText("Password must be at least 6 characters.");
+      setErrorText(t.passwordMinError);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setErrorText("Passwords do not match.");
+      setErrorText(t.passwordMismatchError);
       return;
     }
 
@@ -223,7 +260,7 @@ function AdminContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText("Password updated successfully.");
+    setSuccessText(t.passwordUpdated);
     setNewPassword("");
     setConfirmPassword("");
     setShowPasswordModal(false);
@@ -241,10 +278,10 @@ function AdminContent({ profile }: { profile: Profile }) {
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
           <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-red-300" />
-          <h1 className="text-2xl font-black">Admin Access Required</h1>
-          <p className="mt-2 text-sm text-white/55">
-            This page is only available for admin accounts.
-          </p>
+          <h1 className="text-2xl font-black">{t.accessRequiredTitle}</h1>
+<p className="mt-2 text-sm text-white/55">
+  {t.accessRequiredDescription}
+</p>
         </div>
       </main>
     );
@@ -258,13 +295,12 @@ function AdminContent({ profile }: { profile: Profile }) {
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>
             <p className="text-sm font-bold text-yellow-200/80">
-              Control Center
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Admin Dashboard</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/50">
-              Web control panel for product catalog, task library, user task
-              assignment, wallet requests, and support messages.
-            </p>
+  {t.controlCenter}
+</p>
+<h1 className="mt-1 text-3xl font-black">{t.title}</h1>
+<p className="mt-2 max-w-2xl text-sm text-white/50">
+  {t.description}
+</p>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4">
@@ -273,40 +309,61 @@ function AdminContent({ profile }: { profile: Profile }) {
         </div>
 
         <div className="mb-6 rounded-[2rem] border border-yellow-400/20 bg-white/[0.045] p-5">
-  <p className="text-sm text-white/45">Logged in as</p>
+  <p className="text-sm text-white/45">{t.loggedInAs}</p>
 
   <div className="mt-2 flex items-center justify-between gap-4">
-    <div>
-      <h2 className="text-2xl font-black">
-        {profile.display_name || "Admin"}
-      </h2>
-      <p className="mt-1 text-sm text-yellow-300">
-        Golden Axis 60 Admin Control
-      </p>
-      <p className="mt-1 text-xs text-white/40">
-        {profile.email || "No email"} • {profile.role}
-      </p>
-    </div>
+  <div>
+    <h2 className="text-2xl font-black">
+      {profile.display_name || t.fallbackName}
+    </h2>
 
-    <div className="flex items-center gap-3">
-      <button
-        onClick={() => setShowPasswordModal(true)}
-        className="flex items-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
-      >
-        <KeyRound className="h-4 w-4" />
-        Change Password
-      </button>
+    <p className="mt-1 text-sm text-yellow-300">
+      {t.adminControl}
+    </p>
 
-      <button
-        onClick={handleLogout}
-        disabled={accountLoading}
-        className="flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-3 text-sm font-black text-red-300 hover:bg-red-500/15 disabled:opacity-60"
-      >
-        <LogOut className="h-4 w-4" />
-        Logout
-      </button>
-    </div>
+    <p className="mt-1 text-xs text-white/40">
+      {profile.email || t.noEmail} • {profile.role}
+    </p>
   </div>
+
+  <div className="flex items-center gap-3">
+    <button
+      onClick={() => setShowPasswordModal(true)}
+      className="flex items-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
+    >
+      <KeyRound className="h-4 w-4" />
+      {t.changePassword}
+    </button>
+
+    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <Languages className="h-4 w-4 text-yellow-300" />
+
+      <select
+        value={currentLanguage}
+        onChange={(event) =>
+          handleLanguageChange(event.target.value as "en" | "zh")
+        }
+        className="bg-transparent text-sm font-black text-yellow-200 outline-none"
+      >
+        <option className="bg-[#090909] text-white" value="en">
+          {t.english}
+        </option>
+        <option className="bg-[#090909] text-white" value="zh">
+          {t.chinese}
+        </option>
+      </select>
+    </div>
+
+    <button
+      onClick={handleLogout}
+      disabled={accountLoading}
+      className="flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-3 text-sm font-black text-red-300 hover:bg-red-500/15 disabled:opacity-60"
+    >
+      <LogOut className="h-4 w-4" />
+      {t.logout}
+    </button>
+    </div>
+</div>
 </div>
 
         {errorText && (
@@ -324,25 +381,25 @@ function AdminContent({ profile }: { profile: Profile }) {
 )}
 
         <div className="mb-8 grid grid-cols-6 gap-4">
-          <StatCard label="Users" value={loading ? "..." : String(stats.users)} />
+          <StatCard label={t.stats.users} value={loading ? "..." : String(stats.users)} />
           <StatCard
-            label="Products"
+            label={t.stats.products}
             value={loading ? "..." : String(stats.products)}
           />
           <StatCard
-            label="Task Library"
+            label={t.stats.taskLibrary}
             value={loading ? "..." : String(stats.activeTasks)}
           />
           <StatCard
-            label="Assigned"
+            label={t.stats.assigned}
             value={loading ? "..." : String(stats.assignedTasks)}
           />
           <StatCard
-            label="Pending Wallet"
+            label={t.stats.pendingWallet}
             value={loading ? "..." : String(stats.pendingRequests)}
           />
           <StatCard
-            label="Completed"
+            label={t.stats.completed}
             value={loading ? "..." : String(stats.completedTasks)}
           />
         </div>
@@ -350,8 +407,8 @@ function AdminContent({ profile }: { profile: Profile }) {
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-yellow-200/80">Admin Modules</p>
-              <h2 className="text-2xl font-black">Control Pages</h2>
+              <p className="text-sm text-yellow-200/80">{t.modules}</p>
+<h2 className="text-2xl font-black">{t.controlPages}</h2>
             </div>
           </div>
 
@@ -383,7 +440,7 @@ function AdminContent({ profile }: { profile: Profile }) {
 
                   <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
                     <span className="text-sm font-bold text-yellow-300">
-                      Open Page
+                      {t.openPage}
                     </span>
                     <ArrowRight className="h-5 w-5 text-white/35 transition group-hover:translate-x-1 group-hover:text-yellow-300" />
                   </div>
@@ -398,8 +455,8 @@ function AdminContent({ profile }: { profile: Profile }) {
             <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-yellow-200/80">Admin Security</p>
-                  <h2 className="text-2xl font-black">Change Password</h2>
+                  <p className="text-sm text-yellow-200/80">{t.security}</p>
+<h2 className="text-2xl font-black">{t.changePassword}</h2>
                 </div>
 
                 <button
@@ -417,26 +474,26 @@ function AdminContent({ profile }: { profile: Profile }) {
               <div className="space-y-4">
                 <div>
                   <p className="mb-2 text-sm font-bold text-white/80">
-                    New Password
+                    {t.newPassword}
                   </p>
                   <input
                     value={newPassword}
                     onChange={(event) => setNewPassword(event.target.value)}
                     type="password"
-                    placeholder="Enter new password"
+                    placeholder={t.newPasswordPlaceholder}
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                   />
                 </div>
 
                 <div>
                   <p className="mb-2 text-sm font-bold text-white/80">
-                    Confirm Password
+                     {t.confirmPassword}
                   </p>
                   <input
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     type="password"
-                    placeholder="Confirm new password"
+                    placeholder={t.confirmPasswordPlaceholder}
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                   />
                 </div>
@@ -447,7 +504,7 @@ function AdminContent({ profile }: { profile: Profile }) {
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
                 >
                   <Save className="h-5 w-5" />
-                  {accountLoading ? "Updating..." : "Update Password"}
+                  {accountLoading ? t.updating : t.updatePassword}
                 </button>
               </div>
             </div>

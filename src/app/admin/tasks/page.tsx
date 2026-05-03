@@ -13,9 +13,12 @@ import type { Product } from "@/types/product";
 import {
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Gem,
   Pencil,
   Save,
+  Search,
   ShieldCheck,
   Star,
   X,
@@ -41,6 +44,13 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
 
   const [errorText, setErrorText] = useState("");
   const [successText, setSuccessText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+const [typeFilter, setTypeFilter] = useState<"all" | "standard" | "lucky_bonus">("all");
+const [connectionFilter, setConnectionFilter] = useState<"all" | "connected" | "unconnected">("all");
+const [sortBy, setSortBy] = useState<"step_asc" | "step_desc" | "reward_high" | "price_high">("step_asc");
+const [currentPage, setCurrentPage] = useState(1);
+const [pageSize, setPageSize] = useState(10);
 
   const activeTasks = useMemo(
     () => tasks.filter((task) => task.is_active).length,
@@ -56,6 +66,86 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
   () => tasks.filter((task) => task.products && task.products.is_active).length,
   [tasks]
 );
+
+function getTaskReward(task: Task) {
+  return (
+    Number(task.price) *
+    Number(task.commission_rate) *
+    Number(task.multiplier)
+  );
+}
+
+const filteredTasks = useMemo(() => {
+  const term = searchQuery.trim().toLowerCase();
+
+  const result = tasks.filter((task) => {
+    const product = task.products;
+
+    const matchesSearch =
+      !term ||
+      String(task.step_number).includes(term) ||
+      task.title.toLowerCase().includes(term) ||
+      task.category.toLowerCase().includes(term) ||
+      task.task_type.toLowerCase().includes(term) ||
+      product?.name?.toLowerCase().includes(term) ||
+      product?.category?.toLowerCase().includes(term);
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && task.is_active) ||
+      (statusFilter === "inactive" && !task.is_active);
+
+    const matchesType =
+      typeFilter === "all" || task.task_type === typeFilter;
+
+    const isConnected = Boolean(task.products && task.products.is_active);
+
+    const matchesConnection =
+      connectionFilter === "all" ||
+      (connectionFilter === "connected" && isConnected) ||
+      (connectionFilter === "unconnected" && !isConnected);
+
+    return matchesSearch && matchesStatus && matchesType && matchesConnection;
+  });
+
+  return [...result].sort((a, b) => {
+    if (sortBy === "step_desc") {
+      return Number(b.step_number) - Number(a.step_number);
+    }
+
+    if (sortBy === "reward_high") {
+      return getTaskReward(b) - getTaskReward(a);
+    }
+
+    if (sortBy === "price_high") {
+      return Number(b.price) - Number(a.price);
+    }
+
+    return Number(a.step_number) - Number(b.step_number);
+  });
+}, [tasks, searchQuery, statusFilter, typeFilter, connectionFilter, sortBy]);
+
+const totalPages = Math.max(1, Math.ceil(filteredTasks.length / pageSize));
+
+const paginatedTasks = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  return filteredTasks.slice(start, start + pageSize);
+}, [filteredTasks, currentPage, pageSize]);
+
+const firstResult =
+  filteredTasks.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+const lastResult = Math.min(currentPage * pageSize, filteredTasks.length);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery, statusFilter, typeFilter, connectionFilter, sortBy, pageSize]);
+
+useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
 
   const selectedEditingProduct =
     editingTask?.product_id
@@ -232,7 +322,7 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
   </p>
 </div>
 
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Total Tasks" value={String(tasks.length)} />
           <StatCard label="Active" value={String(activeTasks)} />
           <StatCard label="Lucky Bonus" value={String(luckyTasks)} />
@@ -260,135 +350,271 @@ function AdminTasksContent({ profile }: { profile: Profile }) {
         )}
 
         {!loading && (
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-200/80">Mission Sequence</p>
-                <h2 className="text-2xl font-black">Campaign Steps</h2>
-              </div>
-            </div>
+  <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
+    <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
+      <div>
+        <p className="text-sm text-yellow-200/80">Mission Sequence</p>
+        <h2 className="text-2xl font-black">Campaign Steps</h2>
+        <p className="mt-1 text-xs text-white/40">
+          Search, filter, sort, and edit task logic without scrolling through all 80 steps.
+        </p>
+      </div>
 
-            <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-white/[0.06] text-xs uppercase tracking-wide text-white/45">
-                  <tr>
-                    <th className="px-4 py-3">Step</th>
-                    <th className="px-4 py-3">Product / Task</th>
-                    <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Price</th>
-                    <th className="px-4 py-3">Reward</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Action</th>
+      <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
+        {filteredTasks.length} shown / {tasks.length} total
+      </div>
+    </div>
+
+    <div className="mb-5 grid grid-cols-1 gap-3 xl:grid-cols-[1.4fr_0.7fr_0.8fr_0.9fr_0.8fr_0.6fr]">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+        <input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search step, product, category, type..."
+          className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+        />
+      </div>
+
+      <select
+        value={statusFilter}
+        onChange={(event) =>
+          setStatusFilter(event.target.value as "all" | "active" | "inactive")
+        }
+        className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="all">All Status</option>
+        <option className="bg-black" value="active">Active</option>
+        <option className="bg-black" value="inactive">Inactive</option>
+      </select>
+
+      <select
+        value={typeFilter}
+        onChange={(event) =>
+          setTypeFilter(event.target.value as "all" | "standard" | "lucky_bonus")
+        }
+        className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="all">All Types</option>
+        <option className="bg-black" value="standard">Standard</option>
+        <option className="bg-black" value="lucky_bonus">Lucky Bonus</option>
+      </select>
+
+      <select
+        value={connectionFilter}
+        onChange={(event) =>
+          setConnectionFilter(event.target.value as "all" | "connected" | "unconnected")
+        }
+        className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="all">All Products</option>
+        <option className="bg-black" value="connected">Connected</option>
+        <option className="bg-black" value="unconnected">Unconnected</option>
+      </select>
+
+      <select
+        value={sortBy}
+        onChange={(event) =>
+          setSortBy(event.target.value as "step_asc" | "step_desc" | "reward_high" | "price_high")
+        }
+        className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="step_asc">Step 1-80</option>
+        <option className="bg-black" value="step_desc">Step 80-1</option>
+        <option className="bg-black" value="reward_high">Reward High</option>
+        <option className="bg-black" value="price_high">Price High</option>
+      </select>
+
+      <select
+        value={pageSize}
+        onChange={(event) => setPageSize(Number(event.target.value))}
+        className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value={10}>10</option>
+        <option className="bg-black" value={25}>25</option>
+        <option className="bg-black" value={50}>50</option>
+        <option className="bg-black" value={80}>80</option>
+      </select>
+    </div>
+
+    {filteredTasks.length === 0 && (
+      <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
+        <Search className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
+        <p className="font-black">No matching tasks</p>
+        <p className="mt-2 text-sm text-white/50">
+          Try another search keyword or change the filters.
+        </p>
+      </div>
+    )}
+
+    {filteredTasks.length > 0 && (
+      <>
+        <div className="max-h-[660px] overflow-auto rounded-[1.5rem] border border-white/10">
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
+              <tr>
+                <th className="px-4 py-3">Step</th>
+                <th className="px-4 py-3">Product / Task</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">Reward</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-white/10">
+              {paginatedTasks.map((task) => {
+                const lucky = task.task_type === "lucky_bonus";
+                const product = task.products;
+                const reward = getTaskReward(task);
+
+                return (
+                  <tr
+                    key={task.id}
+                    className="bg-black/20 transition hover:bg-white/[0.04]"
+                  >
+                    <td className="px-4 py-4">
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">
+                        {task.step_number}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-14 w-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06]">
+                          {product?.main_image || task.image_url ? (
+                            <img
+                              src={product?.main_image || task.image_url || ""}
+                              alt={product?.name || task.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <Gem className="h-6 w-6 text-yellow-300" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <p className="font-black">
+                            {product?.name || task.title}
+                          </p>
+
+                          <p className="mt-1 text-xs text-white/45">
+                            {product
+                              ? `${product.category} • Catalog connected`
+                              : `${task.category} • No catalog product`}
+                          </p>
+
+                          {product && (
+                            <div className="mt-1 flex items-center gap-1 text-xs text-yellow-300">
+                              <Star className="h-3 w-3 fill-current" />
+                              {Number(product.rating).toFixed(1)}
+                              <span className="text-white/40">
+                                ({product.reviews_count})
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-black ${
+                          lucky
+                            ? "bg-yellow-300 text-black"
+                            : "bg-white/10 text-white/70"
+                        }`}
+                      >
+                        {lucky ? "Lucky Bonus" : "Standard"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 font-bold text-white">
+                      ${Number(task.price).toFixed(2)}
+                    </td>
+
+                    <td className="px-4 py-4 font-bold text-yellow-300">
+                      ${reward.toFixed(2)}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-black ${
+                          task.is_active
+                            ? "bg-emerald-400/15 text-emerald-300"
+                            : "bg-red-500/15 text-red-300"
+                        }`}
+                      >
+                        {task.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => setEditingTask(task)}
+                          className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-2 text-yellow-300 hover:bg-yellow-400/15"
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-                <tbody className="divide-y divide-white/10">
-                  {tasks.map((task) => {
-                    const lucky = task.task_type === "lucky_bonus";
-                    const product = task.products;
-                    const reward =
-                      Number(task.price) *
-                      Number(task.commission_rate) *
-                      Number(task.multiplier);
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
+          <p>
+            Showing{" "}
+            <span className="font-black text-white">{firstResult}</span>
+            {" - "}
+            <span className="font-black text-white">{lastResult}</span>
+            {" of "}
+            <span className="font-black text-yellow-300">
+              {filteredTasks.length}
+            </span>{" "}
+            tasks
+          </p>
 
-                    return (
-                      <tr key={task.id} className="bg-black/20">
-                        <td className="px-4 py-4">
-                          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">
-                            {task.step_number}
-                          </span>
-                        </td>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Prev
+            </button>
 
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-14 w-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06]">
-                              {product?.main_image || task.image_url ? (
-                                <img
-                                  src={product?.main_image || task.image_url || ""}
-                                  alt={product?.name || task.title}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                  <Gem className="h-6 w-6 text-yellow-300" />
-                                </div>
-                              )}
-                            </div>
-
-                            <div>
-                              <p className="font-black">
-                                {product?.name || task.title}
-                              </p>
-                              <p className="mt-1 text-xs text-white/45">
-                                {product
-                                  ? `${product.category} • Catalog connected`
-                                  : `${task.category} • No catalog product`}
-                              </p>
-
-                              {product && (
-                                <div className="mt-1 flex items-center gap-1 text-xs text-yellow-300">
-                                  <Star className="h-3 w-3 fill-current" />
-                                  {Number(product.rating).toFixed(1)}
-                                  <span className="text-white/40">
-                                    ({product.reviews_count})
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-black ${
-                              lucky
-                                ? "bg-yellow-300 text-black"
-                                : "bg-white/10 text-white/70"
-                            }`}
-                          >
-                            {lucky ? "Lucky Bonus" : "Standard"}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4 font-bold text-white">
-                          ${Number(task.price).toFixed(2)}
-                        </td>
-
-                        <td className="px-4 py-4 font-bold text-yellow-300">
-                          ${reward.toFixed(2)}
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-black ${
-                              task.is_active
-                                ? "bg-emerald-400/15 text-emerald-300"
-                                : "bg-red-500/15 text-red-300"
-                            }`}
-                          >
-                            {task.is_active ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <div className="flex justify-end">
-                            <button
-                              onClick={() => setEditingTask(task)}
-                              className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-2 text-yellow-300"
-                              title="Edit"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+              Page {currentPage} / {totalPages}
             </div>
-          </section>
-        )}
+
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages, page + 1))
+              }
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+  </section>
+)}
 
         {editingTask && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
