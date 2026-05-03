@@ -231,11 +231,44 @@ useEffect(() => {
 }, [hasPageAccess]);
 
   useEffect(() => {
-    if (selectedTicketId) {
-      loadChat(selectedTicketId);
-      setReplyText("");
-    }
-  }, [selectedTicketId]);
+  if (!hasPageAccess) return;
+
+  const channel = supabase
+    .channel("admin-support-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "support_messages",
+      },
+      () => {
+        loadTickets();
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "support_chat_messages",
+      },
+      (payload) => {
+        const newMessage = payload.new as ChatMessage;
+
+        loadTickets();
+
+        if (newMessage.ticket_id === selectedTicketId) {
+          loadChat(selectedTicketId);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [hasPageAccess, selectedTicketId]);
 
   async function handleSendReply() {
     if (!selectedTicket) return;
