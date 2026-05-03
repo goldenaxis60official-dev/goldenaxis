@@ -1,12 +1,16 @@
+//src>app>history>page.tsx
+
 "use client";
 
 import LuxuryCard from "@/components/ui/LuxuryCard";
+import { getLanguage, messages } from "@/i18n";
 import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { CheckCircle, Gem, AlertCircle, Star } from "lucide-react";
+import type { Profile } from "@/types/profile";
 
 type ProductSnapshot = {
   id: string | null;
@@ -46,12 +50,14 @@ type HistoryRow = {
 export default function HistoryPage() {
   return (
     <RequireAuth>
-      {() => <HistoryContent />}
+      {(profile) => <HistoryContent profile={profile} />}
     </RequireAuth>
   );
 }
 
-function HistoryContent() {
+function HistoryContent({ profile }: { profile: Profile }) {
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
@@ -121,8 +127,8 @@ function HistoryContent() {
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Mission Ledger</p>
-            <h1 className="text-2xl font-black">Historical Record</h1>
+            <p className="text-sm text-yellow-200/80">{t.history.missionLedger}</p>
+            <h1 className="text-2xl font-black">{t.history.historicalRecord}</h1>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -131,16 +137,16 @@ function HistoryContent() {
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-  <StatCard label="All" value={String(history.length)} color="white" />
+<StatCard label={t.history.all} value={String(history.length)} color="white" />
 
   <StatCard
-    label="Completed"
+    label={t.history.completed}
     value={String(history.filter((h) => h.status === "completed").length)}
     color="green"
   />
 
   <StatCard
-    label="Bonus"
+    label={t.history.bonus}
     value={String(history.filter((h) => isLuckyHistory(h)).length)}
     color="gold"
   />
@@ -148,7 +154,7 @@ function HistoryContent() {
 
         {loading && (
           <LuxuryCard className="p-5 text-center text-white/60">
-  Loading records...
+  {t.history.loadingRecords}
 </LuxuryCard>
         )}
 
@@ -162,9 +168,9 @@ function HistoryContent() {
         {!loading && !errorText && history.length === 0 && (
           <LuxuryCard goldGlow className="p-6 text-center">
   <Gem className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
-  <p className="font-black">No mission records yet</p>
+  <p className="font-black">{t.history.noRecordsTitle}</p>
   <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
-    Complete your first campaign mission to create your historical record.
+    {t.history.noRecordsNote}
   </p>
 </LuxuryCard>
         )}
@@ -176,10 +182,12 @@ function HistoryContent() {
             const lucky = isLuckyHistory(item);
 
             const productName =
-              snapshot?.name || task?.title || `Mission Step ${item.step_number}`;
+  snapshot?.name ||
+  task?.title ||
+  `${t.history.step} ${item.step_number}`;
 
-            const productCategory =
-              snapshot?.category || task?.category || "Campaign";
+const productCategory =
+  snapshot?.category || task?.category || t.history.campaign;
 
             const productImage =
               snapshot?.main_image ||
@@ -221,11 +229,11 @@ function HistoryContent() {
 : "bg-white/10 text-white/80 backdrop-blur"
                       }`}
                     >
-                      {lucky ? "Lucky Bonus" : "Standard"}
+                      {lucky ? t.history.luckyBonus : t.history.standard}
                     </span>
 
                     <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur">
-                      Completed
+                      {t.history.completed}
                     </span>
                   </div>
                 </div>
@@ -236,7 +244,7 @@ function HistoryContent() {
                       <h3 className="text-lg font-black">{productName}</h3>
 
                       <p className="mt-1 text-sm text-white/45">
-                        Step {item.step_number} • {productCategory}
+                        {t.history.step} {item.step_number} • {productCategory}
                       </p>
 
                       {productRating > 0 && (
@@ -246,7 +254,7 @@ function HistoryContent() {
                             {productRating.toFixed(1)}
                           </span>
                           <span className="text-white/40">
-                            ({productReviews} reviews)
+                            ({productReviews} {t.history.reviews})
                           </span>
                         </div>
                       )}
@@ -261,28 +269,28 @@ function HistoryContent() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">Product Value</p>
+                      <p className="text-xs text-white/45">{t.history.productValue}</p>
                       <p className="mt-1 font-bold text-white">
                         {productCurrency} {productValue.toFixed(2)}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">Commission</p>
+                      <p className="text-xs text-white/45">{t.history.commission}</p>
                       <p className="mt-1 font-bold text-yellow-300">
                         ${Number(item.commission_earned).toFixed(2)}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">Before</p>
+                      <p className="text-xs text-white/45">{t.history.before}</p>
                       <p className="mt-1 font-bold text-white/70">
                         ${Number(item.balance_before).toFixed(2)}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">After</p>
+                      <p className="text-xs text-white/45">{t.history.after}</p>
                       <p className="mt-1 font-bold text-emerald-300">
                         ${Number(item.balance_after).toFixed(2)}
                       </p>
@@ -291,7 +299,7 @@ function HistoryContent() {
 
                   {Number(item.multiplier_applied) > 1 && (
                     <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/80">
-                      Bonus multiplier applied:{" "}
+                      {t.history.bonusMultiplierApplied}{" "}
                       <span className="font-black text-yellow-300">
                         {Number(item.multiplier_applied).toFixed(1)}x
                       </span>

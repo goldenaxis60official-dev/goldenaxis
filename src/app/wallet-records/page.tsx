@@ -1,6 +1,9 @@
+//src>app>wallet-records>page.tsx
+
 "use client";
 
 import LuxuryCard from "@/components/ui/LuxuryCard";
+import { getLanguage, messages } from "@/i18n";
 import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -23,9 +26,11 @@ import {
 
 type RequestFilter = "all" | "deposit_credit" | "withdrawal";
 
-function getTypeLabel(type: WalletRequest["type"]) {
-  if (type === "deposit_credit") return "Deposit Credit";
-  return "Withdrawal";
+function getTypeLabel(
+  type: WalletRequest["type"],
+  labels: Record<WalletRequest["type"], string>
+) {
+  return labels[type] || type;
 }
 
 function getStatusIcon(status: WalletRequest["status"]) {
@@ -55,6 +60,9 @@ export default function WalletRecordsPage() {
 }
 
 function WalletRecordsContent({ profile }: { profile: Profile }) {
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
+
   const searchParams = useSearchParams();
   const defaultType = searchParams.get("type");
 
@@ -119,8 +127,8 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Wallet Center</p>
-            <h1 className="text-2xl font-black">Request Records</h1>
+            <p className="text-sm text-yellow-200/80">{t.walletRecords.walletCenter}</p>
+            <h1 className="text-2xl font-black">{t.walletRecords.requestRecords}</h1>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -129,20 +137,20 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
         </div>
 
         <LuxuryCard goldGlow className="mb-5 p-5">
-          <p className="text-sm text-white/50">Current Campaign Balance</p>
+          <p className="text-sm text-white/50">{t.walletRecords.currentBalance}</p>
           <h2 className="mt-2 text-3xl font-black">
             ${Number(profile.balance).toFixed(2)}
           </h2>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
   <StatCard
-    label="Deposit Requests"
+    label={t.walletRecords.depositRequests}
     value={`$${totalDeposit.toFixed(2)}`}
     color="green"
   />
 
   <StatCard
-    label="Withdraw Requests"
+    label={t.walletRecords.withdrawRequests}
     value={`$${totalWithdrawal.toFixed(2)}`}
     color="blue"
   />
@@ -150,21 +158,21 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
         </LuxuryCard>
 
         <div className="mb-5 grid grid-cols-4 gap-3">
-  <StatCard label="All" value={String(records.length)} color="white" />
+  <StatCard label={t.walletRecords.all} value={String(records.length)} color="white" />
 
-  <StatCard label="Pending" value={String(pendingCount)} color="gold" />
+  <StatCard label={t.walletRecords.pending} value={String(pendingCount)} color="gold" />
 
-  <StatCard label="Approved" value={String(approvedCount)} color="green" />
+  <StatCard label={t.walletRecords.approved} value={String(approvedCount)} color="green" />
 
-  <StatCard label="Rejected" value={String(rejectedCount)} color="red" />
+  <StatCard label={t.walletRecords.rejected} value={String(rejectedCount)} color="red" />
 </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
           {[
-            { label: "All", value: "all" },
-            { label: "Deposit", value: "deposit_credit" },
-            { label: "Withdraw", value: "withdrawal" },
-          ].map((item) => (
+  { label: t.walletRecords.all, value: "all" },
+  { label: t.walletRecords.deposit, value: "deposit_credit" },
+  { label: t.walletRecords.withdraw, value: "withdrawal" },
+].map((item) => (
             <button
               key={item.value}
               onClick={() => setFilter(item.value as RequestFilter)}
@@ -181,7 +189,7 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
 
         {loading && (
           <LuxuryCard className="p-5 text-center text-white/60">
-  Loading request records...
+  {t.walletRecords.loading}
 </LuxuryCard>
         )}
 
@@ -195,9 +203,9 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
         {!loading && !errorText && records.length === 0 && (
           <LuxuryCard goldGlow className="p-6 text-center">
             <ClipboardList className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
-            <p className="font-bold">No request records yet</p>
+            <p className="font-bold">{t.walletRecords.noRecordsTitle}</p>
             <p className="mt-2 text-sm text-white/50">
-              Deposit or withdrawal requests will appear here.
+              {t.walletRecords.noRecordsNote}
             </p>
           </LuxuryCard>
         )}
@@ -226,7 +234,7 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
                     </div>
 
                     <div>
-                      <h3 className="font-black">{getTypeLabel(item.type)}</h3>
+                      <h3 className="font-black">{getTypeLabel(item.type, t.walletRecords.types)}</h3>
 
                       <p className="mt-1 text-xs text-white/45">
                         {new Date(item.created_at).toLocaleString()}
@@ -240,36 +248,36 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
                     )}`}
                   >
                     <StatusIcon className="h-3.5 w-3.5" />
-                    {item.status}
+                    {t.walletRecords.statuses[item.status]}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Amount</p>
+                    <p className="text-xs text-white/45">{t.walletRecords.amount}</p>
                     <p className="mt-1 font-bold text-yellow-300">
                       ${Number(item.amount).toFixed(2)}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Method</p>
+                    <p className="text-xs text-white/45">{t.walletRecords.method}</p>
                     <p className="mt-1 font-bold text-white/70">
-                      {item.method || "Manual Review"}
+                      {item.method || t.walletRecords.manualReview}
                     </p>
                   </div>
                 </div>
 
                 {item.note && (
                   <div className="mt-3 rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Your Note</p>
+                    <p className="text-xs text-white/45">{t.walletRecords.yourNote}</p>
                     <p className="mt-1 text-sm text-white/70">{item.note}</p>
                   </div>
                 )}
 
                 {item.admin_note && (
                   <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3">
-                    <p className="text-xs text-yellow-200/70">Admin Note</p>
+                    <p className="text-xs text-yellow-200/70">{t.walletRecords.reviewNote}</p>
                     <p className="mt-1 text-sm text-yellow-100">
                       {item.admin_note}
                     </p>
@@ -278,7 +286,7 @@ function WalletRecordsContent({ profile }: { profile: Profile }) {
 
                 {item.reviewed_at && (
                   <p className="mt-3 text-xs text-white/35">
-                    Reviewed: {new Date(item.reviewed_at).toLocaleString()}
+                    {t.walletRecords.reviewed}: {new Date(item.reviewed_at).toLocaleString()}
                   </p>
                 )}
               </LuxuryCard>

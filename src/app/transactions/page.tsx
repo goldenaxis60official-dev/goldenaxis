@@ -3,6 +3,7 @@
 "use client";
 
 import LuxuryCard from "@/components/ui/LuxuryCard";
+import { getLanguage, messages } from "@/i18n";
 import StatCard from "@/components/ui/StatCard";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
@@ -20,18 +21,10 @@ import {
 
 type TransactionFilter = "all" | "in" | "out";
 
-function getTransactionLabel(type: string) {
-  const labels: Record<string, string> = {
-    task_purchase: "Task Purchase",
-    task_return: "Task Return",
-    task_commission: "Task Commission",
-    lucky_bonus: "Lucky Bonus",
-    referral_reward: "Team Reward",
-    deposit_credit_approved: "Credit Approved",
-    withdrawal_requested: "Withdrawal Request",
-    admin_adjustment: "Admin Adjustment",
-  };
-
+function getTransactionLabel(
+  type: string,
+  labels: Record<string, string>
+) {
   return labels[type] || type.replaceAll("_", " ");
 }
 
@@ -48,6 +41,9 @@ export default function TransactionsPage() {
 }
 
 function TransactionsContent({ profile }: { profile: Profile }) {
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filter, setFilter] = useState<TransactionFilter>("all");
 
@@ -105,8 +101,8 @@ function TransactionsContent({ profile }: { profile: Profile }) {
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Wallet Ledger</p>
-            <h1 className="text-2xl font-black">Transaction Details</h1>
+            <p className="text-sm text-yellow-200/80">{t.transactions.walletLedger}</p>
+            <h1 className="text-2xl font-black">{t.transactions.transactionDetails}</h1>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -115,26 +111,26 @@ function TransactionsContent({ profile }: { profile: Profile }) {
         </div>
 
         <LuxuryCard goldGlow className="mb-5 p-5">
-          <p className="text-sm text-white/50">Current Campaign Balance</p>
+          <p className="text-sm text-white/50">{t.transactions.currentBalance}</p>
           <h2 className="mt-2 text-3xl font-black">
             ${Number(profile.balance).toFixed(2)}
           </h2>
 
           <div className="mt-4 grid grid-cols-3 gap-3">
   <StatCard
-    label="Credit In"
+    label={t.transactions.creditIn}
     value={`$${totalIn.toFixed(2)}`}
     color="green"
   />
 
   <StatCard
-    label="Credit Out"
+    label={t.transactions.creditOut}
     value={`$${totalOut.toFixed(2)}`}
     color="red"
   />
 
   <StatCard
-    label="Net"
+    label={t.transactions.net}
     value={`$${netChange.toFixed(2)}`}
     color={netChange >= 0 ? "gold" : "red"}
   />
@@ -143,10 +139,10 @@ function TransactionsContent({ profile }: { profile: Profile }) {
 
         <div className="mb-5 grid grid-cols-3 gap-3">
           {[
-            { label: "All", value: "all" },
-            { label: "Credit In", value: "in" },
-            { label: "Credit Out", value: "out" },
-          ].map((item) => (
+  { label: t.transactions.all, value: "all" },
+  { label: t.transactions.creditIn, value: "in" },
+  { label: t.transactions.creditOut, value: "out" },
+].map((item) => (
             <button
               key={item.value}
               onClick={() => setFilter(item.value as TransactionFilter)}
@@ -162,16 +158,16 @@ function TransactionsContent({ profile }: { profile: Profile }) {
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-  <StatCard label="All" value={String(transactions.length)} color="white" />
+  <StatCard label={t.transactions.all} value={String(transactions.length)} color="white" />
 
   <StatCard
-    label="Showing"
+    label={t.transactions.showing}
     value={String(filteredTransactions.length)}
     color="gold"
   />
 
   <StatCard
-    label="Today"
+    label={t.transactions.today}
     value={`$${Number(profile.today_earnings).toFixed(2)}`}
     color="green"
   />
@@ -179,7 +175,7 @@ function TransactionsContent({ profile }: { profile: Profile }) {
 
         {loading && (
           <LuxuryCard className="p-5 text-center text-white/60">
-  Loading transactions...
+  {t.transactions.loading}
 </LuxuryCard>
         )}
 
@@ -193,9 +189,9 @@ function TransactionsContent({ profile }: { profile: Profile }) {
         {!loading && !errorText && filteredTransactions.length === 0 && (
           <LuxuryCard goldGlow className="p-6 text-center">
             <Gem className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
-            <p className="font-bold">No transactions found</p>
+            <p className="font-bold">{t.transactions.noTransactionsTitle}</p>
             <p className="mt-2 text-sm text-white/50">
-              Wallet transaction records will appear here.
+              {t.transactions.noTransactionsNote}
             </p>
           </LuxuryCard>
         )}
@@ -225,7 +221,7 @@ function TransactionsContent({ profile }: { profile: Profile }) {
 
                     <div>
                       <h3 className="font-black">
-                        {getTransactionLabel(item.type)}
+                        {getTransactionLabel(item.type, t.transactions.labels)}
                       </h3>
 
                       <p className="mt-1 text-xs text-white/45">
@@ -251,14 +247,14 @@ function TransactionsContent({ profile }: { profile: Profile }) {
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">Before</p>
+                    <p className="text-xs text-white/45">{t.transactions.before}</p>
                     <p className="mt-1 font-bold text-white/70">
                       ${Number(item.balance_before).toFixed(2)}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-xs text-white/45">After</p>
+                    <p className="text-xs text-white/45">{t.transactions.after}</p>
                     <p className="mt-1 font-bold text-yellow-300">
                       ${Number(item.balance_after).toFixed(2)}
                     </p>

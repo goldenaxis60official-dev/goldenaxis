@@ -1,8 +1,9 @@
-//app>tearms>page.tsx
+//app>tesrms>page.tsx
 
 "use client";
 
 import { useState } from "react";
+import { getLanguage, messages } from "@/i18n";
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import Image from "next/image";
 import AppShell from "@/components/layout/AppShell";
@@ -25,91 +26,101 @@ import {
   X,
 } from "lucide-react";
 
-const certificates = [
+type CertificateKey = "internalQuality" | "certifiedExcellence";
+
+const certificates: Array<{
+  key: CertificateKey;
+  image: string;
+}> = [
   {
-    title: "Internal Quality Certificate",
+    key: "internalQuality",
     image: "/certificate1.png",
-    description:
-      "Golden Axis 60 internal platform quality and campaign review standard.",
   },
   {
-    title: "Certified Excellence Standard",
+    key: "certifiedExcellence",
     image: "/certificate2.png",
-    description:
-      "Golden Axis 60 certificate reference for quality, review, and platform trust.",
   },
 ];
 
-const trustBadges = [
+type TrustBadgeKey =
+  | "internalCertificate"
+  | "qualityChecklist"
+  | "kycReview"
+  | "secureLedger";
+
+const trustBadges: Array<{
+  key: TrustBadgeKey;
+  icon: typeof Award;
+}> = [
   {
-    title: "Internal Certificate",
-    text: "Official Golden Axis 60 quality mark",
+    key: "internalCertificate",
     icon: Award,
   },
   {
-    title: "Quality Checklist",
-    text: "Internal review process for campaign and wallet activity",
+    key: "qualityChecklist",
     icon: BadgeCheck,
   },
   {
-    title: "KYC Review",
-    text: "Account and wallet requests may require manual review",
+    key: "kycReview",
     icon: Fingerprint,
   },
   {
-    title: "Secure Ledger",
-    text: "Wallet activity and requests are recorded for audit history",
+    key: "secureLedger",
     icon: Database,
   },
 ];
 
-const sections = [
+type SectionKey =
+  | "promotionalCredit"
+  | "assignedMissionRule"
+  | "missionSequenceRule"
+  | "luckyBonusRule"
+  | "walletRequestRule"
+  | "withdrawalRule"
+  | "teamRewardRule"
+  | "accountSecurity";
+
+const sections: Array<{
+  key: SectionKey;
+  icon: typeof Gem;
+}> = [
   {
-    title: "Promotional Credit",
+    key: "promotionalCredit",
     icon: Gem,
-    text: "Golden Axis 60 uses campaign credits and rewards. Displayed balances, product values, and rewards are part of the promotional task experience unless officially reviewed and approved by the platform.",
   },
   {
-    title: "Assigned Mission Rule",
+    key: "assignedMissionRule",
     icon: ClipboardList,
-    text: "Each user receives a personalized campaign mission list assigned by the platform. A campaign list can contain a minimum of 1 mission and a maximum of 80 missions. Missions must be completed in order.",
   },
   {
-    title: "Mission Sequence Rule",
+    key: "missionSequenceRule",
     icon: FileText,
-    text: "Users complete assigned campaign missions step by step. Future missions remain locked until previous assigned missions are completed. If no missions are assigned yet, the campaign list may show as preparing.",
   },
   {
-    title: "Lucky Bonus Rule",
+    key: "luckyBonusRule",
     icon: Gem,
-    text: "Lucky Bonus missions are premium jewel campaign tasks with a higher reward multiplier. If the user balance is not enough, the platform may ask the user to add campaign credits before continuing.",
   },
   {
-    title: "Wallet Request Rule",
+    key: "walletRequestRule",
     icon: Wallet,
-    text: "Deposit-credit and withdrawal balance updates are reviewed by the platform. Approved requests are recorded in the transaction ledger for transparency and audit history.",
   },
   {
-    title: "Withdrawal Rule",
+    key: "withdrawalRule",
     icon: ShieldCheck,
-    text: "Withdrawal requests become available only after the user completes all assigned active campaign missions. Requests may require account, wallet, and activity review before final approval.",
   },
   {
-    title: "Team Reward Rule",
+    key: "teamRewardRule",
     icon: Users,
-    text: "Team rewards are calculated from team member mission commission only. The standard team bonus rate is 5% of the completed mission commission and does not cascade from other team bonuses.",
   },
   {
-    title: "Account Security",
+    key: "accountSecurity",
     icon: Lock,
-    text: "Users are responsible for protecting their login information. Balance updates, wallet history, and support replies may be recorded for transparency, security review, and audit history.",
   },
 ];
 
 type Certificate = {
-  title: string;
+  key: CertificateKey;
   image: string;
-  description: string;
 };
 
 export default function TermsPage() {
@@ -118,13 +129,17 @@ export default function TermsPage() {
 
   return (
     <RequireAuth>
-      {() => (
+  {(profile) => {
+    const lang = getLanguage(profile.language);
+    const t = messages[lang].terms;
+
+    return (
         <AppShell>
           <section className="px-5 pt-8">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="text-sm text-yellow-200/80">Platform Policy</p>
-                <h1 className="text-2xl font-black">Terms & Security</h1>
+                <p className="text-sm text-yellow-200/80">{t.platformPolicy}</p>
+                <h1 className="text-2xl font-black">{t.title}</h1>
               </div>
 
               <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 shadow-[0_0_30px_rgba(250,204,21,0.15)]">
@@ -139,18 +154,16 @@ export default function TermsPage() {
                   <div className="mb-1 flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-yellow-300" />
                     <p className="text-xs font-bold uppercase tracking-[0.25em] text-yellow-200/80">
-                      Verified Standard
+                      {t.verifiedStandard}
                     </p>
                   </div>
 
                   <h2 className="text-xl font-black text-white">
-                    Internal Platform Standard
+                    {t.internalStandardTitle}
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-white/55">
-                    Golden Axis 60 uses internal quality checks, manual wallet
-                    review, and ledger-based request records to support a more
-                    secure promotional campaign experience.
+                    {t.internalStandardTitle}
                   </p>
                 </div>
 
@@ -171,7 +184,7 @@ export default function TermsPage() {
                       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-white">
                         <Image
                           src={certificate.image}
-                          alt={certificate.title}
+                          alt={t.certificates[certificate.key].title}
                           fill
                           className="object-contain"
                           priority={certificate.image === "/certificate1.png"}
@@ -180,16 +193,16 @@ export default function TermsPage() {
 
                       <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full border border-black/10 bg-black/65 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md">
                         <ZoomIn className="h-3.5 w-3.5 text-yellow-300" />
-                        View
+                        {t.view}
                       </div>
                     </div>
 
                     <div className="px-2 pb-2 pt-3">
                       <p className="text-sm font-black text-white">
-                        {certificate.title}
+                        {t.certificates[certificate.key].title}
                       </p>
                       <p className="mt-1 text-xs leading-5 text-white/55">
-                        {certificate.description}
+                        {t.certificates[certificate.key].description}
                       </p>
                     </div>
                   </button>
@@ -204,7 +217,7 @@ export default function TermsPage() {
 
                 return (
                   <div
-                    key={badge.title}
+                    key={badge.key}
                     className="rounded-[1.4rem] border border-yellow-400/15 bg-white/[0.055] p-3 backdrop-blur-xl"
                   >
                     <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
@@ -212,11 +225,11 @@ export default function TermsPage() {
                     </div>
 
                     <h3 className="text-sm font-black text-white">
-                      {badge.title}
+                      {t.trustBadges[badge.key].title}
                     </h3>
 
                     <p className="mt-1 text-[11px] leading-4 text-white/50">
-                      {badge.text}
+                      {t.trustBadges[badge.key].text}
                     </p>
                   </div>
                 );
@@ -226,14 +239,11 @@ export default function TermsPage() {
             <LuxuryCard goldGlow className="mb-5 p-5">
               <div className="mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-300" />
-                <h2 className="text-lg font-black">Important Notice</h2>
+                <h2 className="text-lg font-black">{t.importantNotice}</h2>
               </div>
 
               <p className="text-sm leading-6 text-white/65">
-                This platform is designed as a promotional campaign.
-                It should not be presented as guaranteed income, investment
-                profit, or risk-free earning. All wallet, reward, and withdrawal
-                requests are subject to platform review.
+                {t.importantNoticeText}
               </p>
             </LuxuryCard>
 
@@ -242,17 +252,17 @@ export default function TermsPage() {
                 const Icon = item.icon;
 
                 return (
-                  <LuxuryCard key={item.title} className="p-4">
+                  <LuxuryCard key={item.key} className="p-4">
                     <div className="mb-3 flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
                         <Icon className="h-5 w-5" />
                       </div>
 
-                      <h3 className="font-black">{item.title}</h3>
+                      <h3 className="font-black">{t.sections[item.key].title}</h3>
                     </div>
 
                     <p className="text-sm leading-6 text-white/60">
-                      {item.text}
+                      {t.sections[item.key].text}
                     </p>
                   </LuxuryCard>
                 );
@@ -267,10 +277,10 @@ export default function TermsPage() {
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-200/70">
-                      Certificate Preview
+                      {t.certificatePreview}
                     </p>
                     <h2 className="text-lg font-black text-white">
-                      {selectedCertificate.title}
+                      {t.certificates[selectedCertificate.key].title}
                     </h2>
                   </div>
 
@@ -286,20 +296,21 @@ export default function TermsPage() {
                 <div className="relative flex-1 overflow-hidden rounded-[1.5rem] border border-yellow-300/20 bg-white p-3">
                   <Image
                     src={selectedCertificate.image}
-                    alt={selectedCertificate.title}
+                    alt={t.certificates[selectedCertificate.key].title}
                     fill
                     className="object-contain p-3"
                   />
                 </div>
 
                 <p className="mt-4 rounded-2xl border border-yellow-300/15 bg-yellow-400/10 px-4 py-3 text-center text-xs leading-5 text-yellow-50/70">
-                  {selectedCertificate.description}
+                  {t.certificates[selectedCertificate.key].description}
                 </p>
               </div>
             </div>
           )}
-        </AppShell>
-      )}
-    </RequireAuth>
+                </AppShell>
+      );
+    }}
+  </RequireAuth>
   );
 }

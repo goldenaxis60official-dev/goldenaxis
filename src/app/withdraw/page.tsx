@@ -3,6 +3,7 @@
 "use client";
 
 import LuxuryCard from "@/components/ui/LuxuryCard";
+import { getLanguage, messages } from "@/i18n";
 import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -41,6 +42,9 @@ export default function WithdrawPage() {
 
 function WithdrawContent({ profile }: { profile: Profile }) {
   const router = useRouter();
+
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
 
   const [amount, setAmount] = useState(Number(profile.balance || 0));
   const [asset, setAsset] = useState<WalletAsset>("USDT");
@@ -122,36 +126,36 @@ function WithdrawContent({ profile }: { profile: Profile }) {
     setErrorText("");
 
     if (loadingAssignments) {
-      setErrorText("Checking campaign progress. Please wait.");
+      setErrorText(t.withdraw.checkingProgressError);
       return;
     }
 
     if (hasNoAssignedTasks) {
-      setErrorText(
-        "Your campaign task list has not been assigned yet. Withdrawal is not available."
-      );
+      setErrorText(t.withdraw.noAssignedError);
       return;
     }
 
     if (!completedAllAssignedMissions) {
-      setErrorText(
-        "Complete all assigned campaign missions to unlock withdrawal request."
-      );
+      setErrorText(t.withdraw.lockedError);
       return;
     }
 
     if (!amount || amount <= 0) {
-      setErrorText("Please enter a valid withdrawal amount.");
+      setErrorText(t.withdraw.validAmountError);
       return;
     }
 
     if (amount > Number(profile.balance)) {
-      setErrorText("Request amount cannot exceed your campaign balance.");
+      setErrorText(t.withdraw.exceedBalanceError);
       return;
     }
 
     if (!receivingAddress.trim()) {
-      setErrorText(`Please enter your ${asset} ${network} receiving address.`);
+      setErrorText(
+  t.withdraw.receivingAddressError
+    .replace("{asset}", asset)
+    .replace("{network}", network)
+);
       return;
     }
 
@@ -181,7 +185,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText("Withdrawal request submitted for admin review.");
+    setSuccessText(t.withdraw.successSubmitted);
     setReceivingAddress("");
     setNote("");
     setLoading(false);
@@ -192,10 +196,10 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Wallet Center</p>
-            <h1 className="text-2xl font-black">Withdraw Request</h1>
+            <p className="text-sm text-yellow-200/80">{t.withdraw.walletCenter}</p>
+            <h1 className="text-2xl font-black">{t.withdraw.withdrawRequest}</h1>
             <p className="mt-1 text-xs text-white/45">
-  Withdrawal review opens after your campaign sequence is complete. Support is always available.
+  {t.withdraw.subtitle}
 </p>
           </div>
 
@@ -205,14 +209,14 @@ function WithdrawContent({ profile }: { profile: Profile }) {
         </div>
 
         <LuxuryCard goldGlow className="mb-5 p-5">
-          <p className="text-sm text-white/50">Available Campaign Balance</p>
+          <p className="text-sm text-white/50">{t.withdraw.availableBalance}</p>
           <h2 className="mt-2 text-4xl font-black">
             ${Number(profile.balance).toFixed(2)}
           </h2>
 
          <div className="mt-4 grid grid-cols-2 gap-3">
   <StatCard
-    label="Mission Progress"
+    label={t.withdraw.missionProgress}
     value={
       loadingAssignments
         ? "..."
@@ -224,8 +228,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
   />
 
   <StatCard
-    label="Withdraw Status"
-    value={completedAllAssignedMissions ? "Ready" : "In Progress"}
+    label={t.withdraw.withdrawStatus}
+    value={completedAllAssignedMissions ? t.withdraw.ready : t.withdraw.inProgress}
     color={completedAllAssignedMissions ? "green" : "gold"}
   />
 </div>
@@ -234,8 +238,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="mt-4 flex gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">
               <Lock className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
               <p>
-                Your campaign task list is still preparing. Withdrawal becomes
-                available after admin assigns and you complete your missions.
+                {t.withdraw.noAssignedNote}
               </p>
             </div>
           )}
@@ -245,8 +248,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
     <div className="flex gap-3">
       <Lock className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
       <p>
-        Your withdrawal review is preparing. It becomes available after your
-        assigned campaign missions are completed.
+        {t.withdraw.lockedNote}
       </p>
     </div>
 
@@ -256,7 +258,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/25 bg-black/25 px-4 py-3 text-sm font-black text-yellow-100"
     >
       <MessageCircle className="h-4 w-4" />
-      Contact Withdrawal Support
+      {t.withdraw.contactSupport}
     </button>
   </div>
 )}
@@ -265,8 +267,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             <div className="mt-4 flex gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100/80">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
               <p>
-                Your assigned campaign sequence is complete. You can submit a
-                withdrawal request for admin review.
+                {t.withdraw.readyNote}
               </p>
             </div>
           )}
@@ -275,7 +276,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
         <LuxuryCard className="p-5">
   <form onSubmit={handleSubmit}>
           <div className="mb-5">
-            <p className="mb-3 font-bold">1. Request Amount</p>
+            <p className="mb-3 font-bold">{t.withdraw.requestAmount}</p>
 
             <input
               value={amount}
@@ -289,7 +290,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           </div>
 
           <div className="mb-5">
-            <p className="mb-3 font-bold">2. Select Withdraw Asset</p>
+            <p className="mb-3 font-bold">{t.withdraw.selectAsset}</p>
 
             <div className="grid grid-cols-2 gap-3">
               {assets.map((item) => (
@@ -310,7 +311,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           </div>
 
           <div className="mb-5">
-            <p className="mb-3 font-bold">3. Select Network</p>
+            <p className="mb-3 font-bold">{t.withdraw.selectNetwork}</p>
 
             <div className="grid grid-cols-2 gap-3">
               {networks.map((item) => (
@@ -333,20 +334,22 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           <div className="mb-5 rounded-[1.7rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
             <div className="mb-3 flex items-center gap-2">
               <Wallet className="h-5 w-5 text-yellow-300" />
-              <p className="font-black">4. Receiving Wallet</p>
+              <p className="font-black">{t.withdraw.receivingWallet}</p>
             </div>
 
             <p className="mb-3 text-sm leading-6 text-white/55">
-              Enter your personal receiving address. Make sure this address
-              supports {asset} on {network}. Wrong network/address may cause
-              loss.
+              {t.withdraw.receivingWalletNote
+  .replace("{asset}", asset)
+  .replace("{network}", network)}
             </p>
 
             <input
               value={receivingAddress}
               onChange={(event) => setReceivingAddress(event.target.value)}
               disabled={!completedAllAssignedMissions}
-              placeholder={`Enter your ${asset} ${network} receiving address`}
+              placeholder={t.withdraw.receivingAddressPlaceholder
+  .replace("{asset}", asset)
+  .replace("{network}", network)}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
             />
 
@@ -356,48 +359,48 @@ function WithdrawContent({ profile }: { profile: Profile }) {
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/20 bg-black/30 px-5 py-4 font-bold text-yellow-100"
             >
               <MessageCircle className="h-5 w-5" />
-              Need help? Open Wallet Support
+              {t.withdraw.walletSupport}
             </button>
           </div>
 
           <div className="mb-5">
-            <p className="mb-3 font-bold">5. Note Optional</p>
+            <p className="mb-3 font-bold">{t.withdraw.noteOptional}</p>
 
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
               disabled={!completedAllAssignedMissions}
-              placeholder="Write note for admin..."
+              placeholder={t.withdraw.notePlaceholder}
               className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
             />
           </div>
 
           <div className="mb-5 rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
-            <p className="text-xs text-white/45">Request Summary</p>
+            <p className="text-xs text-white/45">{t.withdraw.requestSummary}</p>
 
             <div className="mt-3 grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-white/40">Amount</p>
+                <p className="text-xs text-white/40">{t.withdraw.amount}</p>
                 <p className="mt-1 font-black text-yellow-300">
                   ${Number(amount || 0).toFixed(2)}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-white/40">Method</p>
+                <p className="text-xs text-white/40">{t.withdraw.method}</p>
                 <p className="mt-1 font-black text-white">
                   {asset} {network}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-white/40">Status</p>
-                <p className="mt-1 font-black text-blue-300">Pending</p>
+                <p className="text-xs text-white/40">{t.withdraw.status}</p>
+                <p className="mt-1 font-black text-blue-300">{t.withdraw.pending}</p>
               </div>
 
               <div>
-                <p className="text-xs text-white/40">Balance Deduct</p>
-                <p className="mt-1 font-black text-white">After withdraw</p>
+                <p className="text-xs text-white/40">{t.withdraw.balanceDeduct}</p>
+                <p className="mt-1 font-black text-white">{t.withdraw.afterWithdraw}</p>
               </div>
             </div>
           </div>
@@ -421,7 +424,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="h-5 w-5" />
-            {loading ? "Submitting..." : "Submit Withdrawal Request"}
+            {loading ? t.withdraw.submitting : t.withdraw.submitWithdrawalRequest}
           </button>
 
           <button
@@ -430,7 +433,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 font-bold text-white/75"
           >
             <ClipboardList className="h-5 w-5" />
-            View Withdrawal Records
+            {t.withdraw.viewWithdrawalRecords}
           </button>
           </form>
 </LuxuryCard>

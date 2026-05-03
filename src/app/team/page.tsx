@@ -2,6 +2,7 @@
 
 "use client";
 
+import { getLanguage, messages } from "@/i18n";
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import StatCard from "@/components/ui/StatCard";
 import { useEffect, useState } from "react";
@@ -56,6 +57,8 @@ export default function TeamPage() {
 }
 
 function TeamContent({ profile }: { profile: Profile }) {
+  const lang = getLanguage(profile.language);
+  const t = messages[lang];
   const [summary, setSummary] = useState<TeamSummary | null>(null);
   const [rewards, setRewards] = useState<TeamReward[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +147,7 @@ function TeamContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText(summary ? "Team code updated." : "Team created.");
+    setSuccessText(summary ? t.team.teamCodeUpdated : t.team.teamCreated);
     setActionLoading(false);
     await loadTeam();
   }
@@ -168,7 +171,7 @@ function TeamContent({ profile }: { profile: Profile }) {
     const row = Array.isArray(data) ? data[0] : data;
 
     if (!row) {
-      setErrorText("Team code not found.");
+      setErrorText(t.team.teamCodeNotFound);
       setActionLoading(false);
       return;
     }
@@ -194,7 +197,7 @@ function TeamContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText("Team joined successfully.");
+    setSuccessText(t.team.teamJoinedSuccessfully);
     setFoundTeam(null);
     setSearchCodeInput("");
     setActionLoading(false);
@@ -210,8 +213,8 @@ function TeamContent({ profile }: { profile: Profile }) {
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Team Center</p>
-            <h1 className="text-2xl font-black">Team Code</h1>
+            <p className="text-sm text-yellow-200/80">{t.team.teamCenter}</p>
+            <h1 className="text-2xl font-black">{t.team.teamCode}</h1>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -221,7 +224,7 @@ function TeamContent({ profile }: { profile: Profile }) {
 
         {loading && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
-            Loading team dashboard...
+            {t.team.loadingDashboard}
           </div>
         )}
 
@@ -247,12 +250,12 @@ function TeamContent({ profile }: { profile: Profile }) {
                   <div className="p-5">
                     <div className="mb-5 flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-white/50">Your Team Code</p>
+                        <p className="text-sm text-white/50">{t.team.yourTeamCode}</p>
                         <h2 className="mt-1 text-4xl font-black tracking-wide text-yellow-300">
                           {summary.team_code}
                         </h2>
                         <p className="mt-1 text-sm text-white/45">
-                          {summary.team_name || "Golden Team"}
+                          {summary.team_name || t.team.goldenTeam}
                         </p>
                       </div>
 
@@ -268,12 +271,12 @@ function TeamContent({ profile }: { profile: Profile }) {
                       {copied ? (
                         <>
                           <CheckCircle className="h-5 w-5" />
-                          Copied
+                          {t.team.copied}
                         </>
                       ) : (
                         <>
                           <Copy className="h-5 w-5" />
-                          Copy Team Code
+                          {t.team.copyTeamCode}
                         </>
                       )}
                     </button>
@@ -283,34 +286,33 @@ function TeamContent({ profile }: { profile: Profile }) {
                     <div className="flex items-start gap-3">
                       <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
                       <p className="text-sm leading-6 text-yellow-100/80">
-                        When one team member earns a mission commission, other
-                        active team members receive a 5% team bonus.
+                        {t.team.bonusExplanation}
                       </p>
                     </div>
                   </div>
                 </LuxuryCard>
 
                 <div className="mb-5 grid grid-cols-3 gap-3">
-  <StatCard label="Team Size" value={String(teamCount)} color="blue" />
+  <StatCard label={t.team.teamSize} value={String(teamCount)} color="blue" />
 
-  <StatCard label="Team Bonus" value="5%" color="gold" />
+<StatCard label={t.team.teamBonus} value="5%" color="gold" />
 
-  <StatCard
-    label="Reward"
-    value={`$${totalReward.toFixed(2)}`}
-    color="green"
-  />
+<StatCard
+  label={t.team.reward}
+  value={`$${totalReward.toFixed(2)}`}
+  color="green"
+/>
 </div>
 
                 {isOwner && (
                   <LuxuryCard goldGlow className="mb-5 p-4">
-                    <h2 className="mb-3 font-black">Customize Team</h2>
+                    <h2 className="mb-3 font-black">{t.team.customizeTeam}</h2>
 
                     <div className="space-y-3">
                       <input
                         value={teamNameInput}
                         onChange={(e) => setTeamNameInput(e.target.value)}
-                        placeholder="Team name"
+                        placeholder={t.team.teamNamePlaceholder}
                         className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
                       />
 
@@ -319,7 +321,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                         onChange={(e) =>
                           setTeamCodeInput(e.target.value.toUpperCase())
                         }
-                        placeholder="Team code"
+                        placeholder={t.team.teamCodePlaceholder}
                         className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-bold uppercase tracking-wide text-yellow-300 outline-none placeholder:text-white/35"
                       />
 
@@ -329,30 +331,29 @@ function TeamContent({ profile }: { profile: Profile }) {
                         className="flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-4 py-3 font-bold text-yellow-200 active:scale-[0.98] disabled:opacity-50"
                       >
                         <RefreshCw className="h-4 w-4" />
-                        Update Team Code
+                        {t.team.updateTeamCode}
                       </button>
                     </div>
                   </LuxuryCard>
                 )}
 
                 <div className="mb-5 rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100/80">
-                  Team bonuses are added only from real mission commissions.
-                  Bonus rewards do not create another bonus loop.
+                  {t.team.noLoopNote}
                 </div>
 
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-lg font-black">Team Bonus Ledger</h2>
+                  <h2 className="text-lg font-black">{t.team.teamBonusLedger}</h2>
                   <span className="text-xs text-yellow-300">
-                    {rewards.length} records
+                    {rewards.length} {t.team.records}
                   </span>
                 </div>
 
                 {rewards.length === 0 && (
                   <LuxuryCard className="p-6 text-center">
                     <Gift className="mx-auto mb-3 h-9 w-9 text-yellow-300" />
-                    <p className="font-bold">No team bonuses yet</p>
+                    <p className="font-bold">{t.team.noBonusesYet}</p>
                     <p className="mt-2 text-sm text-white/50">
-                      Bonuses appear when another team member completes a mission.
+                      {t.team.noBonusesNote}
                     </p>
                   </LuxuryCard>
                 )}
@@ -367,7 +368,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                           </div>
 
                           <div>
-                            <h3 className="font-black">Team Bonus Reward</h3>
+                            <h3 className="font-black">{t.team.teamBonusReward}</h3>
                             <p className="mt-1 text-xs text-white/45">
                               {new Date(item.created_at).toLocaleString()}
                             </p>
@@ -382,7 +383,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-2xl bg-black/30 p-3">
                           <p className="text-xs text-white/45">
-                            Base Commission
+                            {t.team.baseCommission}
                           </p>
                           <p className="mt-1 font-bold text-white/70">
                             ${Number(item.base_commission).toFixed(2)}
@@ -390,7 +391,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                         </div>
 
                         <div className="rounded-2xl bg-black/30 p-3">
-                          <p className="text-xs text-white/45">Team Rate</p>
+                          <p className="text-xs text-white/45">{t.team.teamRate}</p>
                           <p className="mt-1 font-bold text-yellow-300">
                             {(Number(item.team_rate) * 100).toFixed(0)}%
                           </p>
@@ -403,17 +404,16 @@ function TeamContent({ profile }: { profile: Profile }) {
             ) : (
               <div className="space-y-5">
                 <LuxuryCard goldGlow className="p-5">
-                  <h2 className="mb-2 text-xl font-black">Create My Team</h2>
+                  <h2 className="mb-2 text-xl font-black">{t.team.createMyTeam}</h2>
                   <p className="mb-4 text-sm leading-6 text-white/55">
-                    Create your own team code. Other members can join by using
-                    this code during signup or from this Team Center.
+                    {t.team.createMyTeamNote}
                   </p>
 
                   <div className="space-y-3">
                     <input
                       value={teamNameInput}
                       onChange={(e) => setTeamNameInput(e.target.value)}
-                      placeholder="Team name"
+                      placeholder={t.team.teamNamePlaceholder}
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
                     />
 
@@ -422,7 +422,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                       onChange={(e) =>
                         setTeamCodeInput(e.target.value.toUpperCase())
                       }
-                      placeholder="Custom team code"
+                      placeholder={t.team.customTeamCodePlaceholder}
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-bold uppercase tracking-wide text-yellow-300 outline-none placeholder:text-white/35"
                     />
 
@@ -432,15 +432,15 @@ function TeamContent({ profile }: { profile: Profile }) {
                       className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-50"
                     >
                       <Plus className="h-5 w-5" />
-                      Create Team
+                      {t.team.createTeam}
                     </button>
                   </div>
                 </LuxuryCard>
 
                 <LuxuryCard className="p-5">
-                  <h2 className="mb-2 text-xl font-black">Join Existing Team</h2>
+                  <h2 className="mb-2 text-xl font-black">{t.team.joinExistingTeam}</h2>
                   <p className="mb-4 text-sm leading-6 text-white/55">
-                    Search a team code and join the team directly.
+                    {t.team.joinExistingTeamNote}
                   </p>
 
                   <div className="space-y-3">
@@ -449,7 +449,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                       onChange={(e) =>
                         setSearchCodeInput(e.target.value.toUpperCase())
                       }
-                      placeholder="Search team code"
+                      placeholder={t.team.searchTeamCodePlaceholder}
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-bold uppercase tracking-wide text-yellow-300 outline-none placeholder:text-white/35"
                     />
 
@@ -459,19 +459,19 @@ function TeamContent({ profile }: { profile: Profile }) {
                       className="flex w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400/10 px-5 py-4 font-black text-yellow-200 disabled:opacity-50"
                     >
                       <Search className="h-5 w-5" />
-                      Search Team
+                      {t.team.searchTeam}
                     </button>
                   </div>
 
                   {foundTeam && (
                     <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-                      <p className="text-xs text-white/45">Found Team</p>
+                      <p className="text-xs text-white/45">{t.team.foundTeam}</p>
                       <h3 className="mt-1 text-xl font-black text-yellow-300">
                         {foundTeam.team_code}
                       </h3>
                       <p className="mt-1 text-sm text-white/60">
-                        {foundTeam.team_name || "Golden Team"} •{" "}
-                        {foundTeam.member_count} members
+                        {foundTeam.team_name || t.team.goldenTeam} •{" "}
+                        {foundTeam.member_count} {t.team.members}
                       </p>
 
                       <button
@@ -479,7 +479,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                         disabled={actionLoading}
                         className="mt-4 w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-3 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-50"
                       >
-                        Join Team
+                        {t.team.joinTeam}
                       </button>
                     </div>
                   )}
