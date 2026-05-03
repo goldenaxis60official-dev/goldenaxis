@@ -198,7 +198,8 @@ async function handleLanguageChange(nextLanguage: Language) {
     .eq("id", profile.id);
 
   if (error) {
-  console.error(error.message);
+  console.error("Language update failed:", error.message);
+  alert(error.message);
   setLanguage(oldLanguage);
   setSavingLanguage(false);
   return;
@@ -271,41 +272,7 @@ setSavingLanguage(false);
             {t.profile.goldenAxisMember}
           </div>
 
-          <div className="mx-auto mt-4 flex max-w-xs items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-1">
-  <div className="flex items-center gap-2 px-3 text-xs font-bold text-white/55">
-    <Languages className="h-4 w-4 text-yellow-300" />
-    {t.profile.language}
-  </div>
-
-  <div className="flex rounded-xl bg-black/35 p-1">
-    <button
-      type="button"
-      disabled={savingLanguage}
-      onClick={() => handleLanguageChange("en")}
-      className={`rounded-lg px-3 py-1.5 text-xs font-black transition ${
-        language === "en"
-          ? "bg-yellow-300 text-black"
-          : "text-white/50 hover:text-white"
-      }`}
-    >
-      {t.profile.english}
-    </button>
-
-    <button
-      type="button"
-      disabled={savingLanguage}
-      onClick={() => handleLanguageChange("zh")}
-      className={`rounded-lg px-3 py-1.5 text-xs font-black transition ${
-        language === "zh"
-          ? "bg-yellow-300 text-black"
-          : "text-white/50 hover:text-white"
-      }`}
-    >
-      {t.profile.chinese}
-    </button>
-  </div>
-</div>
-        </div>
+          </div>
 
         <LuxuryCard goldGlow className="mb-6 p-5">
           <div className="mb-5 flex items-center justify-between">
@@ -369,7 +336,42 @@ setSavingLanguage(false);
           )}
         </LuxuryCard>
 
-        <div className="mb-6 grid grid-cols-2 gap-3">
+<div className="mb-6 flex items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-2">
+  <div className="flex items-center gap-2 px-3 text-xs font-bold text-white/55">
+    <Languages className="h-4 w-4 text-yellow-300" />
+    {t.profile.language}
+  </div>
+
+  <div className="flex rounded-2xl bg-black/35 p-1">
+    <button
+      type="button"
+      disabled={savingLanguage}
+      onClick={() => handleLanguageChange("en")}
+      className={`rounded-xl px-4 py-2 text-xs font-black transition ${
+        language === "en"
+          ? "bg-yellow-300 text-black shadow-[0_0_18px_rgba(250,204,21,0.25)]"
+          : "text-white/50 hover:text-white"
+      }`}
+    >
+      {t.profile.english}
+    </button>
+
+    <button
+      type="button"
+      disabled={savingLanguage}
+      onClick={() => handleLanguageChange("zh")}
+      className={`rounded-xl px-4 py-2 text-xs font-black transition ${
+        language === "zh"
+          ? "bg-yellow-300 text-black shadow-[0_0_18px_rgba(250,204,21,0.25)]"
+          : "text-white/50 hover:text-white"
+      }`}
+    >
+      {t.profile.chinese}
+    </button>
+  </div>
+</div>
+
+<div className="mb-6 grid grid-cols-2 gap-3">
   <StatCard
     label={t.profile.totalEarnings}
     value={`$${Number(profile.total_earnings).toFixed(2)}`}
