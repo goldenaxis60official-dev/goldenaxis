@@ -1,7 +1,8 @@
+//src>app>admin>page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { en } from "@/i18n/en";
 import { zh } from "@/i18n/zh";
 import Link from "next/link";
@@ -16,16 +17,11 @@ import {
   ClipboardList,
   Crown,
   Headphones,
-  KeyRound,
-  Languages,
   ListChecks,
-  LogOut,
   Package,
-  Save,
   ShieldCheck,
   Users,
   Wallet,
-  X,
 } from "lucide-react";
 
 type AdminStats = {
@@ -95,16 +91,8 @@ export default function AdminPage() {
 }
 
 function AdminContent({ profile }: { profile: Profile }) {
-  const router = useRouter();
 
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [accountLoading, setAccountLoading] = useState(false);
-  const [successText, setSuccessText] = useState("");
-  const [currentLanguage, setCurrentLanguage] = useState<"en" | "zh">(
-  profile.language === "zh" ? "zh" : "en"
-);
+  const currentLanguage = profile.language === "zh" ? "zh" : "en";
   const [stats, setStats] = useState<AdminStats>({
     users: 0,
     activeTasks: 0,
@@ -205,72 +193,6 @@ const visibleAdminCards = adminCards.filter((item) =>
     loadStats();
   }, [hasDashboardAccess]);
 
-  async function handleLanguageChange(nextLanguage: "en" | "zh") {
-  setErrorText("");
-  setSuccessText("");
-
-  const nextT: AdminDashboardText =
-  nextLanguage === "zh"
-    ? (zh.adminDashboard as unknown as AdminDashboardText)
-    : en.adminDashboard;
-
-  setCurrentLanguage(nextLanguage);
-
-  localStorage.setItem("golden-axis-language", nextLanguage);
-  window.dispatchEvent(new Event("golden-axis-language-change"));
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ language: nextLanguage })
-    .eq("id", profile.id);
-
-  if (error) {
-    setErrorText(error.message);
-    return;
-  }
-
-  setSuccessText(nextT.languageUpdated);
-}
-
-    async function handleChangePassword() {
-    setErrorText("");
-    setSuccessText("");
-
-    if (newPassword.length < 6) {
-      setErrorText(t.passwordMinError);
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setErrorText(t.passwordMismatchError);
-      return;
-    }
-
-    setAccountLoading(true);
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      setErrorText(error.message);
-      setAccountLoading(false);
-      return;
-    }
-
-    setSuccessText(t.passwordUpdated);
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPasswordModal(false);
-    setAccountLoading(false);
-  }
-
-  async function handleLogout() {
-    setAccountLoading(true);
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
   if (!hasDashboardAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
@@ -324,43 +246,6 @@ const visibleAdminCards = adminCards.filter((item) =>
     </p>
   </div>
 
-  <div className="flex items-center gap-3">
-    <button
-      onClick={() => setShowPasswordModal(true)}
-      className="flex items-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
-    >
-      <KeyRound className="h-4 w-4" />
-      {t.changePassword}
-    </button>
-
-    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-      <Languages className="h-4 w-4 text-yellow-300" />
-
-      <select
-        value={currentLanguage}
-        onChange={(event) =>
-          handleLanguageChange(event.target.value as "en" | "zh")
-        }
-        className="bg-transparent text-sm font-black text-yellow-200 outline-none"
-      >
-        <option className="bg-[#090909] text-white" value="en">
-          {t.english}
-        </option>
-        <option className="bg-[#090909] text-white" value="zh">
-          {t.chinese}
-        </option>
-      </select>
-    </div>
-
-    <button
-      onClick={handleLogout}
-      disabled={accountLoading}
-      className="flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-3 text-sm font-black text-red-300 hover:bg-red-500/15 disabled:opacity-60"
-    >
-      <LogOut className="h-4 w-4" />
-      {t.logout}
-    </button>
-    </div>
 </div>
 </div>
 
@@ -370,13 +255,6 @@ const visibleAdminCards = adminCards.filter((item) =>
             {errorText}
           </div>
         )}
-
-        {successText && (
-  <div className="mb-5 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-    <Save className="h-4 w-4" />
-    {successText}
-  </div>
-)}
 
         <div className="mb-8 grid grid-cols-6 gap-4">
           <StatCard label={t.stats.users} value={loading ? "..." : String(stats.users)} />
@@ -448,66 +326,6 @@ const visibleAdminCards = adminCards.filter((item) =>
           </div>
                 </section>
 
-        {showPasswordModal && (
-          <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-            <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-yellow-200/80">{t.security}</p>
-<h2 className="text-2xl font-black">{t.changePassword}</h2>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setNewPassword("");
-                    setConfirmPassword("");
-                  }}
-                  className="rounded-2xl bg-white/10 p-3 text-white/70"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="mb-2 text-sm font-bold text-white/80">
-                    {t.newPassword}
-                  </p>
-                  <input
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
-                    type="password"
-                    placeholder={t.newPasswordPlaceholder}
-                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-                  />
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-bold text-white/80">
-                     {t.confirmPassword}
-                  </p>
-                  <input
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    type="password"
-                    placeholder={t.confirmPasswordPlaceholder}
-                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-                  />
-                </div>
-
-                <button
-                  onClick={handleChangePassword}
-                  disabled={accountLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
-                >
-                  <Save className="h-5 w-5" />
-                  {accountLoading ? t.updating : t.updatePassword}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );
