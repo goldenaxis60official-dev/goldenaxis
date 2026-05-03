@@ -229,7 +229,7 @@ const nextTaskCategory =
           </div>
         </div>
 
-        <LuxuryCard className="mb-4 px-4 py-4">
+                <LuxuryCard className="mb-4 px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-yellow-300" />
@@ -244,43 +244,37 @@ const nextTaskCategory =
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[11px] text-white/45">
-                {liveText.supportAvailable}
-              </p>
-              <p className="mt-1 text-sm font-black text-emerald-300">
+          <div className="grid grid-cols-4 gap-2">
+            <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
+              <p className="text-[10px] text-white/40">Support</p>
+              <p className="mt-1 text-xs font-black text-emerald-300">
                 {liveText.available247}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[11px] text-white/45">
-                {liveText.assignedCampaigns}
-              </p>
-              <p className="mt-1 text-sm font-black text-sky-300">
+            <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
+              <p className="text-[10px] text-white/40">Assigned</p>
+              <p className="mt-1 text-xs font-black text-sky-300">
                 {loadingTasks ? "..." : assignedTotal}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[11px] text-white/45">
-                {liveText.currentStep}
-              </p>
-              <p className="mt-1 text-sm font-black text-yellow-300">
-                {t.common.step} {profile.current_step}
+            <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
+              <p className="text-[10px] text-white/40">Step</p>
+              <p className="mt-1 text-xs font-black text-yellow-300">
+                {profile.current_step}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[11px] text-white/45">Status</p>
-              <p className="mt-1 text-sm font-black text-white">
+            <div className="rounded-2xl border border-white/10 bg-black/30 px-2 py-3 text-center">
+              <p className="text-[10px] text-white/40">Status</p>
+              <p className="mt-1 truncate text-xs font-black text-white">
                 {missionStatusLabel}
               </p>
             </div>
           </div>
 
-          <p className="mt-3 text-xs leading-5 text-white/45">
+          <p className="mt-3 text-[11px] leading-5 text-white/45">
             {liveText.progressUpdates}
           </p>
         </LuxuryCard>
@@ -393,7 +387,7 @@ const nextTaskCategory =
               {t.home.preparingNote}
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-bold">
+            <div className="mt-4 grid grid-cols-3 gap-2 text-[9px] font-bold">
               <div className="rounded-2xl border border-white/10 bg-black/25 px-2 py-2 text-white/60">
                 {liveText.verificationQueue}
               </div>
@@ -409,7 +403,7 @@ const nextTaskCategory =
 
             <button
               onClick={() => router.push("/support")}
-              className="mt-5 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-3 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
+              className="mt-4 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-2.5 text-sm font-black text-black shadow-[0_12px_30px_rgba(234,179,8,0.25)] active:scale-[0.98]"
             >
               {t.common.contactSupport}
             </button>
@@ -504,7 +498,7 @@ const nextTaskCategory =
         )}
       </section>
 
-      <section className="px-5 pb-6">
+            <section className="px-5 pb-32">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold">{t.home.quickAccess}</h3>
           <span className="text-xs text-yellow-300">{t.home.memberTools}</span>
