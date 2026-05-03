@@ -9,6 +9,7 @@ import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 import {
   AlertCircle,
@@ -50,7 +51,9 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
+  const [roleFilter, setRoleFilter] = useState<
+  "all" | "user" | "admin" | "super" | "support"
+>("all");
 const [statusFilter, setStatusFilter] = useState("all");
 const [sortBy, setSortBy] = useState<
   "newest" | "name" | "balance_high" | "today_high" | "step_high"
@@ -72,7 +75,7 @@ const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  const isAdmin = profile.role === "admin";
+  const hasPageAccess = canAccessAdminPath(profile.role, "/admin/users");
 
   async function loadUsers() {
   setLoading(true);
@@ -116,12 +119,12 @@ const [deleteConfirmText, setDeleteConfirmText] = useState("");
 }
 
   useEffect(() => {
-    if (isAdmin) {
+    if (hasPageAccess) {
       loadUsers();
     } else {
       setLoading(false);
     }
-  }, [isAdmin]);
+  }, [hasPageAccess]);
 
   const userStatuses = useMemo(() => {
   return Array.from(
@@ -312,7 +315,7 @@ async function handleDeleteUser() {
   setActionLoading(false);
 }
 
-  if (!isAdmin) {
+  if (!hasPageAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
@@ -329,7 +332,7 @@ async function handleDeleteUser() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav language={currentLanguage} />
+        <AdminNav language={currentLanguage} profile={profile} />
 
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>
@@ -401,8 +404,10 @@ async function handleDeleteUser() {
     <select
       value={roleFilter}
       onChange={(event) =>
-        setRoleFilter(event.target.value as "all" | "user" | "admin")
-      }
+  setRoleFilter(
+    event.target.value as "all" | "user" | "admin" | "super" | "support"
+  )
+}
       className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
     >
       <option className="bg-black" value="all">
@@ -411,9 +416,12 @@ async function handleDeleteUser() {
       <option className="bg-black" value="user">
         {t.list.users}
       </option>
-      <option className="bg-black" value="admin">
-        {t.list.admins}
-      </option>
+      <option className="bg-black" value="super">
+  Super
+</option>
+<option className="bg-black" value="support">
+  Support
+</option>
     </select>
 
     <select

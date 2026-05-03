@@ -15,7 +15,7 @@ export type Profile = {
   credit_score: number;
   status: string;
   terms_accepted: boolean;
-  role: "user" | "admin";
+  role: "user" | "admin" | "super" | "support";
   language: "en" | "zh";
   created_at: string;
 };

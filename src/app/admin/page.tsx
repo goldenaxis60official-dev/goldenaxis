@@ -8,6 +8,7 @@ import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "./AdminNav";
 import { supabase } from "@/lib/supabaseClient";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 import {
   AlertCircle,
@@ -82,13 +83,6 @@ function getAdminCards(t: AdminDashboardText) {
       icon: Headphones,
       tag: t.cards.supportMessages.tag,
     },
-    {
-      title: t.cards.sequenceBuilder.title,
-      description: t.cards.sequenceBuilder.description,
-      href: "/admin/sequence-builder",
-      icon: Crown,
-      tag: t.cards.sequenceBuilder.tag,
-    },
   ];
 }
 
@@ -123,7 +117,7 @@ function AdminContent({ profile }: { profile: Profile }) {
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
-  const isAdmin = profile.role === "admin";
+  const hasDashboardAccess = canAccessAdminPath(profile.role, "/admin");
 
 const t: AdminDashboardText =
   currentLanguage === "zh"
@@ -132,12 +126,16 @@ const t: AdminDashboardText =
 
 const adminCards = getAdminCards(t);
 
+const visibleAdminCards = adminCards.filter((item) =>
+  canAccessAdminPath(profile.role, item.href)
+);
+
   useEffect(() => {
     async function loadStats() {
-      if (!isAdmin) {
-        setLoading(false);
-        return;
-      }
+      if (!hasDashboardAccess) {
+  setLoading(false);
+  return;
+}
 
       setLoading(true);
       setErrorText("");
@@ -205,7 +203,7 @@ const adminCards = getAdminCards(t);
     }
 
     loadStats();
-  }, [isAdmin]);
+  }, [hasDashboardAccess]);
 
   async function handleLanguageChange(nextLanguage: "en" | "zh") {
   setErrorText("");
@@ -273,7 +271,7 @@ const adminCards = getAdminCards(t);
     router.push("/login");
   }
 
-  if (!isAdmin) {
+  if (!hasDashboardAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
@@ -290,7 +288,7 @@ const adminCards = getAdminCards(t);
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav />
+        <AdminNav profile={profile} language={currentLanguage} />
 
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>
@@ -413,7 +411,7 @@ const adminCards = getAdminCards(t);
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            {adminCards.map((item) => {
+            {visibleAdminCards.map((item) => {
               const Icon = item.icon;
 
               return (

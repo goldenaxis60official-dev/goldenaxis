@@ -8,6 +8,7 @@ import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 import {
   AlertCircle,
@@ -78,7 +79,7 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  const isAdmin = profile.role === "admin";
+  const hasPageAccess = canAccessAdminPath(profile.role, "/admin/wallet-requests");
   function getRequestFilterLabel(value: RequestFilter) {
   return t.filters[value];
 }
@@ -113,12 +114,12 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 }
 
   useEffect(() => {
-  if (isAdmin) {
+  if (hasPageAccess) {
     loadRecords();
   } else {
     setLoading(false);
   }
-}, [isAdmin]);
+}, [hasPageAccess]);
 
   async function handleApprove(id: string) {
     setActionId(id);
@@ -220,7 +221,7 @@ useEffect(() => {
   }
 }, [currentPage, totalPages]);
 
-  if (!isAdmin) {
+  if (!hasPageAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
@@ -245,7 +246,7 @@ const totalAmount = filteredRecords.reduce(
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav language={currentLanguage} />
+        <AdminNav language={currentLanguage} profile={profile} />
 
         <div className="mb-8 flex items-center justify-between gap-5">
           <div>

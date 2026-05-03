@@ -42,11 +42,13 @@ export default function LoginPage() {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profileData?.role === "admin") {
-      router.replace("/admin");
-    } else {
-      router.replace("/");
-    }
+    if (profileData?.role === "admin" || profileData?.role === "super") {
+  router.replace("/admin");
+} else if (profileData?.role === "support") {
+  router.replace("/admin/support");
+} else {
+  router.replace("/");
+}
   }
 
   redirectIfLoggedIn();
@@ -110,11 +112,13 @@ if (!cleanLoginId.includes("@")) {
         throw new Error("Profile not found.");
       }
 
-      if (profileData.role === "admin") {
-        router.replace("/admin");
-      } else {
-        router.replace("/");
-      }
+      if (profileData.role === "admin" || profileData.role === "super") {
+  router.replace("/admin");
+} else if (profileData.role === "support") {
+  router.replace("/admin/support");
+} else {
+  router.replace("/");
+}
     } catch (err) {
       const message =
   err instanceof Error ? err.message : "Something went wrong.";

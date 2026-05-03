@@ -9,6 +9,7 @@ import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 import type { Task } from "@/types/task";
 import type { Product } from "@/types/product";
@@ -37,7 +38,7 @@ export default function AdminTasksPage() {
 }
 
 function AdminTasksContent({ profile }: { profile: Profile }) {
-  const isAdmin = profile.role === "admin";
+  const hasPageAccess = canAccessAdminPath(profile.role, "/admin/tasks");
   const currentLanguage = profile.language === "zh" ? "zh" : "en";
 
   const t: AdminTasksText =
@@ -204,12 +205,12 @@ useEffect(() => {
   }
 
   useEffect(() => {
-    if (isAdmin) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, [isAdmin]);
+  if (hasPageAccess) {
+    loadData();
+  } else {
+    setLoading(false);
+  }
+}, [hasPageAccess]);
 
   function handleProductSelect(productId: string) {
     if (!editingTask) return;
@@ -297,7 +298,7 @@ useEffect(() => {
   loadData();
 }
 
-  if (!isAdmin) {
+  if (!hasPageAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
@@ -314,7 +315,7 @@ useEffect(() => {
   return (
   <main className="min-h-screen bg-[#050505] text-white">
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <AdminNav language={currentLanguage} />
+      <AdminNav language={currentLanguage} profile={profile} />
 
       <div className="mb-8 max-w-3xl">
   <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">

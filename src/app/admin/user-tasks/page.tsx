@@ -9,6 +9,7 @@ import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 import type { Task } from "@/types/task";
 import {
@@ -51,7 +52,7 @@ function AdminUserTasksContent({ profile }: { profile: Profile }) {
   const searchParams = useSearchParams();
   const queryUserId = searchParams.get("user");
 
-  const isAdmin = profile.role === "admin";
+  const hasPageAccess = canAccessAdminPath(profile.role, "/admin/user-tasks");
   const currentLanguage = profile.language === "zh" ? "zh" : "en";
 
   const t: AdminUserTasksText =
@@ -352,12 +353,12 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
   }
 
   useEffect(() => {
-    if (isAdmin) {
+    if (hasPageAccess) {
       loadBaseData();
     } else {
       setLoading(false);
     }
-  }, [isAdmin]);
+  }, [hasPageAccess]);
 
   useEffect(() => {
     if (selectedUserId) {
@@ -494,7 +495,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
     }
   }
 
-  if (!isAdmin) {
+  if (!hasPageAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
@@ -511,7 +512,7 @@ setSelectedTaskId(loadedTasks[0]?.id || "");
   return (
   <main className="min-h-screen bg-[#050505] text-white">
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <AdminNav language={currentLanguage} />
+      <AdminNav language={currentLanguage} profile={profile} />
 
       <div className="mb-8 max-w-3xl">
   <p className="text-sm font-bold uppercase tracking-[0.24em] text-yellow-300/75">

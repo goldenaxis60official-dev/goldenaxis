@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { en } from "@/i18n/en";
 import { zh } from "@/i18n/zh";
+import type { Profile } from "@/types/profile";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import {
   LayoutDashboard,
   Package,
@@ -21,6 +23,7 @@ type AdminNavText = typeof en.adminNav;
 
 type AdminNavProps = {
   language?: Language;
+  profile?: Profile | null;
 };
 
 function getAdminLinks(t: AdminNavText) {
@@ -68,7 +71,7 @@ function getAdminLinks(t: AdminNavText) {
   ];
 }
 
-export default function AdminNav({ language }: AdminNavProps) {
+export default function AdminNav({ language, profile }: AdminNavProps) {
   const pathname = usePathname();
 
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
@@ -115,6 +118,10 @@ export default function AdminNav({ language }: AdminNavProps) {
 
   const adminLinks = getAdminLinks(t);
 
+  const visibleLinks = profile
+    ? adminLinks.filter((item) => canAccessAdminPath(profile.role, item.href))
+    : adminLinks;
+
   return (
     <div className="mb-8 rounded-[1.7rem] border border-yellow-400/20 bg-white/[0.045] p-3 shadow-[0_0_35px_rgba(212,175,55,0.08)]">
       <div className="mb-3 px-2">
@@ -125,7 +132,7 @@ export default function AdminNav({ language }: AdminNavProps) {
       </div>
 
       <div className="grid grid-cols-4 gap-2 xl:grid-cols-8">
-        {adminLinks.map((item) => {
+        {visibleLinks.map((item) => {
           const Icon = item.icon;
           const active =
             pathname === item.href ||

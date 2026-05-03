@@ -8,6 +8,7 @@ import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
+import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 import {
   AlertCircle,
@@ -84,7 +85,7 @@ const [replyText, setReplyText] = useState("");
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  const isAdmin = profile.role === "admin";
+  const hasPageAccess = canAccessAdminPath(profile.role, "/admin/support");
   function getSupportFilterLabel(value: SupportFilter) {
   return t.filters[value];
 }
@@ -222,12 +223,12 @@ useEffect(() => {
   }
 
   useEffect(() => {
-  if (isAdmin) {
+  if (hasPageAccess) {
     loadTickets();
   } else {
     setLoadingTickets(false);
   }
-}, [isAdmin]);
+}, [hasPageAccess]);
 
   useEffect(() => {
     if (selectedTicketId) {
@@ -308,7 +309,7 @@ useEffect(() => {
     await loadTickets();
   }
 
-  if (!isAdmin) {
+  if (!hasPageAccess) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 text-white">
         <div className="mx-auto max-w-xl rounded-[2rem] border border-red-400/30 bg-red-500/10 p-8 text-center">
@@ -329,7 +330,7 @@ useEffect(() => {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <AdminNav language={currentLanguage} />
+        <AdminNav language={currentLanguage} profile={profile} />
 
         <div className="mb-6 flex items-center justify-between gap-5">
           <div>
