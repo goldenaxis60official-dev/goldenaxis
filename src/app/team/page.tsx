@@ -210,17 +210,29 @@ function TeamContent({ profile }: { profile: Profile }) {
 
   return (
     <AppShell>
-      <section className="px-5 pt-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-yellow-200/80">{t.team.teamCenter}</p>
-            <h1 className="text-2xl font-black">{t.team.teamCode}</h1>
-          </div>
+      <section className="px-5 pb-32 pt-8">
+                <LuxuryCard goldGlow className="mb-5 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="mb-1 flex items-center gap-2">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.8)]" />
+                <p className="text-xs font-bold text-emerald-200">
+                  {t.team.teamCenter}
+                </p>
+              </div>
 
-          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
-            <Users className="h-6 w-6 text-yellow-300" />
+              <h1 className="text-2xl font-black">{t.team.teamCode}</h1>
+
+              <p className="mt-1 text-xs leading-5 text-white/45">
+  {summary ? t.team.bonusExplanation : t.team.joinExistingTeamNote}
+</p>
+            </div>
+
+            <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 shadow-[0_0_25px_rgba(234,179,8,0.18)]">
+              <Users className="h-6 w-6 text-yellow-300" />
+            </div>
           </div>
-        </div>
+        </LuxuryCard>
 
         {loading && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
@@ -403,9 +415,9 @@ function TeamContent({ profile }: { profile: Profile }) {
               </>
             ) : (
               <div className="space-y-5">
-                <LuxuryCard goldGlow className="p-5">
+                <LuxuryCard goldGlow className="p-4">
                   <h2 className="mb-2 text-xl font-black">{t.team.createMyTeam}</h2>
-                  <p className="mb-4 text-sm leading-6 text-white/55">
+                  <p className="mb-3 text-sm leading-6 text-white/55">
                     {t.team.createMyTeamNote}
                   </p>
 
@@ -437,7 +449,7 @@ function TeamContent({ profile }: { profile: Profile }) {
                   </div>
                 </LuxuryCard>
 
-                <LuxuryCard className="p-5">
+                <LuxuryCard className="p-4">
                   <h2 className="mb-2 text-xl font-black">{t.team.joinExistingTeam}</h2>
                   <p className="mb-4 text-sm leading-6 text-white/55">
                     {t.team.joinExistingTeamNote}

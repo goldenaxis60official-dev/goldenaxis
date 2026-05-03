@@ -123,13 +123,13 @@ checkExistingSession();
         throw new Error(profileError.message);
       }
 
-      if (finalTeamCode) {
+            if (finalTeamCode) {
         const { error: joinError } = await supabase.rpc("join_team_by_code", {
           _team_code: finalTeamCode,
         });
 
         if (joinError) {
-          throw new Error(joinError.message || "Team code not found.");
+          console.warn("Team code join skipped:", joinError.message);
         }
       }
     }

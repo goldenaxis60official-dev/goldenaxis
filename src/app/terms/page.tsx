@@ -135,7 +135,7 @@ export default function TermsPage() {
 
     return (
         <AppShell>
-          <section className="px-5 pt-8">
+          <section className="px-5 pb-32 pt-8">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-sm text-yellow-200/80">{t.platformPolicy}</p>
@@ -163,8 +163,8 @@ export default function TermsPage() {
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-white/55">
-                    {t.internalStandardTitle}
-                  </p>
+  {t.certificates.internalQuality.description}
+</p>
                 </div>
 
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-300/30 bg-yellow-400/10">
@@ -181,7 +181,7 @@ export default function TermsPage() {
                     className="w-full overflow-hidden rounded-[1.5rem] border border-yellow-300/20 bg-gradient-to-b from-white/10 to-white/[0.03] p-2 text-left shadow-[0_0_35px_rgba(250,204,21,0.08)]"
                   >
                     <div className="relative overflow-hidden rounded-[1.2rem] bg-white p-2">
-                      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-white">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white">
                         <Image
                           src={certificate.image}
                           alt={t.certificates[certificate.key].title}

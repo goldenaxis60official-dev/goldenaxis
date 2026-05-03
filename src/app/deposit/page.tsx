@@ -254,7 +254,7 @@ setLoading(false);
 
   return (
     <AppShell>
-      <section className="px-5 pt-8">
+      <section className="px-5 pb-32 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-sm text-yellow-200/80">{t.deposit.walletCenter}</p>
@@ -291,7 +291,7 @@ setLoading(false);
           </div>
         </LuxuryCard>
 
-        <LuxuryCard className="p-5">
+        <LuxuryCard className="p-4">
   <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <div className="mb-3 flex items-center justify-between">

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -33,6 +33,30 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
+
+  useEffect(() => {
+  async function redirectIfLoggedIn() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileData?.role === "admin") {
+      router.replace("/admin");
+    } else {
+      router.replace("/");
+    }
+  }
+
+  redirectIfLoggedIn();
+}, [router]);
 
   async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
@@ -290,8 +314,7 @@ if (!cleanDisplayName) {
                     Verified member setup
                   </p>
                   <p className="mt-1 text-xs leading-5 text-white/45">
-                    Your account is created as a standard user profile. Admin
-                    controls remain separated from member access.
+                    Your account is created as a standard member profile.
                   </p>
                 </div>
               </div>

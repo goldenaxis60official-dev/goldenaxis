@@ -201,11 +201,15 @@ const nextTaskCategory =
   const nextTaskImage =
     nextProduct?.main_image || nextTask?.image_url || "";
 
-    const nextReward = nextTask
+      const nextReward = nextTask
     ? Number(nextTask.price) *
       Number(nextTask.commission_rate) *
       Number(nextTask.multiplier)
     : 0;
+
+  const campaignPreviewItems = assignments
+    .filter((assignment) => assignment.tasks)
+    .slice(0, 6);
 
   const missionStatusLabel = loadingTasks
     ? liveText.checking
@@ -382,68 +386,6 @@ const nextTaskCategory =
         </LuxuryCard>
       </section>
 
-            <section className="px-5 pb-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-bold">{recentText.title}</h3>
-<span className="text-xs text-yellow-300">{recentText.liveRecords}</span>
-        </div>
-
-        <LuxuryCard className="p-4">
-          {recentActivities.length > 0 ? (
-            <div className="space-y-3">
-              {recentActivities.slice(0, 2).map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/25 p-3"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                        item.tone === "green"
-                          ? "bg-emerald-300/10 text-emerald-300"
-                          : item.tone === "blue"
-                            ? "bg-sky-300/10 text-sky-300"
-                            : "bg-yellow-300/10 text-yellow-300"
-                      }`}
-                    >
-                      <Activity className="h-5 w-5" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-white/85">
-                        {item.title}
-                      </p>
-                      <p className="mt-0.5 truncate text-[11px] text-white/45">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2.5 py-1 text-[11px] font-black text-yellow-200">
-                    {item.status}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-yellow-300/10 text-yellow-300">
-                <Activity className="h-5 w-5" />
-              </div>
-
-              <div>
-                <p className="text-sm font-black text-white/85">
-                  {recentText.noActivityTitle}
-                </p>
-                <p className="mt-1 text-[11px] leading-5 text-white/45">
-                  {recentText.noActivityNote}
-                </p>
-              </div>
-            </div>
-          )}
-        </LuxuryCard>
-      </section>
-
       <section className="px-5 pb-6">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold">{t.home.nextMission}</h3>
@@ -583,10 +525,151 @@ const nextTaskCategory =
         )}
       </section>
 
-            <section className="px-5 pb-32">
+            {campaignPreviewItems.length > 0 && (
+        <section className="px-5 pb-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-lg font-bold">
+  {liveText.assignedCampaigns}
+</h3>
+
+            <span className="text-xs text-yellow-300">
+              {campaignPreviewItems.length}/{assignedTotal}
+            </span>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {campaignPreviewItems.map((assignment) => {
+              const task = assignment.tasks;
+              const product = task?.products;
+              const image = product?.main_image || task?.image_url || "";
+              const title =
+                product?.name || task?.title || t.home.preparingTitle;
+              const category =
+                product?.category || task?.category || t.home.pendingReview;
+              const reward = task
+                ? Number(task.price) *
+                  Number(task.commission_rate) *
+                  Number(task.multiplier)
+                : 0;
+
+              return (
+                <button
+                  key={assignment.id}
+                  onClick={() => router.push("/missions")}
+                  className="w-36 shrink-0 overflow-hidden rounded-[1.4rem] border border-white/10 bg-black/30 text-left shadow-[0_14px_35px_rgba(0,0,0,0.28)] active:scale-[0.98]"
+                >
+                  <div className="relative h-24 bg-black/40">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Gem className="h-9 w-9 text-yellow-300/70" />
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+                    <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-black text-yellow-200">
+                      {t.common.step} {assignment.assigned_step}
+                    </div>
+                  </div>
+
+                  <div className="p-3">
+                    <p className="truncate text-[10px] font-bold uppercase tracking-wide text-yellow-200/70">
+                      {category}
+                    </p>
+
+                    <p className="mt-1 line-clamp-2 min-h-[32px] text-xs font-black text-white/90">
+                      {title}
+                    </p>
+
+                    <p className="mt-2 text-xs font-black text-emerald-300">
+                      +${reward.toFixed(2)}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <section className="px-5 pb-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-bold">{recentText.title}</h3>
+          <span className="text-xs text-yellow-300">
+            {recentText.liveRecords}
+          </span>
+        </div>
+
+        <LuxuryCard className="p-4">
+          {recentActivities.length > 0 ? (
+            <div className="space-y-3">
+              {recentActivities.slice(0, 2).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/25 p-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+                        item.tone === "green"
+                          ? "bg-emerald-300/10 text-emerald-300"
+                          : item.tone === "blue"
+                            ? "bg-sky-300/10 text-sky-300"
+                            : "bg-yellow-300/10 text-yellow-300"
+                      }`}
+                    >
+                      <Activity className="h-5 w-5" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-white/85">
+                        {item.title}
+                      </p>
+
+                      <p className="mt-0.5 truncate text-[11px] text-white/45">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2.5 py-1 text-[11px] font-black text-yellow-200">
+                    {item.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-yellow-300/10 text-yellow-300">
+                <Activity className="h-4 w-4" />
+              </div>
+
+              <div>
+                <p className="text-sm font-black text-white/85">
+                  {recentText.noActivityTitle}
+                </p>
+
+                <p className="mt-0.5 text-[10px] leading-4 text-white/45">
+                  {recentText.noActivityNote}
+                </p>
+              </div>
+            </div>
+          )}
+        </LuxuryCard>
+      </section>
+
+      <section className="px-5 pb-32">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold">{t.home.quickAccess}</h3>
-          <span className="text-xs text-yellow-300">{t.home.memberTools}</span>
+          <span className="text-xs text-yellow-300">
+            {t.home.memberTools}
+          </span>
         </div>
 
         <div className="grid grid-cols-3 gap-4">

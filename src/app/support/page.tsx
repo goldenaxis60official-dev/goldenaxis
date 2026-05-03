@@ -14,7 +14,6 @@ import {
   AlertCircle,
   ArrowDownToLine,
   ArrowUpFromLine,
-  Bot,
   CheckCircle,
   Clock,
   Copy,
@@ -135,6 +134,7 @@ const finalSubjectLabel =
     : t.support.topics[activeTopic].title;
 
 const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
+const ActiveTopicIcon = activeTopicData?.icon || Headphones;
 
   const selectedWalletAddress = useMemo(() => {
     if (!walletAsset || !walletNetwork) return null;
@@ -367,12 +367,6 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
     await loadTicketsAndChat();
   }
 
-  const openCount = tickets.filter((item) => item.status === "open").length;
-  const reviewingCount = tickets.filter(
-    (item) => item.status === "reviewing"
-  ).length;
-  const closedCount = tickets.filter((item) => item.status === "closed").length;
-
   return (
     <AppShell>
       <section className="px-5 pt-8">
@@ -390,21 +384,7 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-3 gap-3">
-          <StatusCard label={t.support.statuses.open} value={openCount} color="text-blue-300" />
-<StatusCard
-  label={t.support.statuses.reviewing}
-  value={reviewingCount}
-  color="text-yellow-300"
-/>
-<StatusCard
-  label={t.support.statuses.closed}
-  value={closedCount}
-  color="text-emerald-300"
-/>
-        </div>
-
-        <div className="mb-4 grid grid-cols-3 gap-2">
+                <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {helpTopics.map((item) => {
             const Icon = item.icon;
             const active = activeTopic === item.key;
@@ -414,56 +394,53 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
                 key={item.key}
                 type="button"
                 onClick={() => handleTopicSelect(item.key)}
-                className={`rounded-2xl border px-3 py-3 text-center transition ${
+                className={`flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-3 transition active:scale-[0.98] ${
                   active
-                    ? "border-yellow-400 bg-yellow-400 text-black"
+                    ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_12px_28px_rgba(234,179,8,0.22)]"
                     : "border-white/10 bg-white/[0.05] text-white/60"
                 }`}
               >
                 <Icon
-                  className={`mx-auto mb-1 h-5 w-5 ${
+                  className={`h-4 w-4 ${
                     active ? "text-black" : "text-yellow-300"
                   }`}
                 />
-                <p className="text-xs font-black">{t.support.topics[item.key].short}</p>
+                <span className="text-xs font-black">
+                  {t.support.topics[item.key].short}
+                </span>
               </button>
             );
           })}
         </div>
 
-        <LuxuryCard className="mb-5 p-4">
-          <div className="mb-4 flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-yellow-400/15 text-yellow-300">
-              <Bot className="h-5 w-5" />
+                <LuxuryCard className="mb-4 p-4">
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-[1.4rem] border border-yellow-400/20 bg-yellow-400/10 p-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-yellow-300 text-black shadow-[0_0_22px_rgba(234,179,8,0.28)]">
+                <ActiveTopicIcon className="h-5 w-5" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-yellow-100">
+                  {finalSubjectLabel}
+                </p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-white/50">
+                  {activeTopicData
+                    ? t.support.topics[activeTopicData.key].text
+                    : t.support.subtitle}
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-3xl rounded-tl-sm border border-yellow-400/20 bg-yellow-400/10 p-4">
-              <p className="text-sm font-black text-yellow-100">
-                {t.support.goldenAxisSupport}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-white/65">
-                {t.support.hello.replace("{name}", profile.display_name || "there")}
-              </p>
+            <div className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-black text-emerald-200">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+              Online
             </div>
           </div>
 
-          {activeTopicData && (
-            <div className="mb-4 ml-12 rounded-2xl border border-white/10 bg-black/25 p-3">
-              <p className="text-xs font-bold text-yellow-200/80">
-                {t.support.selectedTopic}
-              </p>
-              <p className="mt-1 text-sm font-black text-white">
-                {t.support.topics[activeTopicData.key].title}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-white/45">
-                {t.support.topics[activeTopicData.key].text}
-              </p>
-            </div>
-          )}
-
           {activeTopic === "walletHelp" && (
             <WalletAssistantCard
-            t={t.support.walletAssistant}
+              t={t.support.walletAssistant}
               walletAction={walletAction}
               walletAsset={walletAsset}
               walletNetwork={walletNetwork}
@@ -478,7 +455,7 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
             />
           )}
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             {loading && (
               <div className="rounded-2xl bg-black/25 p-4 text-center text-sm text-white/50">
                 {t.support.loadingConversation}
@@ -486,8 +463,8 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
             )}
 
             {!loading && groupedMessages.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-5 text-center">
-                <MessageCircle className="mx-auto mb-2 h-7 w-7 text-yellow-300" />
+              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-center">
+                <MessageCircle className="mx-auto mb-2 h-6 w-6 text-yellow-300" />
                 <p className="text-sm font-bold text-white">
                   {t.support.noConversationYet}
                 </p>
@@ -506,7 +483,10 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
                         {ticket.subject}
                       </p>
                       <div className="mt-1 flex items-center justify-center gap-2">
-                        <StatusBadge status={ticket.status} labels={t.support.statuses} />
+                        <StatusBadge
+                          status={ticket.status}
+                          labels={t.support.statuses}
+                        />
                         <span className="text-[10px] text-white/30">
                           {new Date(ticket.created_at).toLocaleDateString()}
                         </span>
@@ -517,21 +497,21 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
                   {messages.length === 0 ? (
                     <>
                       <ChatBubble
-  role="user"
-  message={ticket.message}
-  time={ticket.created_at}
-  youLabel={t.support.you}
-  supportReplyLabel={t.support.supportReply}
-/>
+                        role="user"
+                        message={ticket.message}
+                        time={ticket.created_at}
+                        youLabel={t.support.you}
+                        supportReplyLabel={t.support.supportReply}
+                      />
 
                       {ticket.admin_reply ? (
                         <ChatBubble
-  role="admin"
-  message={ticket.admin_reply}
-  time={ticket.replied_at || ticket.created_at}
-  youLabel={t.support.you}
-  supportReplyLabel={t.support.supportReply}
-/>
+                          role="admin"
+                          message={ticket.admin_reply}
+                          time={ticket.replied_at || ticket.created_at}
+                          youLabel={t.support.you}
+                          supportReplyLabel={t.support.supportReply}
+                        />
                       ) : (
                         <WaitingBubble label={t.support.waitingReview} />
                       )}
@@ -540,19 +520,19 @@ const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
                     <>
                       {messages.map((chat) => (
                         <ChatBubble
-  key={chat.id}
-  role={chat.sender_role}
-  message={chat.message}
-  time={chat.created_at}
-  youLabel={t.support.you}
-  supportReplyLabel={t.support.supportReply}
-/>
+                          key={chat.id}
+                          role={chat.sender_role}
+                          message={chat.message}
+                          time={chat.created_at}
+                          youLabel={t.support.you}
+                          supportReplyLabel={t.support.supportReply}
+                        />
                       ))}
 
                       {ticket.status !== "closed" &&
-                        !messages.some((chat) => chat.sender_role === "admin") && (
-                          <WaitingBubble label={t.support.waitingReview} />
-                        )}
+                        !messages.some(
+                          (chat) => chat.sender_role === "admin"
+                        ) && <WaitingBubble label={t.support.waitingReview} />}
                     </>
                   )}
                 </div>
@@ -919,25 +899,6 @@ function WalletAssistantCard({
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function StatusCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-black/35 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.25)]">
-      <p className="truncate text-[11px] font-medium tracking-wide text-white/45">
-        {label}
-      </p>
-      <p className={`mt-1 font-black tabular-nums ${color}`}>{value}</p>
     </div>
   );
 }

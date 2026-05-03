@@ -228,61 +228,115 @@ setTimeout(() => {
   const completedCount = Math.max(profile.current_step - 1, 0);
   const progressBase = assignedTotal || 1;
   const progressPercent = Math.min((completedCount / progressBase) * 100, 100);
-  const allAssignedCompleted =
+    const allAssignedCompleted =
     assignedTotal > 0 && profile.current_step > maxAssignedStep;
+
+  const activeAssignment = visibleAssignments[0] || null;
+  const activeTask = activeAssignment?.tasks || null;
+
+  const activeReward = activeTask
+    ? Number(activeTask.price) *
+      Number(activeTask.commission_rate) *
+      Number(activeTask.multiplier)
+    : 0;
+
+  const missionStatusLabel = loading
+    ? t.common.loading
+    : assignedTotal === 0
+      ? t.missions.preparingTitle
+      : allAssignedCompleted
+        ? t.missions.allCompletedTitle
+        : activeTask
+          ? t.missions.startPromotionTask
+          : t.missions.stepNotAssignedTitle;
 
   return (
     <AppShell>
-      <section className="px-5 pt-8">
-        <div className="mb-6 flex items-center justify-between">
+            <section className="px-5 pb-5 pt-8">
+        <div className="mb-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">{t.missions.campaignCenter}</p>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.8)]" />
+              <p className="text-xs font-bold text-emerald-200">
+                {t.missions.campaignCenter}
+              </p>
+            </div>
+
             <h1 className="text-2xl font-black">{t.missions.title}</h1>
           </div>
 
-          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
+          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 shadow-[0_0_25px_rgba(234,179,8,0.18)]">
             <Gem className="h-6 w-6 text-yellow-300" />
           </div>
         </div>
 
-        <LuxuryCard goldGlow className="mb-5 p-5">
-  <div className="mb-4 flex items-center justify-between">
-    <p className="text-sm text-white/55">{t.missions.currentProgress}</p>
+        <LuxuryCard goldGlow className="mb-4 p-5">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-yellow-200/60">
+                {t.missions.currentProgress}
+              </p>
 
-    <div className="flex items-center gap-1 text-sm font-bold text-yellow-300">
-      <Trophy className="h-4 w-4" />
-      {t.missions.step} {profile.current_step} / {assignedTotal || "-"}
-    </div>
-  </div>
+              <h2 className="mt-2 text-xl font-black text-white">
+                {missionStatusLabel}
+              </h2>
 
-  <div className="h-3 overflow-hidden rounded-full bg-black/40">
-    <div
-      className="h-full rounded-full bg-gradient-to-r from-yellow-500 via-yellow-300 to-yellow-100 shadow-[0_0_18px_rgba(250,204,21,0.35)]"
-      style={{ width: `${progressPercent}%` }}
-    />
-  </div>
-</LuxuryCard>
+              <p className="mt-1 text-xs leading-5 text-white/45">
+                {t.missions.step} {profile.current_step} /{" "}
+                {assignedTotal || "-"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-black/35 px-3 py-2 text-right">
+              <p className="text-[10px] uppercase tracking-wide text-white/40">
+                {t.missions.reward}
+              </p>
+              <p className="font-black text-yellow-300">
+                ${activeReward.toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          <div className="h-3 overflow-hidden rounded-full bg-black/40">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-yellow-500 via-yellow-300 to-yellow-100 shadow-[0_0_18px_rgba(250,204,21,0.35)] transition-all duration-700"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <span className="text-white/45">
+              {completedCount}/{assignedTotal || "-"} {t.missions.completed}
+            </span>
+
+            <span className="font-black text-yellow-300">
+              {Math.round(progressPercent)}%
+            </span>
+          </div>
+        </LuxuryCard>
 
         <div className="mb-4 grid grid-cols-3 gap-3">
-  <StatCard
-    label={t.missions.today}
-    value={`$${Number(profile.today_earnings).toFixed(2)}`}
-    color="green"
-  />
+          <StatCard
+            label={t.missions.today}
+            value={`$${Number(profile.today_earnings).toFixed(2)}`}
+            color="green"
+          />
 
-  <StatCard
-    label={t.missions.balance}
-    value={`$${Number(profile.balance).toFixed(2)}`}
-    color="gold"
-  />
+          <StatCard
+            label={t.missions.balance}
+            value={`$${Number(profile.balance).toFixed(2)}`}
+            color="gold"
+          />
 
-  <StatCard
-    label={t.missions.assigned}
-    value={String(assignedTotal)}
-    color="blue"
-  />
-</div>
+          <StatCard
+            label={t.missions.assigned}
+            value={String(assignedTotal)}
+            color="blue"
+          />
+        </div>
+            </section>
 
+      <section className="px-5 pb-6">
         {successText && (
           <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             <CheckCircle className="h-4 w-4" />
@@ -346,7 +400,7 @@ setTimeout(() => {
           )}
 
         {!loading && visibleAssignments.length > 0 && (
-          <div className="space-y-5 pb-6">
+          <div className="space-y-5 pb-32">
             {visibleAssignments.map((assignment) => {
               const task = assignment.tasks;
               if (!task) return null;

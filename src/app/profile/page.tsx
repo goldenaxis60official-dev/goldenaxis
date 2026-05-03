@@ -253,26 +253,37 @@ setSavingLanguage(false);
 
   return (
     <AppShell>
-      <section className="px-5 pt-8">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
-            <User className="h-12 w-12 text-yellow-300" />
+      <section className="px-5 pb-32 pt-8">
+                <LuxuryCard goldGlow className="mb-5 p-5">
+          <div className="flex items-center gap-4">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.7rem] border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
+              <div className="absolute inset-0 rounded-[1.7rem] bg-yellow-300/15 blur-xl" />
+              <User className="relative h-10 w-10 text-yellow-300" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.8)]" />
+                <p className="text-xs font-bold text-emerald-200">
+                  {t.profile.accountCenterOnline}
+                </p>
+              </div>
+
+              <h1 className="truncate text-2xl font-black">
+                {profile.display_name || t.profile.goldMember}
+              </h1>
+
+              <p className="mt-1 truncate text-sm text-white/50">
+                {profile.email || t.profile.goldenAxisUser}
+              </p>
+
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-bold text-yellow-200">
+                <Gem className="h-3.5 w-3.5" />
+                {t.profile.goldenAxisMember}
+              </div>
+            </div>
           </div>
-
-          <h1 className="text-2xl font-black">
-            {profile.display_name || t.profile.goldMember}
-          </h1>
-
-          <p className="mt-1 text-sm text-white/50">
-            {profile.email || t.profile.goldenAxisUser}
-          </p>
-
-          <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-bold text-yellow-200">
-            <Gem className="h-3.5 w-3.5" />
-            {t.profile.goldenAxisMember}
-          </div>
-
-          </div>
+        </LuxuryCard>
 
         <LuxuryCard goldGlow className="mb-6 p-5">
           <div className="mb-5 flex items-center justify-between">
@@ -384,6 +395,13 @@ setSavingLanguage(false);
     color="green"
   />
 </div>
+
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-black">{t.profile.memberCenter}</h3>
+          <span className="text-xs font-bold text-yellow-300">
+            {t.profile.secureTools}
+          </span>
+        </div>
 
         <LuxuryCard className="mb-8 overflow-hidden p-0">
           {menuItems.map((item) => {

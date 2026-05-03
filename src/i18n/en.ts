@@ -104,6 +104,9 @@ export const en = {
   goldMember: "Gold Member",
   goldenAxisUser: "Golden Axis User",
   goldenAxisMember: "Golden Axis Member",
+  accountCenterOnline: "Account Center Online",
+  memberCenter: "Member Center",
+  secureTools: "Secure Tools",
   campaignBalance: "Campaign Balance",
   teamCenter: "Team Center",
   noTeam: "No Team",
@@ -347,8 +350,8 @@ support: {
 
     afterPayment: "After you send payment",
     afterPaymentNote:
-      "Open Deposit Review and submit your amount plus transaction hash/proof note. This chat is only for wallet help.",
-    openDepositReview: "Open Deposit Review",
+      "Open Deposit and submit your amount plus transaction hash/proof note. This chat is only for wallet help.",
+    openDepositReview: "Open Deposit",
 
     withdrawalNetwork: "Withdrawal Network",
     withdrawNote:
@@ -384,7 +387,7 @@ deposit: {
   submitReview: "5. Submit Review",
   txHashPlaceholder: "Transaction hash / proof note optional",
   proofTitle: "Deposit Proof Screenshot",
-  proofNote: "Upload payment screenshot so admin can verify faster.",
+  proofNote: "Upload payment screenshot so the review can be completed faster.",
   removeScreenshot: "Remove Screenshot",
   uploadScreenshot: "Tap to upload payment screenshot",
   adminNotePlaceholder: "Write a note for review...",
@@ -398,7 +401,7 @@ deposit: {
   afterApproval: "After Approval",
 
   submitting: "Submitting...",
-  submitDepositReview: "Submit Deposit Review",
+  submitDepositReview: "Submit Deposit",
   viewDepositRecords: "View Deposit Records",
 
   validAmountError: "Please enter a valid credit amount.",
@@ -407,7 +410,7 @@ deposit: {
   proofRequiredError:
     "Please enter transaction hash or upload deposit proof screenshot.",
   proofUploadFailed: "Failed to upload deposit proof.",
-  successSubmitted: "Deposit review is pending.",
+  successSubmitted: "Deposit pending.",
 },
 
 withdraw: {

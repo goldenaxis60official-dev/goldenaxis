@@ -193,7 +193,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
   return (
     <AppShell>
-      <section className="px-5 pt-8">
+      <section className="px-5 pb-48 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-sm text-yellow-200/80">{t.withdraw.walletCenter}</p>
@@ -273,7 +273,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           )}
         </LuxuryCard>
 
-        <LuxuryCard className="p-5">
+        <LuxuryCard className="mb-8 p-4">
   <form onSubmit={handleSubmit}>
           <div className="mb-5">
             <p className="mb-3 font-bold">{t.withdraw.requestAmount}</p>
