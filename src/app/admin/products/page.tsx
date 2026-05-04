@@ -124,7 +124,7 @@ function buildDefaultDescription(name: string, category: string, price: number) 
 
   return `${name || "Premium jewel item"} is prepared for Golden Axis 60 campaign promotion. Category: ${
     category || "Gold Jewelry"
-  }. ${tier} product with polished presentation, luxury detail, and gallery-ready product display.`;
+  }. ${tier} product detail, and gallery-ready product display.`;
 }
 
 export default function AdminProductsPage() {
@@ -149,6 +149,7 @@ const t: AdminProductsText =
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveMode, setSaveMode] = useState<"normal" | "addAnother">("normal");
 
   const [uploading, setUploading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -393,11 +394,11 @@ useEffect(() => {
       return;
     }
 
-    if (Number(form.price) <= 0) {
-      setErrorText(t.validation.priceRequired);
-      setSaving(false);
-      return;
-    }
+    if (Number(form.price) < 100 || Number(form.price) > 10000) {
+  setErrorText("Product price must be between $100 and $10,000.");
+  setSaving(false);
+  return;
+}
 
     if (Number(form.rating) < 0 || Number(form.rating) > 5) {
       setErrorText(t.validation.ratingRange);
@@ -444,8 +445,21 @@ useEffect(() => {
     }
 
     setSaving(false);
-    resetForm();
-    loadProducts();
+
+if (saveMode === "addAnother") {
+  setForm({
+    ...emptyForm,
+    category: form.category,
+    currency: form.currency,
+    rating: form.rating,
+    reviews_count: form.reviews_count,
+  });
+} else {
+  resetForm();
+}
+
+setSaveMode("normal");
+loadProducts();
   }
 
   async function toggleProductStatus(product: Product) {
@@ -923,8 +937,12 @@ useEffect(() => {
     <span className="font-bold text-white/80">{t.form.activeProduct}</span>
   </label>
 
+  <div className="grid grid-cols-1 gap-3">
   <button
-    onClick={handleSaveProduct}
+    onClick={() => {
+      setSaveMode("normal");
+      handleSaveProduct();
+    }}
     disabled={saving || uploading}
     className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
   >
@@ -935,6 +953,30 @@ useEffect(() => {
         ? t.form.updateProduct
         : t.form.createProductButton}
   </button>
+
+  {!form.id && (
+    <button
+      type="button"
+      onClick={() => {
+        setSaveMode("addAnother");
+        handleSaveProduct();
+      }}
+      disabled={saving || uploading}
+      className="rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15 disabled:opacity-60"
+    >
+      Save & Add Another
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={resetForm}
+    disabled={saving || uploading}
+    className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-black text-white/65 hover:bg-white/[0.1] disabled:opacity-60"
+  >
+    Clear Form
+  </button>
+</div>
 </div>
 
           </section>
