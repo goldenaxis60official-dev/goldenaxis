@@ -416,7 +416,7 @@ useEffect(() => {
       description: form.description.trim() || null,
       images: form.images,
       main_image: form.main_image || form.images[0] || null,
-      is_active: form.is_active,
+      is_active: true,
     };
 
     if (form.id) {
@@ -570,10 +570,9 @@ loadProducts();
 </p>
 </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
   <StatCard label="Total Products" value={`${products.length} / 120`} />
-  <StatCard label="Active Products" value={String(activeProducts)} />
-  <StatCard label="Hidden Products" value={String(products.length - activeProducts)} />
+  <StatCard label="Product Pool" value="Auto Ready" />
   <StatCard label="Gallery Status" value={t.stats.galleryReady} />
 </div>
 
@@ -926,17 +925,6 @@ loadProducts();
     )}
   </div>
 
-  <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 p-4">
-    <input
-      type="checkbox"
-      checked={form.is_active}
-      onChange={(event) =>
-        setForm({ ...form, is_active: event.target.checked })
-      }
-    />
-    <span className="font-bold text-white/80">{t.form.activeProduct}</span>
-  </label>
-
   <div className="grid grid-cols-1 gap-3">
   <button
     onClick={() => {
@@ -1108,7 +1096,6 @@ loadProducts();
 <th className="px-4 py-3">Tier</th>
 <th className="px-4 py-3">{t.list.price}</th>
 <th className="px-4 py-3">{t.list.rating}</th>
-<th className="px-4 py-3">{t.list.status}</th>
 <th className="px-4 py-3 text-right">{t.list.actions}</th>
             </tr>
           </thead>
@@ -1171,18 +1158,6 @@ loadProducts();
                 </td>
 
                 <td className="px-4 py-4">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-black ${
-                      product.is_active
-                        ? "bg-emerald-400/15 text-emerald-300"
-                        : "bg-red-500/15 text-red-300"
-                    }`}
-                  >
-                    {product.is_active ? t.list.active : t.list.hidden}
-                  </span>
-                </td>
-
-                <td className="px-4 py-4">
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
@@ -1192,14 +1167,6 @@ loadProducts();
                     >
                       <Pencil className="h-4 w-4" />
                       {t.list.edit}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleProductStatus(product)}
-                      className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/[0.1]"
-                    >
-                      {product.is_active ? t.list.hide : t.list.activate}
                     </button>
 
                     <button
