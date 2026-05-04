@@ -56,6 +56,77 @@ const emptyForm: ProductForm = {
   is_active: true,
 };
 
+type ProductTier = "tier1" | "tier2" | "tier3" | "out";
+
+const productTierPlan = [
+  {
+    id: "tier1" as ProductTier,
+    label: "Tier 1",
+    range: "$100–$1,000",
+    target: 60,
+    min: 100,
+    max: 1000,
+    helper: "Basic gold, small jewelry, simple gem pieces",
+  },
+  {
+    id: "tier2" as ProductTier,
+    label: "Tier 2",
+    range: "$1,001–$5,000",
+    target: 40,
+    min: 1001,
+    max: 5000,
+    helper: "Premium rings, bracelets, necklaces, polished gems",
+  },
+  {
+    id: "tier3" as ProductTier,
+    label: "Tier 3",
+    range: "$5,001–$10,000",
+    target: 20,
+    min: 5001,
+    max: 10000,
+    helper: "Luxury diamond, rare gem, high-value jewel sets",
+  },
+];
+
+const quickCategories = [
+  "Gold Jewelry",
+  "Diamond Ring",
+  "Gem Pendant",
+  "Luxury Necklace",
+  "Gold Bracelet",
+  "Rare Gem Set",
+];
+
+function getProductTier(price: number): ProductTier {
+  if (price >= 100 && price <= 1000) return "tier1";
+  if (price >= 1001 && price <= 5000) return "tier2";
+  if (price >= 5001 && price <= 10000) return "tier3";
+  return "out";
+}
+
+function getTierLabel(price: number) {
+  const tier = getProductTier(price);
+
+  if (tier === "tier1") return "Tier 1";
+  if (tier === "tier2") return "Tier 2";
+  if (tier === "tier3") return "Tier 3";
+
+  return "Check Price";
+}
+
+function getTierRange(price: number) {
+  const tier = productTierPlan.find((item) => item.id === getProductTier(price));
+  return tier?.range || "Use $100–$10,000";
+}
+
+function buildDefaultDescription(name: string, category: string, price: number) {
+  const tier = getTierLabel(price);
+
+  return `${name || "Premium jewel item"} is prepared for Golden Axis 60 campaign promotion. Category: ${
+    category || "Gold Jewelry"
+  }. ${tier} product with polished presentation, luxury detail, and gallery-ready product display.`;
+}
+
 export default function AdminProductsPage() {
   return (
     <RequireAuth>
@@ -98,6 +169,23 @@ const [pageSize, setPageSize] = useState(10);
     () => products.filter((product) => product.is_active).length,
     [products]
   );
+
+  const tierCounts = useMemo(() => {
+  return {
+    tier1: products.filter(
+      (product) => getProductTier(Number(product.price)) === "tier1"
+    ).length,
+    tier2: products.filter(
+      (product) => getProductTier(Number(product.price)) === "tier2"
+    ).length,
+    tier3: products.filter(
+      (product) => getProductTier(Number(product.price)) === "tier3"
+    ).length,
+    out: products.filter(
+      (product) => getProductTier(Number(product.price)) === "out"
+    ).length,
+  };
+}, [products]);
 
   const categories = useMemo(() => {
   return Array.from(
@@ -469,12 +557,48 @@ useEffect(() => {
 </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label={t.stats.totalProducts} value={String(products.length)} />
-          <StatCard label={t.stats.active} value={String(activeProducts)} />
-          <StatCard label={t.stats.hidden} value={String(products.length - activeProducts)}
-          />
-          <StatCard label={t.stats.storage} value={t.stats.galleryReady} />
+  <StatCard label="Total Products" value={`${products.length} / 120`} />
+  <StatCard label="Active Products" value={String(activeProducts)} />
+  <StatCard label="Hidden Products" value={String(products.length - activeProducts)} />
+  <StatCard label="Gallery Status" value={t.stats.galleryReady} />
+</div>
+
+<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+  {productTierPlan.map((tier) => {
+    const count = tierCounts[tier.id];
+
+    return (
+      <div
+        key={tier.id}
+        className="rounded-2xl border border-yellow-400/15 bg-yellow-400/[0.06] p-4"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-black text-yellow-300">
+              {tier.label} Product Pool
+            </p>
+            <p className="mt-1 text-xs text-white/45">{tier.range}</p>
+          </div>
+
+          <span className="rounded-full border border-yellow-400/25 bg-black/30 px-3 py-1 text-xs font-black text-yellow-300">
+            {count} / {tier.target}
+          </span>
         </div>
+
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/50">
+          <div
+            className="h-full rounded-full bg-yellow-400"
+            style={{
+              width: `${Math.min(100, (count / tier.target) * 100)}%`,
+            }}
+          />
+        </div>
+
+        <p className="mt-3 text-xs leading-5 text-white/45">{tier.helper}</p>
+      </div>
+    );
+  })}
+</div>
 
         {successText && (
           <div className="mb-5 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
@@ -596,21 +720,109 @@ useEffect(() => {
     onChange={(value) => setForm({ ...form, name: value })}
   />
 
-  <div className="grid grid-cols-2 gap-3">
-    <TextInput
-      label={t.form.category}
-      value={form.category}
-      placeholder={t.form.categoryPlaceholder}
-      onChange={(value) => setForm({ ...form, category: value })}
-    />
-
-    <TextInput
-      label={t.form.currency}
-      value={form.currency}
-      placeholder={t.form.currencyPlaceholder}
-      onChange={(value) => setForm({ ...form, currency: value })}
-    />
+  <div>
+  <div className="mb-2 flex items-center justify-between gap-3">
+    <p className="text-sm font-bold text-white/80">Category</p>
+    <p className="text-xs text-white/35">Choose or type manually</p>
   </div>
+
+  <div className="mb-3 grid grid-cols-2 gap-2">
+    {quickCategories.map((category) => (
+      <button
+        key={category}
+        type="button"
+        onClick={() => setForm({ ...form, category })}
+        className={`rounded-xl border px-3 py-2 text-left text-xs font-black transition ${
+          form.category === category
+            ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-300"
+            : "border-white/10 bg-black/30 text-white/55 hover:bg-white/[0.06]"
+        }`}
+      >
+        {category}
+      </button>
+    ))}
+  </div>
+
+  <TextInput
+    label="Custom Category"
+    value={form.category}
+    placeholder="Example: Gold Bracelet"
+    onChange={(value) => setForm({ ...form, category: value })}
+  />
+</div>
+
+<div className="grid grid-cols-2 gap-3">
+  <TextInput
+    label="Currency"
+    value={form.currency}
+    placeholder="USD"
+    onChange={(value) => setForm({ ...form, currency: value })}
+  />
+
+  <NumberInput
+    label="Reviews"
+    value={form.reviews_count}
+    onChange={(value) => setForm({ ...form, reviews_count: value })}
+  />
+</div>
+
+<div className="rounded-2xl border border-yellow-400/15 bg-yellow-400/[0.06] p-4">
+  <div className="mb-3 flex items-start justify-between gap-3">
+    <div>
+      <p className="text-sm font-black text-yellow-300">
+        Product Price Tier Guide
+      </p>
+      <p className="mt-1 text-xs text-white/45">
+        Price controls which pool this product belongs to.
+      </p>
+    </div>
+
+    <span className="rounded-full border border-yellow-400/25 bg-black/40 px-3 py-1 text-xs font-black text-yellow-300">
+      {getTierLabel(form.price)}
+    </span>
+  </div>
+
+  <div className="grid grid-cols-1 gap-2">
+    {productTierPlan.map((tier) => (
+      <button
+        key={tier.id}
+        type="button"
+        onClick={() =>
+          setForm({
+            ...form,
+            price: tier.min,
+          })
+        }
+        className={`rounded-xl border px-3 py-2 text-left text-xs transition ${
+          getProductTier(form.price) === tier.id
+            ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-200"
+            : "border-white/10 bg-black/30 text-white/50 hover:bg-white/[0.06]"
+        }`}
+      >
+        <span className="font-black">{tier.label}</span>{" "}
+        <span className="text-white/45">{tier.range}</span>
+        <br />
+        <span className="text-[11px] text-white/35">{tier.helper}</span>
+      </button>
+    ))}
+  </div>
+</div>
+
+<div className="grid grid-cols-2 gap-3">
+  <NumberInput
+    label={`Price (${getTierRange(form.price)})`}
+    value={form.price}
+    step="0.01"
+    onChange={(value) => setForm({ ...form, price: value })}
+  />
+
+  <NumberInput
+    label="Rating"
+    value={form.rating}
+    step="0.1"
+    onChange={(value) => setForm({ ...form, rating: value })}
+  />
+</div>
 
   <div className="grid grid-cols-3 gap-3">
     <NumberInput
@@ -640,13 +852,30 @@ useEffect(() => {
     </p>
 
     <textarea
-      value={form.description}
-      placeholder={t.form.descriptionPlaceholder}
-      onChange={(event) =>
-        setForm({ ...form, description: event.target.value })
-      }
-      className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-    />
+  value={form.description}
+  placeholder={t.form.descriptionPlaceholder}
+  onChange={(event) =>
+    setForm({ ...form, description: event.target.value })
+  }
+  className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+/>
+
+<button
+  type="button"
+  onClick={() =>
+    setForm({
+      ...form,
+      description: buildDefaultDescription(
+        form.name,
+        form.category,
+        form.price
+      ),
+    })
+  }
+  className="mt-2 w-full rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-300 hover:bg-yellow-400/15"
+>
+  Auto-fill Premium Description
+</button>
   </div>
 
   <div>
@@ -851,11 +1080,12 @@ useEffect(() => {
   {!loading && filteredProducts.length > 0 && (
     <>
       <div className="max-h-[640px] overflow-auto rounded-[1.5rem] border border-white/10">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
             <tr>
               <th className="px-4 py-3">{t.list.product}</th>
 <th className="px-4 py-3">{t.list.category}</th>
+<th className="px-4 py-3">Tier</th>
 <th className="px-4 py-3">{t.list.price}</th>
 <th className="px-4 py-3">{t.list.rating}</th>
 <th className="px-4 py-3">{t.list.status}</th>
@@ -895,12 +1125,18 @@ useEffect(() => {
                 </td>
 
                 <td className="px-4 py-4 text-white/70">
-                  {product.category}
-                </td>
+  {product.category}
+</td>
 
-                <td className="px-4 py-4 font-bold text-yellow-300">
-                  {product.currency} {Number(product.price).toFixed(2)}
-                </td>
+<td className="px-4 py-4">
+  <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">
+    {getTierLabel(Number(product.price))}
+  </span>
+</td>
+
+<td className="px-4 py-4 font-bold text-yellow-300">
+  {product.currency} {Number(product.price).toFixed(2)}
+</td>
 
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-1 text-yellow-300">
