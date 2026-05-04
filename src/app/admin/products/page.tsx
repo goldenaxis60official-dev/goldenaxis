@@ -824,28 +824,6 @@ useEffect(() => {
   />
 </div>
 
-  <div className="grid grid-cols-3 gap-3">
-    <NumberInput
-      label={t.form.price}
-      value={form.price}
-      step="0.01"
-      onChange={(value) => setForm({ ...form, price: value })}
-    />
-
-    <NumberInput
-      label={t.form.rating}
-      value={form.rating}
-      step="0.1"
-      onChange={(value) => setForm({ ...form, rating: value })}
-    />
-
-    <NumberInput
-      label={t.form.reviews}
-      value={form.reviews_count}
-      onChange={(value) => setForm({ ...form, reviews_count: value })}
-    />
-  </div>
-
   <div>
     <p className="mb-2 text-sm font-bold text-white/80">
       {t.form.description}
