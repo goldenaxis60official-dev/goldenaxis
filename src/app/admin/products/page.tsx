@@ -399,12 +399,18 @@ useEffect(() => {
   return;
 }
 
+if (Number(form.rating) < 0 || Number(form.rating) > 5) {
+  setErrorText("Rating must be between 0 and 5.");
+  setSaving(false);
+  return;
+}
+
     const payload = {
       name: form.name.trim(),
       category: form.category.trim() || "Gold Jewelry",
       price: Number(form.price),
       currency: form.currency.trim() || "USD",
-      rating: 5,
+      rating: Number(form.rating),
       reviews_count: Number(form.reviews_count),
       description: form.description.trim() || null,
       images: form.images,
@@ -813,7 +819,7 @@ loadProducts();
   </div>
 </div>
 
-<div className="grid grid-cols-1 gap-3">
+<div className="grid grid-cols-2 gap-3">
   <NumberInput
     label={`Price (${getTierRange(form.price)})`}
     value={form.price}
@@ -821,18 +827,19 @@ loadProducts();
     onChange={(value) => setForm({ ...form, price: value })}
   />
 
-  <div className="rounded-2xl border border-yellow-400/15 bg-black/30 p-4">
-    <p className="text-sm font-bold text-white/80">Rating</p>
-    <div className="mt-2 flex items-center gap-2 text-yellow-300">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star key={star} className="h-5 w-5 fill-current" />
-      ))}
-      <span className="ml-2 text-sm font-black text-white">5.0 fixed</span>
-    </div>
-    <p className="mt-1 text-xs text-white/40">
-      Rating is locked to 5 stars for clean product entry.
-    </p>
-  </div>
+  <NumberInput
+    label="Rating (Max 5)"
+    value={form.rating}
+    step="0.1"
+    min={0}
+    max={5}
+    onChange={(value) =>
+      setForm({
+        ...form,
+        rating: Math.min(5, Math.max(0, value)),
+      })
+    }
+  />
 </div>
 
   <div>
@@ -1267,11 +1274,15 @@ function NumberInput({
   value,
   onChange,
   step = "1",
+  min,
+  max,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
   step?: string;
+  min?: number;
+  max?: number;
 }) {
   return (
     <div>
@@ -1280,7 +1291,9 @@ function NumberInput({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         type="number"
-        step={step}
+step={step}
+min={min}
+max={max}
         className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
       />
     </div>
