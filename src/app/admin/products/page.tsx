@@ -149,7 +149,6 @@ const t: AdminProductsText =
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveMode, setSaveMode] = useState<"normal" | "addAnother">("normal");
 
   const [uploading, setUploading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -383,7 +382,7 @@ useEffect(() => {
     });
   }
 
-  async function handleSaveProduct() {
+  async function handleSaveProduct(mode: "normal" | "addAnother" = "normal") {
     setSaving(true);
     setErrorText("");
     setSuccessText("");
@@ -400,18 +399,12 @@ useEffect(() => {
   return;
 }
 
-    if (Number(form.rating) < 0 || Number(form.rating) > 5) {
-      setErrorText(t.validation.ratingRange);
-      setSaving(false);
-      return;
-    }
-
     const payload = {
       name: form.name.trim(),
       category: form.category.trim() || "Gold Jewelry",
       price: Number(form.price),
       currency: form.currency.trim() || "USD",
-      rating: Number(form.rating),
+      rating: 5,
       reviews_count: Number(form.reviews_count),
       description: form.description.trim() || null,
       images: form.images,
@@ -446,7 +439,7 @@ useEffect(() => {
 
     setSaving(false);
 
-if (saveMode === "addAnother") {
+if (mode === "addAnother") {
   setForm({
     ...emptyForm,
     category: form.category,
@@ -458,7 +451,6 @@ if (saveMode === "addAnother") {
   resetForm();
 }
 
-setSaveMode("normal");
 loadProducts();
   }
 
@@ -821,7 +813,7 @@ loadProducts();
   </div>
 </div>
 
-<div className="grid grid-cols-2 gap-3">
+<div className="grid grid-cols-1 gap-3">
   <NumberInput
     label={`Price (${getTierRange(form.price)})`}
     value={form.price}
@@ -829,12 +821,18 @@ loadProducts();
     onChange={(value) => setForm({ ...form, price: value })}
   />
 
-  <NumberInput
-    label="Rating"
-    value={form.rating}
-    step="0.1"
-    onChange={(value) => setForm({ ...form, rating: value })}
-  />
+  <div className="rounded-2xl border border-yellow-400/15 bg-black/30 p-4">
+    <p className="text-sm font-bold text-white/80">Rating</p>
+    <div className="mt-2 flex items-center gap-2 text-yellow-300">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star key={star} className="h-5 w-5 fill-current" />
+      ))}
+      <span className="ml-2 text-sm font-black text-white">5.0 fixed</span>
+    </div>
+    <p className="mt-1 text-xs text-white/40">
+      Rating is locked to 5 stars for clean product entry.
+    </p>
+  </div>
 </div>
 
   <div>
@@ -927,10 +925,7 @@ loadProducts();
 
   <div className="grid grid-cols-1 gap-3">
   <button
-    onClick={() => {
-      setSaveMode("normal");
-      handleSaveProduct();
-    }}
+    onClick={() => handleSaveProduct("normal")}
     disabled={saving || uploading}
     className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
   >
@@ -945,10 +940,7 @@ loadProducts();
   {!form.id && (
     <button
       type="button"
-      onClick={() => {
-        setSaveMode("addAnother");
-        handleSaveProduct();
-      }}
+      onClick={() => handleSaveProduct("addAnother")}
       disabled={saving || uploading}
       className="rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15 disabled:opacity-60"
     >
