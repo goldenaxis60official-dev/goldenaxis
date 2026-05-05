@@ -333,6 +333,23 @@ product_type: product.product_type || "normal",
     setSuccessText("");
 
     const uploadedUrls: string[] = [];
+    const allowedImageTypes = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/avif",
+];
+
+const invalidFile = Array.from(files).find(
+  (file) => !allowedImageTypes.includes(file.type)
+);
+
+if (invalidFile) {
+  setErrorText("Only PNG, JPG, WEBP, or AVIF product images are allowed.");
+  setUploading(false);
+  return;
+}
 
     for (const file of Array.from(files)) {
       const fileExt = file.name.split(".").pop();
@@ -949,12 +966,12 @@ loadProducts();
       {uploading ? t.form.uploading : t.form.uploadImages}
 
       <input
-        type="file"
-        multiple
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => handleUpload(event.target.files)}
-      />
+  type="file"
+  multiple
+  accept="image/png,image/jpeg,image/jpg,image/webp,image/avif"
+  className="hidden"
+  onChange={(event) => handleUpload(event.target.files)}
+/>
     </label>
 
     {form.images.length > 0 && (
