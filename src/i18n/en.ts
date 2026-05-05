@@ -122,6 +122,7 @@ export const en = {
   menu: {
     teamCenter: "Team Center",
     withdrawPasscode: "Withdraw Passcode",
+    changePassword: "Change Password",
     customerSupport: "Customer Support",
     depositCredits: "Deposit Credits",
     withdrawRequest: "Withdraw Request",

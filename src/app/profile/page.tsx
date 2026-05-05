@@ -19,6 +19,7 @@ import {
   History,
   Headphones,
   ShieldCheck,
+  KeyRound,
   LogOut,
   ChevronRight,
   ClipboardList,
@@ -87,6 +88,15 @@ const menuItems = [
     danger: false,
     subtitleKey: null,
   },
+
+  {
+  key: "changePassword",
+  icon: KeyRound,
+  href: "/change-password",
+  featured: false,
+  danger: false,
+  subtitleKey: null,
+},
   {
   key: "withdrawPasscode",
   icon: ShieldCheck,

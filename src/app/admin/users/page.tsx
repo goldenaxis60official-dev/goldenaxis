@@ -69,6 +69,10 @@ const [referralValue, setReferralValue] = useState("");
 
 const [deleteUser, setDeleteUser] = useState<ManagedUser | null>(null);
 const [deleteConfirmText, setDeleteConfirmText] = useState("");
+const [securityUser, setSecurityUser] = useState<ManagedUser | null>(null);
+const [resetPassword, setResetPassword] = useState("");
+const [resetPasscode, setResetPasscode] = useState("");
+const [resetResult, setResetResult] = useState("");
 
   const [adjustAmount, setAdjustAmount] = useState(100);
   const [adjustNote, setAdjustNote] = useState("");
@@ -207,6 +211,104 @@ useEffect(() => {
     (sum, user) => sum + Number(user.balance || 0),
     0
   );
+
+function generateSixDigitPasscode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function generateTemporaryPassword() {
+  return `GA60-${Math.floor(100000 + Math.random() * 900000)}`;
+}
+
+function openSecurityReset(user: ManagedUser) {
+  setSecurityUser(user);
+  setResetPassword(generateTemporaryPassword());
+  setResetPasscode(generateSixDigitPasscode());
+  setResetResult("");
+  setErrorText("");
+  setSuccessText("");
+}
+
+async function handleResetLoginPassword() {
+  if (!securityUser) return;
+
+  if (resetPassword.length < 6) {
+    setErrorText("Password must be at least 6 characters.");
+    return;
+  }
+
+  setActionLoading(true);
+  setErrorText("");
+  setSuccessText("");
+  setResetResult("");
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    setErrorText("Admin session expired. Please login again.");
+    setActionLoading(false);
+    return;
+  }
+
+  const response = await fetch("/api/admin/reset-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      userId: securityUser.id,
+      newPassword: resetPassword,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    setErrorText(result.error || "Failed to reset login password.");
+    setActionLoading(false);
+    return;
+  }
+
+  setResetResult(
+    `Login password reset successfully. Give this new password to the user: ${resetPassword}`
+  );
+  setSuccessText("Login password reset successfully.");
+  setActionLoading(false);
+}
+
+async function handleResetWithdrawPasscode() {
+  if (!securityUser) return;
+
+  if (!/^[0-9]{6}$/.test(resetPasscode)) {
+    setErrorText("Withdraw passcode must be exactly 6 digits.");
+    return;
+  }
+
+  setActionLoading(true);
+  setErrorText("");
+  setSuccessText("");
+  setResetResult("");
+
+  const { error } = await supabase.rpc("admin_reset_withdraw_passcode", {
+    p_user_id: securityUser.id,
+    p_passcode: resetPasscode,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  setResetResult(
+    `Withdraw passcode reset successfully. Give this new code to the user: ${resetPasscode}`
+  );
+  setSuccessText("Withdraw passcode reset successfully.");
+  setActionLoading(false);
+}
 
   async function handleAdjustBalance() {
     if (!selectedUser) return;
@@ -723,6 +825,15 @@ async function handleDeleteUser() {
                       </button>
 
                       <button
+  onClick={() => openSecurityReset(user)}
+  disabled={user.role !== "user" && profile.role !== "super"}
+  className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-35"
+  title="Security Reset"
+>
+  <ShieldCheck className="h-4 w-4" />
+</button>
+
+                      <button
   onClick={() => {
     setDeleteUser(user);
     setDeleteConfirmText("");
@@ -861,6 +972,124 @@ value={selectedUser.display_name || t.list.fallbackName}
             </div>
           </div>
         )}
+
+        {securityUser && (
+  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
+    <div className="w-full max-w-lg rounded-[2rem] border border-emerald-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(16,185,129,0.16)]">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <p className="text-sm text-emerald-300/80">Account Security</p>
+          <h2 className="text-2xl font-black">Security Reset</h2>
+        </div>
+
+        <button
+          onClick={() => {
+  setSecurityUser(null);
+  setResetPassword("");
+  setResetPasscode("");
+  setResetResult("");
+}}
+          className="rounded-2xl bg-white/10 p-3 text-white/70"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <MiniBox
+          label="User"
+          value={securityUser.display_name || t.list.fallbackName}
+        />
+        <MiniBox
+          label="Email"
+          value={securityUser.email || t.list.noEmail}
+          color="gold"
+        />
+      </div>
+
+      <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100/75">
+        Reset only. Old password/passcode is never shown. Give the new code to
+        the user privately after reset.
+      </div>
+
+      <div className="mt-5">
+  <p className="mb-2 text-sm font-bold text-white/80">
+    New Login Password
+  </p>
+
+  <div className="flex gap-3">
+    <input
+      value={resetPassword}
+      onChange={(event) => setResetPassword(event.target.value)}
+      placeholder="Temporary password"
+      className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-emerald-400/50"
+    />
+
+    <button
+      type="button"
+      onClick={() => setResetPassword(generateTemporaryPassword())}
+      className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white/75 hover:bg-white/[0.1]"
+    >
+      Generate
+    </button>
+  </div>
+
+  <button
+    onClick={handleResetLoginPassword}
+    disabled={actionLoading || resetPassword.length < 6}
+    className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    <ShieldCheck className="h-5 w-5" />
+    {actionLoading ? "Resetting..." : "Reset Login Password"}
+  </button>
+</div>
+
+      <div className="mt-5">
+        <p className="mb-2 text-sm font-bold text-white/80">
+          New Withdraw Passcode
+        </p>
+
+        <div className="flex gap-3">
+          <input
+            value={resetPasscode}
+            onChange={(event) =>
+              setResetPasscode(
+                event.target.value.replace(/\D/g, "").slice(0, 6)
+              )
+            }
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="6-digit code"
+            className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-emerald-400/50"
+          />
+
+          <button
+            type="button"
+            onClick={() => setResetPasscode(generateSixDigitPasscode())}
+            className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white/75 hover:bg-white/[0.1]"
+          >
+            Generate
+          </button>
+        </div>
+      </div>
+
+      {resetResult && (
+        <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-200">
+          {resetResult}
+        </div>
+      )}
+
+      <button
+        onClick={handleResetWithdrawPasscode}
+        disabled={actionLoading || resetPasscode.length !== 6}
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-300 to-emerald-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <ShieldCheck className="h-5 w-5" />
+        {actionLoading ? "Resetting..." : "Reset Withdraw Passcode"}
+      </button>
+    </div>
+  </div>
+)}
 
         {deleteUser && (
   <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
