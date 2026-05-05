@@ -28,6 +28,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 const [confirmPassword, setConfirmPassword] = useState("");
+const [withdrawPasscode, setWithdrawPasscode] = useState("");
+const [confirmWithdrawPasscode, setConfirmWithdrawPasscode] = useState("");
 const [referralCode, setReferralCode] = useState("");
   const [accepted, setAccepted] = useState(false);
 
@@ -102,6 +104,15 @@ if (profileData.role === "admin" || profileData.role === "super") {
   setErrorText("Passwords do not match.");
   return;
 }
+if (!/^[0-9]{6}$/.test(withdrawPasscode)) {
+  setErrorText("Withdraw passcode must be exactly 6 digits.");
+  return;
+}
+
+if (withdrawPasscode !== confirmWithdrawPasscode) {
+  setErrorText("Withdraw passcodes do not match.");
+  return;
+}
 
   if (cleanReferralCode.length < 4) {
     setErrorText("Valid referral code is required.");
@@ -172,7 +183,13 @@ if (!referrerProfile?.referrer_id) {
 
     if (profileError) throw profileError;
 
-    router.replace("/");
+const { error: passcodeError } = await supabase.rpc("set_withdraw_passcode", {
+  p_passcode: withdrawPasscode,
+});
+
+if (passcodeError) throw passcodeError;
+
+router.replace("/");
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Something went wrong.";
@@ -316,6 +333,54 @@ campaign tasks, account records, referral benefits, and support.
       onChange={(e) => setConfirmPassword(e.target.value)}
       placeholder="Enter password again"
       type={showPassword ? "text" : "password"}
+      autoComplete="new-password"
+      className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
+    />
+  </div>
+</label>
+
+<label className="block">
+  <span className="mb-2 block text-xs font-bold text-white/45">
+    Withdraw Passcode
+  </span>
+
+  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
+    <Lock className="h-5 w-5 text-yellow-300/80" />
+
+    <input
+      value={withdrawPasscode}
+      onChange={(e) =>
+        setWithdrawPasscode(e.target.value.replace(/\D/g, "").slice(0, 6))
+      }
+      placeholder="Create 6-digit passcode"
+      type="password"
+      inputMode="numeric"
+      maxLength={6}
+      autoComplete="new-password"
+      className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
+    />
+  </div>
+</label>
+
+<label className="block">
+  <span className="mb-2 block text-xs font-bold text-white/45">
+    Confirm Withdraw Passcode
+  </span>
+
+  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
+    <Lock className="h-5 w-5 text-yellow-300/80" />
+
+    <input
+      value={confirmWithdrawPasscode}
+      onChange={(e) =>
+        setConfirmWithdrawPasscode(
+          e.target.value.replace(/\D/g, "").slice(0, 6)
+        )
+      }
+      placeholder="Enter passcode again"
+      type="password"
+      inputMode="numeric"
+      maxLength={6}
       autoComplete="new-password"
       className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
     />

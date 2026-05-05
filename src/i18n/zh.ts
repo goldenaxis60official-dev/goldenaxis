@@ -118,6 +118,7 @@ export const zh = {
 
   menu: {
     teamCenter: "团队中心",
+    withdrawPasscode: "提现密码",
     customerSupport: "在线客服",
     depositCredits: "充值积分",
     withdrawRequest: "提现申请",

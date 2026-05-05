@@ -88,6 +88,14 @@ const menuItems = [
     subtitleKey: null,
   },
   {
+  key: "withdrawPasscode",
+  icon: ShieldCheck,
+  href: "/withdraw-passcode",
+  featured: false,
+  danger: false,
+  subtitleKey: null,
+},
+  {
     key: "termsSecurity",
     icon: ShieldCheck,
     href: "/terms",
