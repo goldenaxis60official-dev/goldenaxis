@@ -27,7 +27,8 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [referralCode, setReferralCode] = useState("");
   const [accepted, setAccepted] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -48,11 +49,18 @@ export default function RegisterPage() {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profileData?.role === "admin") {
-      router.replace("/admin");
-    } else {
-      router.replace("/");
-    }
+    if (!profileData) {
+  await supabase.auth.signOut();
+  return;
+}
+
+if (profileData.role === "admin" || profileData.role === "super") {
+  router.replace("/admin");
+} else if (profileData.role === "support") {
+  router.replace("/admin/support");
+} else {
+  router.replace("/");
+}
   }
 
   redirectIfLoggedIn();
@@ -89,6 +97,11 @@ export default function RegisterPage() {
     setErrorText("Password must be at least 6 characters.");
     return;
   }
+
+  if (password !== confirmPassword) {
+  setErrorText("Passwords do not match.");
+  return;
+}
 
   if (cleanReferralCode.length < 4) {
     setErrorText("Valid referral code is required.");
@@ -289,6 +302,25 @@ campaign tasks, account records, referral benefits, and support.
                     </button>
                   </div>
                 </label>
+
+                <label className="block">
+  <span className="mb-2 block text-xs font-bold text-white/45">
+    Confirm Password
+  </span>
+
+  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
+    <Lock className="h-5 w-5 text-yellow-300/80" />
+
+    <input
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      placeholder="Enter password again"
+      type={showPassword ? "text" : "password"}
+      autoComplete="new-password"
+      className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
+    />
+  </div>
+</label>
 
                 <label className="block">
   <div className="mb-2 flex items-center justify-between gap-3">
