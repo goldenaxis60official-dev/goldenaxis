@@ -98,20 +98,22 @@ export default function RegisterPage() {
   setLoading(true);
 
   try {
-    const { data: referrerProfile, error: referralError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("referral_code", cleanReferralCode)
-      .eq("status", "active")
-      .maybeSingle();
+    const { data: referrerRows, error: referralError } = await supabase.rpc(
+  "verify_referral_code",
+  {
+    input_referral_code: cleanReferralCode,
+  }
+);
 
-    if (referralError) throw referralError;
+if (referralError) throw referralError;
 
-    if (!referrerProfile?.id) {
-      setErrorText("Invalid referral code. Please check your code and try again.");
-      setLoading(false);
-      return;
-    }
+const referrerProfile = referrerRows?.[0];
+
+if (!referrerProfile?.referrer_id) {
+  setErrorText("Invalid referral code. Please check your code and try again.");
+  setLoading(false);
+  return;
+}
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
@@ -143,7 +145,7 @@ export default function RegisterPage() {
       email: cleanEmail,
       display_name: cleanDisplayName,
       referral_code: generateReferralCode(),
-      referred_by: referrerProfile.id,
+      referred_by: referrerProfile.referrer_id,
       terms_accepted: true,
       role: "user",
       balance: 0,
