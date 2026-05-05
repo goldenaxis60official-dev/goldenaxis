@@ -46,7 +46,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
   const t = messages[lang];
 
-  const [amount, setAmount] = useState(Number(profile.balance || 0));
+  const [amount, setAmount] = useState("");
   const [asset, setAsset] = useState<WalletAsset>("USDT");
   const [network, setNetwork] = useState<WalletNetwork>("TRC20");
   const [receivingAddress, setReceivingAddress] = useState("");
@@ -112,6 +112,8 @@ function WithdrawContent({ profile }: { profile: Profile }) {
     assignedTotal > 0 && Number(profile.current_step) > maxAssignedStep;
 
   const hasNoAssignedTasks = !loadingAssignments && assignedTotal === 0;
+  const availableBalance = Number(profile.balance || 0);
+const withdrawAmount = Number(amount || 0);
 
   function openWalletSupport() {
     router.push(
@@ -140,15 +142,15 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    if (!amount || amount <= 0) {
-      setErrorText(t.withdraw.validAmountError);
-      return;
-    }
+    if (!withdrawAmount || withdrawAmount <= 0) {
+  setErrorText(t.withdraw.validAmountError);
+  return;
+}
 
-    if (amount > Number(profile.balance)) {
-      setErrorText(t.withdraw.exceedBalanceError);
-      return;
-    }
+if (withdrawAmount > availableBalance) {
+  setErrorText(t.withdraw.exceedBalanceError);
+  return;
+}
 
     if (!receivingAddress.trim()) {
       setErrorText(
@@ -173,7 +175,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
     const { error } = await supabase.from("wallet_requests").insert({
       user_id: profile.id,
       type: "withdrawal",
-      amount,
+      amount: withdrawAmount,
       method: `${asset} ${network}`,
       note: finalNote,
       status: "pending",
@@ -278,15 +280,28 @@ function WithdrawContent({ profile }: { profile: Profile }) {
           <div className="mb-5">
             <p className="mb-3 font-bold">{t.withdraw.requestAmount}</p>
 
-            <input
-              value={amount}
-              onChange={(event) => setAmount(Number(event.target.value))}
-              type="number"
-              min="1"
-              step="0.01"
-              disabled={!completedAllAssignedMissions}
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
-            />
+            <div className="flex gap-3">
+  <input
+    value={amount}
+    onChange={(event) => setAmount(event.target.value)}
+    type="number"
+    min="1"
+    max={availableBalance}
+    step="0.01"
+    disabled={!completedAllAssignedMissions}
+    placeholder="Enter custom amount"
+    className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed"
+  />
+
+  <button
+    type="button"
+    onClick={() => setAmount(availableBalance.toFixed(2))}
+    disabled={!completedAllAssignedMissions}
+    className="rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-200 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    Max
+  </button>
+</div>
           </div>
 
           <div className="mb-5">
@@ -382,7 +397,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
               <div>
                 <p className="text-xs text-white/40">{t.withdraw.amount}</p>
                 <p className="mt-1 font-black text-yellow-300">
-                  ${Number(amount || 0).toFixed(2)}
+                  ${withdrawAmount.toFixed(2)}
                 </p>
               </div>
 
