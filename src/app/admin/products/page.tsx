@@ -39,6 +39,7 @@ type ProductForm = {
   images: string[];
   main_image: string;
   is_active: boolean;
+  product_type: "normal" | "lucky";
 };
 
 type AdminProductsText = typeof en.adminProducts;
@@ -54,6 +55,7 @@ const emptyForm: ProductForm = {
   images: [],
   main_image: "",
   is_active: true,
+  product_type: "normal",
 };
 
 type ProductTier = "tier1" | "tier2" | "tier3" | "out";
@@ -187,6 +189,13 @@ const [pageSize, setPageSize] = useState(10);
   };
 }, [products]);
 
+const productTypeCounts = useMemo(() => {
+  return {
+    normal: products.filter((product) => product.product_type !== "lucky").length,
+    lucky: products.filter((product) => product.product_type === "lucky").length,
+  };
+}, [products]);
+
   const categories = useMemo(() => {
   return Array.from(
     new Set(
@@ -310,6 +319,7 @@ useEffect(() => {
       images: Array.isArray(product.images) ? product.images : [],
       main_image: product.main_image || "",
       is_active: product.is_active,
+product_type: product.product_type || "normal",
     });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -416,6 +426,7 @@ if (Number(form.rating) < 0 || Number(form.rating) > 5) {
       images: form.images,
       main_image: form.main_image || form.images[0] || null,
       is_active: true,
+product_type: form.product_type,
     };
 
     if (form.id) {
@@ -568,9 +579,10 @@ loadProducts();
 </p>
 </div>
 
-<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-  <StatCard label="Total Products" value={`${products.length} / 120`} />
-  <StatCard label="Product Pool" value="Auto Ready" />
+<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+  <StatCard label="Normal Products" value={`${productTypeCounts.normal} / 120`} />
+  <StatCard label="Lucky Products" value={`${productTypeCounts.lucky} / 10`} />
+  <StatCard label="Total Products" value={String(products.length)} />
   <StatCard label="Gallery Status" value={t.stats.galleryReady} />
 </div>
 
@@ -730,6 +742,59 @@ loadProducts();
     placeholder={t.form.productNamePlaceholder}
     onChange={(value) => setForm({ ...form, name: value })}
   />
+
+  <div className="rounded-2xl border border-yellow-400/15 bg-yellow-400/[0.06] p-4">
+  <div className="mb-3">
+    <p className="text-sm font-black text-yellow-300">Product Type</p>
+    <p className="mt-1 text-xs text-white/45">
+      Normal products are used for auto orders. Lucky products are used only for lucky order injection.
+    </p>
+  </div>
+
+  <div className="grid grid-cols-2 gap-2">
+    <button
+      type="button"
+      onClick={() =>
+        setForm({
+          ...form,
+          product_type: "normal",
+          category: form.category || "Gold Jewelry",
+        })
+      }
+      className={`rounded-xl border px-3 py-3 text-left text-xs font-black transition ${
+        form.product_type === "normal"
+          ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-300"
+          : "border-white/10 bg-black/30 text-white/55 hover:bg-white/[0.06]"
+      }`}
+    >
+      Normal Product
+      <span className="mt-1 block text-[11px] font-medium text-white/35">
+        Auto order pool
+      </span>
+    </button>
+
+    <button
+      type="button"
+      onClick={() =>
+        setForm({
+          ...form,
+          product_type: "lucky",
+          category: "Lucky Order",
+        })
+      }
+      className={`rounded-xl border px-3 py-3 text-left text-xs font-black transition ${
+        form.product_type === "lucky"
+          ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-300"
+          : "border-white/10 bg-black/30 text-white/55 hover:bg-white/[0.06]"
+      }`}
+    >
+      Lucky Product
+      <span className="mt-1 block text-[11px] font-medium text-white/35">
+        Lucky task only
+      </span>
+    </button>
+  </div>
+</div>
 
   <div>
   <div className="mb-2 flex items-center justify-between gap-3">
@@ -1087,11 +1152,12 @@ loadProducts();
   {!loading && filteredProducts.length > 0 && (
     <>
       <div className="max-h-[640px] overflow-auto rounded-[1.5rem] border border-white/10">
-        <table className="w-full min-w-[980px] text-left text-sm">
+        <table className="w-full min-w-[1060px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
             <tr>
               <th className="px-4 py-3">{t.list.product}</th>
 <th className="px-4 py-3">{t.list.category}</th>
+<th className="px-4 py-3">Type</th>
 <th className="px-4 py-3">Tier</th>
 <th className="px-4 py-3">{t.list.price}</th>
 <th className="px-4 py-3">{t.list.rating}</th>
@@ -1130,13 +1196,27 @@ loadProducts();
                   </div>
                 </td>
 
-                <td className="px-4 py-4 text-white/70">
+<td className="px-4 py-4 text-white/70">
   {product.category}
 </td>
 
 <td className="px-4 py-4">
+  <span
+    className={`rounded-full border px-3 py-1 text-xs font-black ${
+      product.product_type === "lucky"
+        ? "border-purple-400/30 bg-purple-500/10 text-purple-200"
+        : "border-yellow-400/20 bg-yellow-400/10 text-yellow-300"
+    }`}
+  >
+    {product.product_type === "lucky" ? "Lucky" : "Normal"}
+  </span>
+</td>
+
+<td className="px-4 py-4">
   <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">
-    {getTierLabel(Number(product.price))}
+    {product.product_type === "lucky"
+      ? "Lucky"
+      : getTierLabel(Number(product.price))}
   </span>
 </td>
 
