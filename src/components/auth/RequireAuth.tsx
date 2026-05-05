@@ -31,26 +31,25 @@ export default function RequireAuth({ children }: RequireAuthProps) {
       }
 
       const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+  .from("profiles")
+  .select("*")
+  .eq("id", user.id)
+  .maybeSingle();
 
-      if (error) {
-        console.error(error);
-        router.replace("/login");
-        return;
-      }
+if (error) {
+  console.error(error);
+  router.replace("/login");
+  return;
+}
 
-      if (!data) {
-        router.replace(
-          `/verify-email?email=${encodeURIComponent(user.email || "")}`
-        );
-        return;
-      }
+if (!data) {
+  await supabase.auth.signOut();
+  router.replace("/register");
+  return;
+}
 
-      setProfile(data as Profile);
-      setLoading(false);
+setProfile(data as Profile);
+setLoading(false);
     }
 
     loadProfile();

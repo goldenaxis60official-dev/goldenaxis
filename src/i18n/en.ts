@@ -1067,11 +1067,16 @@ adminUserTasks: {
 adminUsers: {
   accessRequiredTitle: "Admin Access Required",
   accessRequiredDescription: "This page is only available for admin accounts.",
+  referralCodeSaved: "Referral code updated successfully.",
+referralCodeInvalid: "Referral code must be 4-20 characters. Use only A-Z, 0-9, _ or -.",
+referralCodeDuplicate: "This referral code is already used by another account.",
+description:
+  "Manage users, balances, referral codes, account status, and campaign progress.",
 
   pageTag: "Admin Control",
   title: "User Manager",
-  description:
-    "Manage users, balances, invite codes, account status, and campaign progress.",
+  searchPlaceholder: "Search name, email, nickname, referral code, ID...",
+inviteCode: "Referral Code",
   userTaskAssignment: "User Task Assignment",
 
   stats: {
@@ -1082,10 +1087,15 @@ adminUsers: {
   },
 
   messages: {
-    balanceAdjusted: "User balance adjusted successfully.",
-    nicknameSaved: "Admin nickname saved successfully.",
-    cannotDeleteSelf: "You cannot delete your own admin account.",
-    cannotDeleteAdmin: "Admin accounts cannot be deleted from this page.",
+  balanceAdjusted: "User balance adjusted successfully.",
+  nicknameSaved: "Admin nickname saved successfully.",
+  referralCodeSaved: "Referral code updated successfully.",
+  referralCodeInvalid: "Referral code must be 4-20 characters. Use only A-Z, 0-9, _ or -.",
+  referralCodeDuplicate: "This referral code is already used by another account.",
+  cannotDeleteSelf: "You cannot delete your own admin account.",
+
+
+ cannotDeleteAdmin: "Admin accounts cannot be deleted from this page.",
     typeDelete: "Type DELETE to confirm user removal.",
     userRemoved: "User removed from User Manager.",
   },
@@ -1176,6 +1186,19 @@ adminUsers: {
     saving: "Saving...",
     saveNickname: "Save Nickname",
   },
+  referralModal: {
+  tag: "Referral Code",
+  title: "Edit Referral Code",
+  user: "User",
+  currentCode: "Current Code",
+  referralCode: "Referral Code",
+  placeholder: "Example: GOLD888",
+  note:
+    "Use 4-20 characters. Allowed: A-Z, numbers, underscore, and dash. This code must be unique.",
+  saving: "Saving...",
+  saveReferralCode: "Save Referral Code",
+},
+
 },
 
 adminWalletRequests: {

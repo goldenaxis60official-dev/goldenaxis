@@ -127,18 +127,10 @@ if (
   message.toLowerCase().includes("email not confirmed") ||
   message.toLowerCase().includes("not confirmed")
 ) {
-  if (loginEmail) {
-  await supabase.auth.resend({
-    type: "signup",
-    email: loginEmail,
-    options: {
-      emailRedirectTo: `${window.location.origin}/verify-email`,
-    },
-  });
-
-  router.replace(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
+  setErrorText(
+    "This account is not fully activated. Please register again with a valid referral code."
+  );
   return;
-}
 }
 
 setErrorText(message);

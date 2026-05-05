@@ -19,6 +19,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { generateReferralCode } from "@/lib/referral";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function RegisterPage() {
   redirectIfLoggedIn();
 }, [router]);
 
-  async function handleRegister(e: FormEvent<HTMLFormElement>) {
+ async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
   setErrorText("");
 
@@ -68,12 +69,16 @@ export default function RegisterPage() {
 
   const cleanEmail = email.trim().toLowerCase();
   const cleanDisplayName = displayName.trim();
+  const cleanReferralCode = referralCode
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, "")
+    .slice(0, 20);
 
-if (!cleanDisplayName) {
-  setErrorText("Display name is required.");
-  return;
-}
-  const cleanReferralCode = referralCode.trim().toUpperCase();
+  if (!cleanDisplayName) {
+    setErrorText("Display name is required.");
+    return;
+  }
 
   if (!cleanEmail || !password) {
     setErrorText("Email and password are required.");
@@ -85,33 +90,74 @@ if (!cleanDisplayName) {
     return;
   }
 
+  if (cleanReferralCode.length < 4) {
+    setErrorText("Valid referral code is required.");
+    return;
+  }
+
   setLoading(true);
 
   try {
-    localStorage.setItem(
-  "ga60_pending_signup",
-  JSON.stringify({
-    email: cleanEmail,
-    displayName: cleanDisplayName,
-    referralCode: cleanReferralCode,
-  })
-);
+    const { data: referrerProfile, error: referralError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("referral_code", cleanReferralCode)
+      .eq("status", "active")
+      .maybeSingle();
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    if (referralError) throw referralError;
+
+    if (!referrerProfile?.id) {
+      setErrorText("Invalid referral code. Please check your code and try again.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/verify-email`,
         data: {
-  display_name: cleanDisplayName,
-  referral_code: cleanReferralCode,
-},
+          display_name: cleanDisplayName,
+          referral_code: cleanReferralCode,
+        },
       },
     });
 
     if (signUpError) throw signUpError;
 
-    router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}`);
+    const newUser = signUpData.user;
+
+    if (!newUser) {
+      throw new Error("Account created, but user session was not found.");
+    }
+
+    if (!signUpData.session) {
+      throw new Error(
+        "Email confirmation is still enabled in Supabase. Turn off email confirmation first."
+      );
+    }
+
+    const { error: profileError } = await supabase.from("profiles").insert({
+      id: newUser.id,
+      email: cleanEmail,
+      display_name: cleanDisplayName,
+      referral_code: generateReferralCode(),
+      referred_by: referrerProfile.id,
+      terms_accepted: true,
+      role: "user",
+      balance: 0,
+      today_earnings: 0,
+      total_earnings: 0,
+      current_step: 1,
+      credit_score: 100,
+      status: "active",
+      language: "en",
+    });
+
+    if (profileError) throw profileError;
+
+    router.replace("/");
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Something went wrong.";
@@ -247,9 +293,9 @@ campaign tasks, account records, referral benefits, and support.
     <span className="block text-xs font-bold text-white/45">
       Referral Code
     </span>
-    <span className="text-[10px] font-bold text-white/30">
-      Optional
-    </span>
+    <span className="text-[10px] font-bold text-yellow-300/80">
+  Required
+</span>
   </div>
 
   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
@@ -322,7 +368,7 @@ platform protection.
 
             <div className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-yellow-400/15 bg-yellow-400/5 px-4 py-3 text-xs text-yellow-100/65">
               <CheckCircle2 className="h-4 w-4 text-yellow-300" />
-              Referral code is optional and can be entered during registration.
+              A valid referral code is required to create a member account.
             </div>
 
             <p className="mt-6 text-center text-sm text-white/50">

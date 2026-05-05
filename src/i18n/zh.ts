@@ -1045,9 +1045,10 @@ adminUsers: {
   accessRequiredDescription: "此页面仅限管理账户访问。",
 
   pageTag: "管理控制",
-  title: "用户管理",
-  description: "管理用户、余额、邀请码、账户状态和推广进度。",
-  userTaskAssignment: "用户任务分配",
+title: "用户管理",
+description:
+  "管理用户、余额、推荐代码、账户状态和任务进度。",
+userTaskAssignment: "用户任务分配",
 
   stats: {
     users: "用户",
@@ -1057,9 +1058,12 @@ adminUsers: {
   },
 
   messages: {
-    balanceAdjusted: "用户余额已成功调整。",
-    nicknameSaved: "管理备注昵称已成功保存。",
-    cannotDeleteSelf: "不能删除自己的管理账户。",
+  balanceAdjusted: "用户余额已成功调整。",
+  nicknameSaved: "管理备注昵称已成功保存。",
+  referralCodeSaved: "推荐代码更新成功。",
+  referralCodeInvalid: "推荐代码必须为 4-20 个字符。只能使用 A-Z、0-9、_ 或 -。",
+  referralCodeDuplicate: "此推荐代码已被其他账户使用。",
+  cannotDeleteSelf: "不能删除自己的管理账户。",
     cannotDeleteAdmin: "不能在此页面删除管理账户。",
     typeDelete: "请输入 DELETE 以确认移除用户。",
     userRemoved: "用户已从用户管理中移除。",
@@ -1090,7 +1094,7 @@ adminUsers: {
     balance: "余额",
     today: "今日",
     step: "步骤",
-    inviteCode: "邀请码",
+    inviteCode: "推荐代码",
     status: "状态",
     actions: "操作",
     fallbackName: "黄金会员",
@@ -1146,6 +1150,19 @@ adminUsers: {
     saving: "保存中...",
     saveNickname: "保存备注昵称",
   },
+
+  referralModal: {
+  tag: "推荐代码",
+  title: "编辑推荐代码",
+  user: "用户",
+  currentCode: "当前代码",
+  referralCode: "推荐代码",
+  placeholder: "例如：GOLD888",
+  note:
+    "使用 4-20 个字符。允许：A-Z、数字、下划线和横线。此代码必须唯一。",
+  saving: "保存中...",
+  saveReferralCode: "保存推荐代码",
+},
 },
 
 adminWalletRequests: {

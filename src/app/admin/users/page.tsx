@@ -60,9 +60,13 @@ const [sortBy, setSortBy] = useState<
 >("newest");
 const [currentPage, setCurrentPage] = useState(1);
 const [pageSize, setPageSize] = useState(10);
-  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
+const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
 const [nicknameUser, setNicknameUser] = useState<ManagedUser | null>(null);
 const [nicknameValue, setNicknameValue] = useState("");
+
+const [referralUser, setReferralUser] = useState<ManagedUser | null>(null);
+const [referralValue, setReferralValue] = useState("");
+
 const [deleteUser, setDeleteUser] = useState<ManagedUser | null>(null);
 const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
@@ -269,6 +273,58 @@ useEffect(() => {
   setSuccessText(t.messages.nicknameSaved);
   setNicknameUser(null);
   setNicknameValue("");
+  setActionLoading(false);
+}
+
+async function handleSaveReferralCode() {
+  if (!referralUser) return;
+
+  const cleanCode = referralValue
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, "")
+    .slice(0, 20);
+
+  if (cleanCode.length < 4) {
+    setErrorText(t.messages.referralCodeInvalid);
+    return;
+  }
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ referral_code: cleanCode })
+    .eq("id", referralUser.id);
+
+  if (error) {
+    if (
+      error.code === "23505" ||
+      error.message.toLowerCase().includes("duplicate") ||
+      error.message.toLowerCase().includes("unique")
+    ) {
+      setErrorText(t.messages.referralCodeDuplicate);
+    } else {
+      setErrorText(error.message);
+    }
+
+    setActionLoading(false);
+    return;
+  }
+
+  setUsers((currentUsers) =>
+    currentUsers.map((user) =>
+      user.id === referralUser.id
+        ? { ...user, referral_code: cleanCode }
+        : user
+    )
+  );
+
+  setSuccessText(t.messages.referralCodeSaved);
+  setReferralUser(null);
+  setReferralValue("");
   setActionLoading(false);
 }
 
@@ -613,9 +669,24 @@ async function handleDeleteUser() {
                     {user.current_step}
                   </td>
 
-                  <td className="px-4 py-4 text-yellow-200">
-                    {user.referral_code || "-"}
-                  </td>
+                  <td className="px-4 py-4">
+  <div className="min-w-[130px]">
+    <p className="font-black text-yellow-200">
+      {user.referral_code || "-"}
+    </p>
+
+    <button
+      onClick={() => {
+        setReferralUser(user);
+        setReferralValue(user.referral_code || "");
+      }}
+      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-white/45 hover:text-yellow-300"
+    >
+      <Pencil className="h-3 w-3" />
+      {t.list.edit}
+    </button>
+  </div>
+</td>
 
                   <td className="px-4 py-4">
                     <span
@@ -915,6 +986,80 @@ value={nicknameUser.email || t.list.noEmail}
   </div>
 )}
       </div>
+
+      {referralUser && (
+  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
+    <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <p className="text-sm text-yellow-200/80">
+            {t.referralModal.tag}
+          </p>
+          <h2 className="text-2xl font-black">
+            {t.referralModal.title}
+          </h2>
+        </div>
+
+        <button
+          onClick={() => {
+            setReferralUser(null);
+            setReferralValue("");
+          }}
+          className="rounded-2xl bg-white/10 p-3 text-white/70"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <MiniBox
+          label={t.referralModal.user}
+          value={referralUser.display_name || t.list.fallbackName}
+        />
+        <MiniBox
+          label={t.referralModal.currentCode}
+          value={referralUser.referral_code || "-"}
+          color="gold"
+        />
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-bold text-white/80">
+          {t.referralModal.referralCode}
+        </p>
+
+        <input
+          value={referralValue}
+          onChange={(event) =>
+            setReferralValue(
+              event.target.value
+                .toUpperCase()
+                .replace(/[^A-Z0-9_-]/g, "")
+                .slice(0, 20)
+            )
+          }
+          placeholder={t.referralModal.placeholder}
+          className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+        />
+
+        <p className="mt-2 text-xs text-white/45">
+          {t.referralModal.note}
+        </p>
+      </div>
+
+      <button
+        onClick={handleSaveReferralCode}
+        disabled={actionLoading}
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
+      >
+        <Save className="h-5 w-5" />
+        {actionLoading
+          ? t.referralModal.saving
+          : t.referralModal.saveReferralCode}
+      </button>
+    </div>
+  </div>
+)}
     </main>
   );
 }
