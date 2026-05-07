@@ -152,15 +152,18 @@ const [resetOrdersResetStep, setResetOrdersResetStep] = useState(true);
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  const hasPageAccess = canAccessAdminPath(profile.role, "/admin/users");
+const hasPageAccess = canAccessAdminPath(profile.role, "/admin/users");
+
 const isFullControlRole = profile.role === "admin" || profile.role === "super";
 const isSupportRole = profile.role === "support";
-const canUseUserTools = isFullControlRole || isSupportRole;
+const isStaffControlRole = isFullControlRole || isSupportRole;
 
-const canManageOrders = canUseUserTools;
-const canManageMoney = canUseUserTools;
-const canManageSecurity = canUseUserTools;
+// Support can control orders, balance, referral bonus, and security reset
+const canManageOrders = isStaffControlRole;
+const canManageMoney = isStaffControlRole;
+const canManageSecurity = isStaffControlRole;
 
+// Keep these locked for support
 const canDeleteUsers = isFullControlRole;
 const canEditUserInfo = isFullControlRole;
 
