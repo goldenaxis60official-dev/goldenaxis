@@ -153,6 +153,16 @@ const [resetOrdersResetStep, setResetOrdersResetStep] = useState(true);
   const [errorText, setErrorText] = useState("");
 
   const hasPageAccess = canAccessAdminPath(profile.role, "/admin/users");
+const isFullControlRole = profile.role === "admin" || profile.role === "super";
+const isSupportRole = profile.role === "support";
+const canUseUserTools = isFullControlRole || isSupportRole;
+
+const canManageOrders = canUseUserTools;
+const canManageMoney = canUseUserTools;
+const canManageSecurity = canUseUserTools;
+
+const canDeleteUsers = isFullControlRole;
+const canEditUserInfo = isFullControlRole;
 
   async function loadUsers() {
   setLoading(true);
@@ -1330,14 +1340,15 @@ async function handleDeleteUser() {
                       </p>
 
                       <button
-                        onClick={() => {
-                          setNicknameUser(user);
-                          setNicknameValue(user.admin_nickname || "");
-                        }}
-                        className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200"
-                      >
-                        {t.row.edit}
-                      </button>
+  onClick={() => {
+    setNicknameUser(user);
+    setNicknameValue(user.admin_nickname || "");
+  }}
+  disabled={!canEditUserInfo}
+  className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200 disabled:cursor-not-allowed disabled:opacity-35"
+>
+  {t.row.edit}
+</button>
                     </div>
                   </td>
 
@@ -1427,14 +1438,15 @@ async function handleDeleteUser() {
                       </p>
 
                       <button
-                        onClick={() => {
-                          setReferralUser(user);
-                          setReferralValue(user.referral_code || "");
-                        }}
-                        className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200"
-                      >
-                        {t.row.edit}
-                      </button>
+  onClick={() => {
+    setReferralUser(user);
+    setReferralValue(user.referral_code || "");
+  }}
+  disabled={!canEditUserInfo}
+  className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200 disabled:cursor-not-allowed disabled:opacity-35"
+>
+  {t.row.edit}
+</button>
                     </div>
                   </td>
 
@@ -1470,7 +1482,7 @@ async function handleDeleteUser() {
                           setGenerateProfitRate(0.08);
                           setGenerateResetExisting(true);
                         }}
-                        disabled={user.role !== "user"}
+                        disabled={!canManageOrders || user.role !== "user"}
                         className="rounded-md bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         {t.actions.generate}
@@ -1478,7 +1490,7 @@ async function handleDeleteUser() {
 
                       <button
                         onClick={() => openLuckyOrderModal(user)}
-                        disabled={user.role !== "user"}
+                        disabled={!canManageOrders || user.role !== "user"}
                         className="rounded-md bg-fuchsia-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         {t.actions.lucky}
@@ -1486,7 +1498,7 @@ async function handleDeleteUser() {
 
                       <button
                         onClick={() => openViewOrdersModal(user)}
-                        disabled={user.role !== "user"}
+                        disabled={!canManageOrders || user.role !== "user"}
                         className="rounded-md bg-blue-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         {t.actions.orders}
@@ -1498,20 +1510,21 @@ async function handleDeleteUser() {
                           setResetOrdersConfirmText("");
                           setResetOrdersResetStep(true);
                         }}
-                        disabled={user.role !== "user"}
+                        disabled={!canManageOrders || user.role !== "user"}
                         className="rounded-md bg-orange-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         {t.actions.reset}
                       </button>
 
                       <button
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setAdjustAmount(100);
-                          setAdjustNote("");
-                        }}
-                        className="rounded-md border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-[11px] font-black text-white/80 hover:bg-white/[0.14]"
-                      >
+  onClick={() => {
+    setSelectedUser(user);
+    setAdjustAmount(100);
+    setAdjustNote("");
+  }}
+  disabled={!canManageMoney}
+  className="rounded-md border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-[11px] font-black text-white/80 hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:opacity-35"
+>
                         {t.actions.balance}
                       </button>
 
@@ -1520,7 +1533,7 @@ async function handleDeleteUser() {
     setReferralBonusUser(user);
     setReferralBonusAmount(Number(user.referral_bonus_balance || 0));
   }}
-  disabled={user.role !== "user"}
+  disabled={!canManageMoney || user.role !== "user"}
   className="rounded-md border border-yellow-400/25 bg-yellow-400/10 px-2.5 py-1.5 text-[11px] font-black text-yellow-300 hover:bg-yellow-400/15 disabled:cursor-not-allowed disabled:opacity-35"
 >
   {t.actions.referralBonus}
@@ -1528,7 +1541,7 @@ async function handleDeleteUser() {
 
                       <button
                         onClick={() => openSecurityReset(user)}
-                        disabled={user.role !== "user" && profile.role !== "super"}
+                        disabled={!canManageSecurity}
                         className="rounded-md bg-emerald-500 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         {t.actions.security}
@@ -1539,7 +1552,7 @@ async function handleDeleteUser() {
                           setDeleteUser(user);
                           setDeleteConfirmText("");
                         }}
-                        disabled={user.id === profile.id || user.role === "admin"}
+                        disabled={!canDeleteUsers || user.id === profile.id || user.role !== "user"}
                         className="rounded-md bg-red-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         {t.actions.delete}

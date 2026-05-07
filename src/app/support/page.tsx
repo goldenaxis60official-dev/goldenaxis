@@ -158,9 +158,12 @@ const ActiveTopicIcon = activeTopicData?.icon || Headphones;
     }));
   }, [tickets, chatMessages]);
 
-  async function loadTicketsAndChat() {
+async function loadTicketsAndChat(showLoader = true) {
+  if (showLoader) {
     setLoading(true);
-    setErrorText("");
+  }
+
+  setErrorText("");
 
     const { data: ticketData, error: ticketError } = await supabase
       .from("support_messages")
@@ -222,6 +225,39 @@ const ActiveTopicIcon = activeTopicData?.icon || Headphones;
     loadTicketsAndChat();
     loadWalletAddresses();
   }, [profile.id]);
+
+  useEffect(() => {
+  const channel = supabase
+    .channel(`user-support-realtime-${profile.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "support_messages",
+        filter: `user_id=eq.${profile.id}`,
+      },
+      () => {
+        loadTicketsAndChat(false);
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "support_chat_messages",
+      },
+      () => {
+        loadTicketsAndChat(false);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [profile.id]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

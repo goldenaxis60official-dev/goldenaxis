@@ -282,6 +282,14 @@ function MissionContent({ profile }: { profile: Profile }) {
   }
 
   const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
+  const earnBalance = Number(profile.task_profit_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const depositBalance = Number(profile.deposited_balance || 0);
+
+const splitTotalBalance = earnBalance + referralBalance + depositBalance;
+
+const displayTotalBalance =
+  splitTotalBalance > 0 ? splitTotalBalance : Number(profile.balance || 0);
 
   return (
     <AppShell>
@@ -351,25 +359,31 @@ function MissionContent({ profile }: { profile: Profile }) {
           </div>
         </LuxuryCard>
 
-        <div className="mb-4 grid grid-cols-3 gap-3">
-          <StatCard
-            label={t.missions.today}
-            value={`$${Number(profile.today_earnings).toFixed(2)}`}
-            color="green"
-          />
+        <div className="mb-4 grid grid-cols-2 gap-3">
+  <StatCard
+    label="Earn"
+    value={`$${earnBalance.toFixed(2)}`}
+    color="green"
+  />
 
-          <StatCard
-            label={t.missions.balance}
-            value={`$${Number(profile.balance).toFixed(2)}`}
-            color="gold"
-          />
+  <StatCard
+    label="Referral"
+    value={`$${referralBalance.toFixed(2)}`}
+    color="blue"
+  />
 
-          <StatCard
-            label={t.missions.assigned}
-            value={String(totalOrders)}
-            color="blue"
-          />
-        </div>
+  <StatCard
+    label="Deposit"
+    value={`$${depositBalance.toFixed(2)}`}
+    color="gold"
+  />
+
+  <StatCard
+    label="Balance"
+    value={`$${displayTotalBalance.toFixed(2)}`}
+    color="gold"
+  />
+</div>
       </section>
 
       <section className="px-5 pb-6">
