@@ -889,8 +889,8 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
       </section>
 
 {showInsufficientPopup && (
-  <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/75 px-4 pb-4 backdrop-blur-md">
-    <div className="w-full max-w-md overflow-hidden rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#6b4c08_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.32)]">
+  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md">
+    <div className="max-h-[calc(100vh-4rem)] w-full max-w-md overflow-y-auto rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#6b4c08_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.32)]">
       <div className="relative p-5">
         <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
 
@@ -965,8 +965,8 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
 )}
 
 {showCompletedPopup && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/80 px-4 pb-4 backdrop-blur-md">
-          <div className="w-full max-w-md overflow-hidden rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#7a560d_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.35)]">
+  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md">
+          <div className="max-h-[calc(100vh-4rem)] w-full max-w-md overflow-y-auto rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#7a560d_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.35)]">
             <div className="relative p-6 text-center">
               <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
 
