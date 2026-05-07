@@ -198,8 +198,6 @@ const [finalReward, setFinalReward] = useState("0.00");
   const progressBase = totalOrders || 1;
   const progressPercent = Math.min((completedCount / progressBase) * 100, 100);
 
-  const activeReward = activeOrder ? Number(activeOrder.profit_amount || 0) : 0;
-
   const totalProfitAmount = useMemo(() => {
   return orders.reduce(
     (sum, order) => sum + Number(order.profit_amount || 0),
@@ -370,6 +368,22 @@ const splitTotalBalance = earnBalance + referralBalance + depositBalance;
 
 const displayTotalBalance =
   splitTotalBalance > 0 ? splitTotalBalance : Number(profile.balance || 0);
+
+function calculateDisplayReward(order: GeneratedOrder | null) {
+  if (!order) return 0;
+
+  const profitRate = Number(order.profit_rate || 0);
+
+  if (order.is_lucky_bonus || order.order_type === "lucky") {
+    return (Number(order.order_total || 0) * profitRate) / 100;
+  }
+
+  // Normal task profit uses total balance:
+  // Deposit + Referral + Earn
+  return (displayTotalBalance * profitRate) / 100;
+}
+
+const activeReward = calculateDisplayReward(activeOrder);
 
 const isInsufficientBalanceError =
   errorText === t.missions.insufficientBalance;
@@ -683,7 +697,7 @@ const processingProgressPercent = Math.min(
               const productReviews = Number(snapshot.reviews_count || 0);
 
               const productPrice = Number(order.order_total || 0);
-              const reward = Number(order.profit_amount || 0);
+              const reward = calculateDisplayReward(order);
               const profitRate = Number(order.profit_rate || 0);
 
               const completed = order.status === "completed";
@@ -1046,7 +1060,7 @@ const processingProgressPercent = Math.min(
               {lang === "zh" ? "预计收益" : "Expected Profit"}
             </p>
             <p className="mt-1 text-sm font-black text-emerald-300">
-              ${Number(activeOrder?.profit_amount || 0).toFixed(2)}
+              ${calculateDisplayReward(activeOrder).toFixed(2)}
             </p>
           </div>
         </div>
