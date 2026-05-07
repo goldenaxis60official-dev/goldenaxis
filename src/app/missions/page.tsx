@@ -105,7 +105,8 @@ function MissionContent({ profile }: { profile: Profile }) {
   const [actionLoading, setActionLoading] = useState(false);
 
   const [showCompletedPopup, setShowCompletedPopup] = useState(false);
-  const [finalReward, setFinalReward] = useState("0.00");
+const [showInsufficientPopup, setShowInsufficientPopup] = useState(false);
+const [finalReward, setFinalReward] = useState("0.00");
 
   const [errorText, setErrorText] = useState("");
   const [successText, setSuccessText] = useState("");
@@ -258,9 +259,10 @@ function MissionContent({ profile }: { profile: Profile }) {
   const orderTotal = Number(order.order_total || 0);
 
   if (fallbackBalance < orderTotal) {
-    setErrorText(t.missions.insufficientBalance);
-    return;
-  }
+  setErrorText(t.missions.insufficientBalance);
+  setShowInsufficientPopup(true);
+  return;
+}
 
   setActionLoading(true);
   setErrorText("");
@@ -277,6 +279,7 @@ function MissionContent({ profile }: { profile: Profile }) {
   setErrorText(t.missions.assignedTaskNotFound);
 } else if (error.message.includes("insufficient_balance")) {
   setErrorText(t.missions.insufficientBalance);
+  setShowInsufficientPopup(true);
 } else {
   setErrorText(error.message);
 }
@@ -885,7 +888,83 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
         )}
       </section>
 
-      {showCompletedPopup && (
+{showInsufficientPopup && (
+  <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/75 px-4 pb-4 backdrop-blur-md">
+    <div className="w-full max-w-md overflow-hidden rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#6b4c08_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.32)]">
+      <div className="relative p-5">
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
+
+        <div className="relative flex items-start gap-3">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-300 text-black shadow-[0_0_30px_rgba(250,204,21,0.5)]">
+            <Gem className="h-7 w-7" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-yellow-200/65">
+              Balance Verification
+            </p>
+
+            <h2 className="mt-1 text-2xl font-black text-white">
+              Additional credits required
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-yellow-100/70">
+              This premium mission requires more campaign balance before it can be completed.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative mt-5 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-2xl bg-black/40 p-3">
+            <p className="text-[10px] uppercase text-white/35">Required</p>
+            <p className="mt-1 text-sm font-black text-yellow-300">
+              ${requiredBalance.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-black/40 p-3">
+            <p className="text-[10px] uppercase text-white/35">Balance</p>
+            <p className="mt-1 text-sm font-black text-white">
+              ${displayTotalBalance.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-black/40 p-3">
+            <p className="text-[10px] uppercase text-white/35">Needed</p>
+            <p className="mt-1 text-sm font-black text-rose-200">
+              ${balanceShortage.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <div className="relative mt-5 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => router.push("/deposit")}
+            className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)] active:scale-[0.98]"
+          >
+            Add Credits
+          </button>
+
+          <button
+            onClick={() => setShowInsufficientPopup(false)}
+            className="rounded-2xl border border-yellow-300/25 bg-white/[0.06] px-4 py-3 text-sm font-black text-yellow-100 active:scale-[0.98]"
+          >
+            Not Now
+          </button>
+        </div>
+
+        <button
+          onClick={() => router.push("/support")}
+          className="relative mt-3 w-full rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-white/65 active:scale-[0.98]"
+        >
+          Contact Support
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showCompletedPopup && (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/80 px-4 pb-4 backdrop-blur-md">
           <div className="w-full max-w-md overflow-hidden rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#7a560d_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.35)]">
             <div className="relative p-6 text-center">
