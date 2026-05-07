@@ -127,7 +127,7 @@ const [resetPasscode, setResetPasscode] = useState("");
 const [resetResult, setResetResult] = useState("");
 const [generateUser, setGenerateUser] = useState<ManagedUser | null>(null);
 const [generateTaskCount, setGenerateTaskCount] = useState(60);
-const [generateProfitRate, setGenerateProfitRate] = useState(0.8);
+const [generateProfitRate, setGenerateProfitRate] = useState(0.08);
 const [generateResetExisting, setGenerateResetExisting] = useState(false);
 const [luckyUser, setLuckyUser] = useState<ManagedUser | null>(null);
 const [luckyProducts, setLuckyProducts] = useState<LuckyProductOption[]>([]);
@@ -758,6 +758,80 @@ async function openViewOrdersModal(user: ManagedUser) {
 
   setViewOrders((data || []) as unknown as GeneratedOrderPreview[]);
   setViewOrdersLoading(false);
+}
+
+async function handleDeleteGeneratedOrder(order: GeneratedOrderPreview) {
+  if (!viewOrdersUser) return;
+
+  if (order.status !== "pending") {
+    setErrorText("Only pending orders can be deleted.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete Step ${order.step_number}? Completed orders cannot be deleted.`
+  );
+
+  if (!confirmed) return;
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const remainingPendingOrders = viewOrders
+    .filter((item) => item.id !== order.id && item.status === "pending")
+    .sort((a, b) => a.step_number - b.step_number);
+
+  const nextStep =
+    viewOrdersUser.current_step === order.step_number
+      ? remainingPendingOrders[0]?.step_number || viewOrdersUser.current_step
+      : viewOrdersUser.current_step;
+
+  const { error: itemError } = await supabase
+    .from("user_generated_order_items")
+    .delete()
+    .eq("order_id", order.id);
+
+  if (itemError) {
+    setErrorText(itemError.message);
+    setActionLoading(false);
+    return;
+  }
+
+  const { error: orderError } = await supabase
+    .from("user_generated_orders")
+    .delete()
+    .eq("id", order.id)
+    .eq("user_id", viewOrdersUser.id)
+    .eq("status", "pending");
+
+  if (orderError) {
+    setErrorText(orderError.message);
+    setActionLoading(false);
+    return;
+  }
+
+  if (nextStep !== viewOrdersUser.current_step) {
+    await supabase
+      .from("profiles")
+      .update({ current_step: nextStep })
+      .eq("id", viewOrdersUser.id);
+  }
+
+  setViewOrders((current) => current.filter((item) => item.id !== order.id));
+
+  setUsers((currentUsers) =>
+    currentUsers.map((user) =>
+      user.id === viewOrdersUser.id
+        ? { ...user, current_step: nextStep }
+        : user
+    )
+  );
+
+  setViewOrdersUser({ ...viewOrdersUser, current_step: nextStep });
+
+  setSuccessText(`Step ${order.step_number} deleted.`);
+  setActionLoading(false);
 }
 
 async function handleResetGeneratedOrders() {
@@ -1717,16 +1791,17 @@ async function handleDeleteUser() {
 
 {viewOrdersUser && (
   <ViewOrdersModal
-    user={viewOrdersUser}
-    fallbackName={t.list.fallbackName}
-    orders={viewOrders}
-    loading={viewOrdersLoading}
-      t={t.viewOrdersModal}
-    onClose={() => {
-      setViewOrdersUser(null);
-      setViewOrders([]);
-    }}
-  />
+  user={viewOrdersUser}
+  fallbackName={t.list.fallbackName}
+  orders={viewOrders}
+  loading={viewOrdersLoading}
+  t={t.viewOrdersModal}
+  onDeleteOrder={handleDeleteGeneratedOrder}
+  onClose={() => {
+    setViewOrdersUser(null);
+    setViewOrders([]);
+  }}
+/>
 )}
 
 {resetOrdersUser && (

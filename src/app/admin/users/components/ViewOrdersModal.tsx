@@ -67,6 +67,7 @@ type ViewOrdersModalProps = {
   loading: boolean;
   t: ViewOrdersModalText;
   onClose: () => void;
+  onDeleteOrder: (order: GeneratedOrderPreview) => void;
 };
 
 function MiniBox({
@@ -99,6 +100,7 @@ export default function ViewOrdersModal({
   loading,
   t,
   onClose,
+  onDeleteOrder,
 }: ViewOrdersModalProps) {
   const completedCount = orders.filter(
     (order) => order.status === "completed"
@@ -174,6 +176,7 @@ export default function ViewOrdersModal({
                   <th className="px-4 py-3">{t.profit}</th>
                   <th className="px-4 py-3">{t.status}</th>
                   <th className="px-4 py-3">{t.completedDate}</th>
+                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
 
@@ -248,6 +251,18 @@ export default function ViewOrdersModal({
                           ? new Date(order.completed_at).toLocaleString()
                           : "-"}
                       </td>
+                      <td className="px-4 py-4 text-right">
+  {order.status === "pending" ? (
+    <button
+      onClick={() => onDeleteOrder(order)}
+      className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-black text-red-300 hover:bg-red-500/25"
+    >
+      Delete
+    </button>
+  ) : (
+    <span className="text-xs text-white/30">Locked</span>
+  )}
+</td>
                     </tr>
                   );
                 })}

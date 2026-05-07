@@ -271,11 +271,13 @@ const [finalReward, setFinalReward] = useState("0.00");
 
   const orderTotal = Number(order.order_total || 0);
 
-  if (fallbackBalance < orderTotal) {
-    setErrorText(t.missions.insufficientBalance);
-    setShowInsufficientPopup(true);
-    return;
-  }
+  const isLuckyOrder = order.is_lucky_bonus || order.order_type === "lucky";
+
+if (isLuckyOrder && fallbackBalance < orderTotal) {
+  setErrorText(t.missions.insufficientBalance);
+  setShowInsufficientPopup(true);
+  return;
+}
 
   setActionLoading(true);
   setShowProcessingPopup(true);
