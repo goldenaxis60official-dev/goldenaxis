@@ -21,6 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
 
 type GeneratedOrderItem = {
@@ -94,6 +96,10 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
 function MissionContent({ profile }: { profile: Profile }) {
   const router = useRouter();
 
@@ -104,8 +110,15 @@ function MissionContent({ profile }: { profile: Profile }) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const [showCompletedPopup, setShowCompletedPopup] = useState(false);
+const [showCompletedPopup, setShowCompletedPopup] = useState(false);
 const [showInsufficientPopup, setShowInsufficientPopup] = useState(false);
+const [showProcessingPopup, setShowProcessingPopup] = useState(false);
+
+const [processingStep, setProcessingStep] = useState(0);
+const [completedReward, setCompletedReward] = useState("0.00");
+const [completedStep, setCompletedStep] = useState<number | null>(null);
+const [completedAllOrders, setCompletedAllOrders] = useState(false);
+
 const [finalReward, setFinalReward] = useState("0.00");
 
   const [errorText, setErrorText] = useState("");
@@ -259,16 +272,30 @@ const [finalReward, setFinalReward] = useState("0.00");
   const orderTotal = Number(order.order_total || 0);
 
   if (fallbackBalance < orderTotal) {
-  setErrorText(t.missions.insufficientBalance);
-  setShowInsufficientPopup(true);
-  return;
-}
+    setErrorText(t.missions.insufficientBalance);
+    setShowInsufficientPopup(true);
+    return;
+  }
 
   setActionLoading(true);
+  setShowProcessingPopup(true);
+  setProcessingStep(0);
   setErrorText("");
   setSuccessText("");
 
-  const { data, error } = await supabase.rpc("complete_generated_order");
+  const stepDelay = order.is_lucky_bonus ? 700 : 520;
+
+  try {
+    setProcessingStep(0);
+    await wait(stepDelay);
+
+    setProcessingStep(1);
+    await wait(stepDelay);
+
+    setProcessingStep(2);
+    await wait(stepDelay);
+
+    const { data, error } = await supabase.rpc("complete_generated_order");
 
     if (error) {
       if (error.message.includes("no_generated_orders")) {
@@ -276,48 +303,61 @@ const [finalReward, setFinalReward] = useState("0.00");
       } else if (error.message.includes("current_generated_order_not_found")) {
         setErrorText(t.missions.stepNotAssignedTitle);
       } else if (error.message.includes("account_not_active")) {
-  setErrorText(t.missions.assignedTaskNotFound);
-} else if (error.message.includes("insufficient_balance")) {
-  setErrorText(t.missions.insufficientBalance);
-  setShowInsufficientPopup(true);
-} else {
-  setErrorText(error.message);
-}
+        setErrorText(t.missions.assignedTaskNotFound);
+      } else if (error.message.includes("insufficient_balance")) {
+        setErrorText(t.missions.insufficientBalance);
+        setShowInsufficientPopup(true);
+      } else {
+        setErrorText(error.message);
+      }
 
+      setShowProcessingPopup(false);
       setActionLoading(false);
       return;
     }
 
+    setProcessingStep(3);
+    await wait(stepDelay);
+
+    setProcessingStep(4);
+    await wait(stepDelay);
+
+    setProcessingStep(5);
+    await wait(stepDelay);
+
     const reward = Number(data?.profit_amount || 0);
 
-const totalProfitAfterComplete = orders.reduce((sum, item) => {
-  const profit = Number(item.profit_amount || 0);
-
+    const totalProfitAfterComplete = orders.reduce((sum, item) => {
   if (item.id === order.id) {
     return sum + reward;
   }
 
-  return sum + profit;
+  if (item.status === "completed") {
+    return sum + Number(item.profit_amount || 0);
+  }
+
+  return sum;
 }, 0);
 
-setFinalReward(totalProfitAfterComplete.toFixed(2));
+    const allCompleted =
+      Boolean(data?.all_completed) || order.step_number >= maxStep;
 
-    const allCompleted = Boolean(data?.all_completed);
+    setCompletedReward(reward.toFixed(2));
+    setCompletedStep(order.step_number);
+    setCompletedAllOrders(allCompleted);
+    setFinalReward(totalProfitAfterComplete.toFixed(2));
 
-    if (allCompleted || order.step_number >= maxStep) {
-      setShowCompletedPopup(true);
-      setActionLoading(false);
-      return;
-    }
-
-    setSuccessText(
-  t.missions.successCompleted.replace("${reward}", `$${reward.toFixed(2)}`)
-);
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 900);
+    setShowProcessingPopup(false);
+    setShowCompletedPopup(true);
+    setActionLoading(false);
+  } catch (err) {
+    setErrorText(
+      err instanceof Error ? err.message : "Promotion task could not be completed."
+    );
+    setShowProcessingPopup(false);
+    setActionLoading(false);
   }
+}
 
   const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
   const earnBalance = Number(profile.task_profit_balance || 0);
@@ -334,6 +374,57 @@ const isInsufficientBalanceError =
 
 const requiredBalance = Number(activeOrder?.order_total || 0);
 const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
+
+const processingSteps = useMemo(() => {
+  const lucky = Boolean(activeOrder?.is_lucky_bonus);
+
+  if (lang === "zh") {
+    return lucky
+      ? [
+          "正在提交幸运推广任务",
+          "正在上传产品评分记录",
+          "正在验证高级珠宝活动价值",
+          "正在计算幸运奖励收益",
+          "正在更新账户余额",
+          "正在准备下一项推广任务",
+        ]
+      : [
+          "正在提交产品推广任务",
+          "正在上传评分与活动记录",
+          "正在验证推广价值",
+          "正在计算任务收益",
+          "正在更新账户余额",
+          "正在准备下一项推广任务",
+        ];
+  }
+
+  return lucky
+    ? [
+        "Submitting lucky promotion task",
+        "Uploading product rating activity",
+        "Verifying premium jewel campaign value",
+        "Calculating lucky reward profit",
+        "Updating account balance",
+        "Preparing next promotion task",
+      ]
+    : [
+        "Submitting product promotion task",
+        "Uploading rating and campaign activity",
+        "Verifying promotion value",
+        "Calculating task profit",
+        "Updating account balance",
+        "Preparing next promotion task",
+      ];
+}, [lang, activeOrder?.is_lucky_bonus]);
+
+const activeProcessingText =
+  processingSteps[Math.min(processingStep, processingSteps.length - 1)] ||
+  processingSteps[0];
+
+const processingProgressPercent = Math.min(
+  ((processingStep + 1) / processingSteps.length) * 100,
+  100
+);
 
   return (
     <AppShell>
@@ -874,10 +965,16 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
                         ? t.missions.completed
                         : isCurrent
                           ? actionLoading
-                            ? t.missions.completing
-                            : lucky
-                              ? t.missions.claimLuckyBonusTask
-                              : t.missions.startPromotionTask
+  ? lang === "zh"
+    ? lucky
+      ? "正在处理幸运推广..."
+      : "正在提交推广..."
+    : lucky
+      ? "Processing lucky campaign..."
+      : "Submitting campaign..."
+  : lucky
+    ? t.missions.claimLuckyBonusTask
+    : t.missions.startPromotionTask
                           : t.missions.locked}
                     </button>
                   </div>
@@ -887,6 +984,114 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
           </div>
         )}
       </section>
+
+      {showProcessingPopup && (
+  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/85 px-4 py-8 backdrop-blur-md">
+    <div className="w-full max-w-md overflow-hidden rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#77540b_0%,#171003_42%,#050505_100%)] shadow-[0_0_80px_rgba(250,204,21,0.32)]">
+      <div className="relative p-6">
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-52 w-52 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
+
+        <div className="relative text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-200/40 bg-yellow-300/10 shadow-[0_0_35px_rgba(250,204,21,0.35)]">
+            <Loader2 className="h-10 w-10 animate-spin text-yellow-300" />
+          </div>
+
+          <p className="mt-5 text-xs font-black uppercase tracking-[0.24em] text-yellow-200/65">
+            {lang === "zh" ? "推广处理中" : "Promotion Processing"}
+          </p>
+
+          <h2 className="mt-2 text-2xl font-black text-white">
+            {activeProcessingText}
+          </h2>
+
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-yellow-100/60">
+            {lang === "zh"
+              ? "请等待系统完成当前推广任务记录。"
+              : "Please wait while the campaign activity is being recorded."}
+          </p>
+        </div>
+
+        <div className="relative mt-6">
+          <div className="h-3 overflow-hidden rounded-full bg-black/45">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-yellow-500 via-yellow-300 to-yellow-100 shadow-[0_0_20px_rgba(250,204,21,0.45)] transition-all duration-500"
+              style={{ width: `${processingProgressPercent}%` }}
+            />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between text-xs">
+            <span className="text-white/40">
+              {lang === "zh" ? "进度" : "Progress"}
+            </span>
+            <span className="font-black text-yellow-300">
+              {Math.round(processingProgressPercent)}%
+            </span>
+          </div>
+        </div>
+
+        <div className="relative mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-black/35 p-3 text-center">
+            <p className="text-[10px] uppercase text-white/35">
+              {lang === "zh" ? "活动价值" : "Campaign Value"}
+            </p>
+            <p className="mt-1 text-sm font-black text-yellow-300">
+              ${Number(activeOrder?.order_total || 0).toFixed(2)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-black/35 p-3 text-center">
+            <p className="text-[10px] uppercase text-white/35">
+              {lang === "zh" ? "预计收益" : "Expected Profit"}
+            </p>
+            <p className="mt-1 text-sm font-black text-emerald-300">
+              ${Number(activeOrder?.profit_amount || 0).toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <div className="relative mt-5 space-y-2">
+          {processingSteps.map((step, index) => {
+            const active = index === processingStep;
+            const done = index < processingStep;
+
+            return (
+              <div
+                key={step}
+                className={`flex items-center gap-3 rounded-2xl border px-3 py-2 text-xs transition-all ${
+                  done
+                    ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"
+                    : active
+                      ? "border-yellow-300/35 bg-yellow-300/10 text-yellow-100"
+                      : "border-white/10 bg-white/[0.03] text-white/35"
+                }`}
+              >
+                <div
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                    done
+                      ? "bg-emerald-400 text-black"
+                      : active
+                        ? "bg-yellow-300 text-black"
+                        : "bg-white/10 text-white/40"
+                  }`}
+                >
+                  {done ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : active ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                  )}
+                </div>
+
+                <span className="font-bold">{step}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
 {showInsufficientPopup && (
   <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md">
@@ -975,26 +1180,80 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
         </div>
 
         <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-200/70">
-          {t.missions.campaignCompleted}
+          {completedAllOrders
+            ? t.missions.campaignCompleted
+            : lang === "zh"
+              ? "推广任务完成"
+              : "Promotion Completed"}
         </p>
 
         <h2 className="mt-2 text-3xl font-black text-white">
-          {t.missions.congratulations}
+          {completedAllOrders
+            ? t.missions.congratulations
+            : lang === "zh"
+              ? "奖励已到账"
+              : "Reward Updated"}
         </h2>
 
-        <div className="mt-5 rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
-          <p className="text-xs text-white/45">{t.missions.totalProfitEarned}</p>
-          <p className="mt-1 text-2xl font-black text-yellow-300">
-            ${finalReward}
-          </p>
+        <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-yellow-100/65">
+          {lang === "zh"
+            ? `第 ${completedStep || "-"} 项推广任务已成功记录。`
+            : `Step ${completedStep || "-"} promotion activity has been recorded successfully.`}
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-[1.5rem] border border-emerald-300/25 bg-emerald-400/10 p-4">
+            <p className="text-xs text-white/45">
+              {lang === "zh" ? "本次收益" : "Profit Earned"}
+            </p>
+            <p className="mt-1 text-2xl font-black text-emerald-300">
+              ${completedReward}
+            </p>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
+            <p className="text-xs text-white/45">
+              {lang === "zh" ? "累计收益" : "Total Profit"}
+            </p>
+            <p className="mt-1 text-2xl font-black text-yellow-300">
+              ${finalReward}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 text-left">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-yellow-300 text-black">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+
+            <div>
+              <p className="text-sm font-black text-white">
+                {lang === "zh" ? "账户余额已更新" : "Account Balance Updated"}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-white/50">
+                {completedAllOrders
+                  ? lang === "zh"
+                    ? "所有推广任务已完成，您现在可以查看记录。"
+                    : "All promotion tasks are completed. You can now review your records."
+                  : lang === "zh"
+                    ? "您可以继续处理下一项推广任务。"
+                    : "You can continue to the next promotion task."}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5">
           <button
             onClick={() => window.location.reload()}
-            className="w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
+            className="w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)] active:scale-[0.98]"
           >
-            {t.missions.continue}
+            {completedAllOrders
+              ? t.missions.continue
+              : lang === "zh"
+                ? "继续下一项任务"
+                : "Continue to Next Task"}
           </button>
         </div>
       </div>
