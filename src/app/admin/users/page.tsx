@@ -381,7 +381,7 @@ function exportUsersToCsv() {
   const rows = filteredUsers.map((user) => [
     user.display_name || "",
     user.email || "",
-    user.id,
+    user.member_id || user.id,
     user.phone || "",
     user.admin_nickname || "",
     user.role,

@@ -260,13 +260,19 @@ function openTelegramSupport() {
               </h1>
 
               <p className="mt-1 truncate text-sm text-white/50">
-                {profile.email || t.profile.goldenAxisUser}
-              </p>
+  {profile.email || t.profile.goldenAxisUser}
+</p>
 
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-bold text-yellow-200">
-                <Gem className="h-3.5 w-3.5" />
-                {t.profile.goldenAxisMember}
-              </div>
+<div className="mt-3 flex flex-wrap items-center gap-2">
+  <div className="inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-xs font-bold text-yellow-200">
+    <Gem className="h-3.5 w-3.5" />
+    {t.profile.goldenAxisMember}
+  </div>
+
+  <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/65">
+    ID: <span className="text-white">{profile.member_id || profile.id.slice(0, 8)}</span>
+  </div>
+</div>
             </div>
           </div>
         </LuxuryCard>
