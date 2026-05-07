@@ -94,6 +94,15 @@ function getSupportStatusLabel(value: SupportStatus) {
   return t.status[value];
 }
 
+useEffect(() => {
+  if (!hasPageAccess) {
+    setLoadingTickets(false);
+    return;
+  }
+
+  loadTickets();
+}, [hasPageAccess]);
+
   const selectedTicket = useMemo(() => {
     return tickets.find((ticket) => ticket.id === selectedTicketId) || null;
   }, [tickets, selectedTicketId]);
