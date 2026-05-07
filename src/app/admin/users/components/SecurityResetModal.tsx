@@ -7,6 +7,22 @@ type ModalUser = {
   email: string | null;
 };
 
+type SecurityResetModalText = {
+  tag: string;
+  title: string;
+  user: string;
+  email: string;
+  warning: string;
+  newLoginPassword: string;
+  temporaryPassword: string;
+  generate: string;
+  resetting: string;
+  resetLoginPassword: string;
+  newWithdrawPasscode: string;
+  sixDigitCode: string;
+  resetWithdrawPasscode: string;
+};
+
 type SecurityResetModalProps = {
   user: ModalUser;
   fallbackName: string;
@@ -15,6 +31,7 @@ type SecurityResetModalProps = {
   resetPasscode: string;
   resetResult: string;
   actionLoading: boolean;
+  t: SecurityResetModalText;
   onPasswordChange: (value: string) => void;
   onPasscodeChange: (value: string) => void;
   onGeneratePassword: () => void;
@@ -55,6 +72,7 @@ export default function SecurityResetModal({
   resetPasscode,
   resetResult,
   actionLoading,
+  t,
   onPasswordChange,
   onPasscodeChange,
   onGeneratePassword,
@@ -68,8 +86,8 @@ export default function SecurityResetModal({
       <div className="w-full max-w-lg rounded-[2rem] border border-emerald-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(16,185,129,0.16)]">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-emerald-300/80">Account Security</p>
-            <h2 className="text-2xl font-black">Security Reset</h2>
+            <p className="text-sm text-emerald-300/80">{t.tag}</p>
+            <h2 className="text-2xl font-black">{t.title}</h2>
           </div>
 
           <button
@@ -81,30 +99,29 @@ export default function SecurityResetModal({
         </div>
 
         <div className="mb-5 grid grid-cols-2 gap-3">
-          <MiniBox label="User" value={user.display_name || fallbackName} />
+          <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
           <MiniBox
-            label="Email"
+            label={t.email}
             value={user.email || noEmailText}
             color="gold"
           />
         </div>
 
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100/75">
-          Reset only. Old password/passcode is never shown. Give the new code to
-          the user privately after reset.
+          {t.warning}
         </div>
 
         <div className="mt-5">
           <p className="mb-2 text-sm font-bold text-white/80">
-            New Login Password
+            {t.newLoginPassword}
           </p>
 
           <div className="flex gap-3">
             <input
               value={resetPassword}
               onChange={(event) => onPasswordChange(event.target.value)}
-              placeholder="Temporary password"
+              placeholder={t.temporaryPassword}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-emerald-400/50"
             />
 
@@ -113,7 +130,7 @@ export default function SecurityResetModal({
               onClick={onGeneratePassword}
               className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white/75 hover:bg-white/[0.1]"
             >
-              Generate
+              {t.generate}
             </button>
           </div>
 
@@ -123,13 +140,13 @@ export default function SecurityResetModal({
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ShieldCheck className="h-5 w-5" />
-            {actionLoading ? "Resetting..." : "Reset Login Password"}
+            {actionLoading ? t.resetting : t.resetLoginPassword}
           </button>
         </div>
 
         <div className="mt-5">
           <p className="mb-2 text-sm font-bold text-white/80">
-            New Withdraw Passcode
+            {t.newWithdrawPasscode}
           </p>
 
           <div className="flex gap-3">
@@ -142,7 +159,7 @@ export default function SecurityResetModal({
               }
               inputMode="numeric"
               maxLength={6}
-              placeholder="6-digit code"
+              placeholder={t.sixDigitCode}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-emerald-400/50"
             />
 
@@ -151,7 +168,7 @@ export default function SecurityResetModal({
               onClick={onGeneratePasscode}
               className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white/75 hover:bg-white/[0.1]"
             >
-              Generate
+              {t.generate}
             </button>
           </div>
         </div>
@@ -168,7 +185,7 @@ export default function SecurityResetModal({
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-300 to-emerald-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
         >
           <ShieldCheck className="h-5 w-5" />
-          {actionLoading ? "Resetting..." : "Reset Withdraw Passcode"}
+          {actionLoading ? t.resetting : t.resetWithdrawPasscode}
         </button>
       </div>
     </div>

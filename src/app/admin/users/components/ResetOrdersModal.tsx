@@ -1,3 +1,5 @@
+//src>app>admin>users>components>ResetOrdersModal.tsx
+
 import { RotateCcw, X } from "lucide-react";
 
 type ModalUser = {
@@ -7,12 +9,29 @@ type ModalUser = {
   current_step: number;
 };
 
+type ResetOrdersModalText = {
+  tag: string;
+  title: string;
+  description: string;
+  user: string;
+  balance: string;
+  step: string;
+  warning: string;
+  resetStep: string;
+  resetStepHelp: string;
+  confirmLabel: string;
+  confirmPlaceholder: string;
+  resetting: string;
+  resetGeneratedOrders: string;
+};
+
 type ResetOrdersModalProps = {
   user: ModalUser;
   fallbackName: string;
   confirmText: string;
   resetStep: boolean;
   actionLoading: boolean;
+  t: ResetOrdersModalText;
   onConfirmTextChange: (value: string) => void;
   onResetStepChange: (value: boolean) => void;
   onClose: () => void;
@@ -48,6 +67,7 @@ export default function ResetOrdersModal({
   confirmText,
   resetStep,
   actionLoading,
+  t,
   onConfirmTextChange,
   onResetStepChange,
   onClose,
@@ -58,13 +78,9 @@ export default function ResetOrdersModal({
       <div className="w-full max-w-lg rounded-[2rem] border border-orange-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(249,115,22,0.18)]">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-orange-200/80">
-              Generated Order Reset
-            </p>
-            <h2 className="text-2xl font-black">Reset Orders</h2>
-            <p className="mt-1 text-sm text-white/45">
-              Clear this user&apos;s generated campaign orders.
-            </p>
+            <p className="text-sm text-orange-200/80">{t.tag}</p>
+            <h2 className="text-2xl font-black">{t.title}</h2>
+            <p className="mt-1 text-sm text-white/45">{t.description}</p>
           </div>
 
           <button
@@ -76,31 +92,25 @@ export default function ResetOrdersModal({
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-          <MiniBox label="User" value={user.display_name || fallbackName} />
+          <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
           <MiniBox
-            label="Balance"
+            label={t.balance}
             value={`$${Number(user.balance || 0).toFixed(2)}`}
             color="gold"
           />
 
-          <MiniBox label="Step" value={String(user.current_step)} />
+          <MiniBox label={t.step} value={String(user.current_step)} />
         </div>
 
         <div className="rounded-2xl border border-orange-400/20 bg-orange-500/10 p-4 text-sm leading-6 text-orange-100/75">
-          This will delete generated orders for this user only. Product pool,
-          balance, earnings, wallet records, and account data will not be
-          deleted.
+          {t.warning}
         </div>
 
         <label className="mt-5 flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
           <div>
-            <p className="text-sm font-black text-white">
-              Reset user step to 1
-            </p>
-            <p className="mt-1 text-xs text-white/45">
-              Recommended when clearing a generated campaign.
-            </p>
+            <p className="text-sm font-black text-white">{t.resetStep}</p>
+            <p className="mt-1 text-xs text-white/45">{t.resetStepHelp}</p>
           </div>
 
           <input
@@ -113,7 +123,7 @@ export default function ResetOrdersModal({
 
         <div className="mt-5">
           <p className="mb-2 text-sm font-bold text-white/80">
-            Type RESET to confirm
+            {t.confirmLabel}
           </p>
 
           <input
@@ -121,7 +131,7 @@ export default function ResetOrdersModal({
             onChange={(event) =>
               onConfirmTextChange(event.target.value.toUpperCase())
             }
-            placeholder="RESET"
+            placeholder={t.confirmPlaceholder}
             className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-orange-400/50"
           />
         </div>
@@ -132,7 +142,7 @@ export default function ResetOrdersModal({
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-400/30 bg-orange-500/20 px-5 py-4 font-black text-orange-100 hover:bg-orange-500/30 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RotateCcw className="h-5 w-5" />
-          {actionLoading ? "Resetting..." : "Reset Generated Orders"}
+          {actionLoading ? t.resetting : t.resetGeneratedOrders}
         </button>
       </div>
     </div>

@@ -17,6 +17,25 @@ type LuckyProductOption = {
   main_image: string | null;
 };
 
+type LuckyOrderModalText = {
+  tag: string;
+  title: string;
+  description: string;
+  user: string;
+  balance: string;
+  currentStep: string;
+  luckyStepNumber: string;
+  luckyStepHelp: string;
+  luckyProduct: string;
+  noLuckyProducts: string;
+  customLuckyAmount: string;
+  customLuckyAmountHelp: string;
+  luckyProfitRate: string;
+  luckyProfitRateHelp: string;
+  injecting: string;
+  injectLuckyOrder: string;
+};
+
 type LuckyOrderModalProps = {
   user: ModalUser;
   fallbackName: string;
@@ -26,6 +45,7 @@ type LuckyOrderModalProps = {
   luckyAmount: number;
   profitRate: number;
   actionLoading: boolean;
+  t: LuckyOrderModalText;
   onStepNumberChange: (value: number) => void;
   onProductIdChange: (value: string) => void;
   onLuckyAmountChange: (value: number) => void;
@@ -66,6 +86,7 @@ export default function LuckyOrderModal({
   luckyAmount,
   profitRate,
   actionLoading,
+  t,
   onStepNumberChange,
   onProductIdChange,
   onLuckyAmountChange,
@@ -78,11 +99,9 @@ export default function LuckyOrderModal({
       <div className="w-full max-w-xl rounded-[2rem] border border-fuchsia-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(217,70,239,0.18)]">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-fuchsia-200/80">Lucky Order Engine</p>
-            <h2 className="text-2xl font-black">Inject Lucky Order</h2>
-            <p className="mt-1 text-sm text-white/45">
-              Replace one pending generated order with a special lucky order.
-            </p>
+            <p className="text-sm text-fuchsia-200/80">{t.tag}</p>
+            <h2 className="text-2xl font-black">{t.title}</h2>
+            <p className="mt-1 text-sm text-white/45">{t.description}</p>
           </div>
 
           <button
@@ -94,21 +113,21 @@ export default function LuckyOrderModal({
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-          <MiniBox label="User" value={user.display_name || fallbackName} />
+          <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
           <MiniBox
-            label="Balance"
+            label={t.balance}
             value={`$${Number(user.balance || 0).toFixed(2)}`}
             color="gold"
           />
 
-          <MiniBox label="Current Step" value={String(user.current_step)} />
+          <MiniBox label={t.currentStep} value={String(user.current_step)} />
         </div>
 
         <div className="space-y-4">
           <div>
             <p className="mb-2 text-sm font-bold text-white/80">
-              Lucky Step Number
+              {t.luckyStepNumber}
             </p>
 
             <input
@@ -120,14 +139,12 @@ export default function LuckyOrderModal({
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-fuchsia-400/50"
             />
 
-            <p className="mt-2 text-xs text-white/45">
-              Choose a pending step only. Completed steps cannot be replaced.
-            </p>
+            <p className="mt-2 text-xs text-white/45">{t.luckyStepHelp}</p>
           </div>
 
           <div>
             <p className="mb-2 text-sm font-bold text-white/80">
-              Lucky Product
+              {t.luckyProduct}
             </p>
 
             <select
@@ -137,7 +154,7 @@ export default function LuckyOrderModal({
             >
               {luckyProducts.length === 0 && (
                 <option className="bg-black" value="">
-                  No lucky products found
+                  {t.noLuckyProducts}
                 </option>
               )}
 
@@ -151,7 +168,7 @@ export default function LuckyOrderModal({
 
           <div>
             <p className="mb-2 text-sm font-bold text-white/80">
-              Custom Lucky Amount
+              {t.customLuckyAmount}
             </p>
 
             <input
@@ -166,13 +183,13 @@ export default function LuckyOrderModal({
             />
 
             <p className="mt-2 text-xs text-white/45">
-              Example: 2800. This replaces the order total for this lucky step.
+              {t.customLuckyAmountHelp}
             </p>
           </div>
 
           <div>
             <p className="mb-2 text-sm font-bold text-white/80">
-              Lucky Profit Rate %
+              {t.luckyProfitRate}
             </p>
 
             <input
@@ -187,7 +204,7 @@ export default function LuckyOrderModal({
             />
 
             <p className="mt-2 text-xs text-white/45">
-              Example: 5 means 5%. A $2,800 lucky order gives $140 profit.
+              {t.luckyProfitRateHelp}
             </p>
           </div>
 
@@ -197,7 +214,7 @@ export default function LuckyOrderModal({
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-300 to-yellow-500 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Sparkles className="h-5 w-5" />
-            {actionLoading ? "Injecting..." : "Inject Lucky Order"}
+            {actionLoading ? t.injecting : t.injectLuckyOrder}
           </button>
         </div>
       </div>

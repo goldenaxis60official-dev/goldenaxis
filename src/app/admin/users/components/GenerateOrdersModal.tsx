@@ -9,6 +9,25 @@ type ModalUser = {
   current_step: number;
 };
 
+type GenerateOrdersModalText = {
+  tag: string;
+  title: string;
+  description: string;
+  user: string;
+  balance: string;
+  step: string;
+  taskCount: string;
+  taskCountHelp: string;
+  capitalAmount: string;
+  capitalAmountHelp: string;
+  profitRate: string;
+  profitRateHelp: string;
+  resetExisting: string;
+  resetExistingHelp: string;
+  generating: string;
+  generateAutoOrders: string;
+};
+
 type GenerateOrdersModalProps = {
   user: ModalUser;
   fallbackName: string;
@@ -17,6 +36,7 @@ type GenerateOrdersModalProps = {
   profitRate: number;
   resetExisting: boolean;
   actionLoading: boolean;
+  t: GenerateOrdersModalText;
   onTaskCountChange: (value: number) => void;
   onCapitalAmountChange: (value: number) => void;
   onProfitRateChange: (value: number) => void;
@@ -56,6 +76,7 @@ export default function GenerateOrdersModal({
   profitRate,
   resetExisting,
   actionLoading,
+  t,
   onTaskCountChange,
   onCapitalAmountChange,
   onProfitRateChange,
@@ -68,11 +89,9 @@ export default function GenerateOrdersModal({
       <div className="w-full max-w-xl rounded-[2rem] border border-yellow-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.18)]">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">Auto Order Engine</p>
-            <h2 className="text-2xl font-black">Generate Orders</h2>
-            <p className="mt-1 text-sm text-white/45">
-              Create generated promotion orders for this user.
-            </p>
+            <p className="text-sm text-yellow-200/80">{t.tag}</p>
+            <h2 className="text-2xl font-black">{t.title}</h2>
+            <p className="mt-1 text-sm text-white/45">{t.description}</p>
           </div>
 
           <button
@@ -84,20 +103,22 @@ export default function GenerateOrdersModal({
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-          <MiniBox label="User" value={user.display_name || fallbackName} />
+          <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
           <MiniBox
-            label="Balance"
+            label={t.balance}
             value={`$${Number(user.balance || 0).toFixed(2)}`}
             color="gold"
           />
 
-          <MiniBox label="Step" value={String(user.current_step)} />
+          <MiniBox label={t.step} value={String(user.current_step)} />
         </div>
 
         <div className="space-y-4">
           <div>
-            <p className="mb-2 text-sm font-bold text-white/80">Task Count</p>
+            <p className="mb-2 text-sm font-bold text-white/80">
+              {t.taskCount}
+            </p>
             <input
               value={taskCount}
               onChange={(event) => onTaskCountChange(Number(event.target.value))}
@@ -106,14 +127,12 @@ export default function GenerateOrdersModal({
               max={80}
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
             />
-            <p className="mt-2 text-xs text-white/45">
-              Minimum 1, maximum 80.
-            </p>
+            <p className="mt-2 text-xs text-white/45">{t.taskCountHelp}</p>
           </div>
 
           <div>
             <p className="mb-2 text-sm font-bold text-white/80">
-              Capital / Order Amount
+              {t.capitalAmount}
             </p>
             <input
               value={capitalAmount}
@@ -126,14 +145,13 @@ export default function GenerateOrdersModal({
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
             />
             <p className="mt-2 text-xs text-white/45">
-              Example: 500, 3000, 8000, 20000. System will pick closest product
-              tier.
+              {t.capitalAmountHelp}
             </p>
           </div>
 
           <div>
             <p className="mb-2 text-sm font-bold text-white/80">
-              Profit Rate %
+              {t.profitRate}
             </p>
             <input
               value={profitRate}
@@ -145,18 +163,16 @@ export default function GenerateOrdersModal({
               step="0.01"
               className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
             />
-            <p className="mt-2 text-xs text-white/45">
-              Example: 0.08 means 0.08% per normal order.
-            </p>
+            <p className="mt-2 text-xs text-white/45">{t.profitRateHelp}</p>
           </div>
 
           <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
             <div>
               <p className="text-sm font-black text-white">
-                Reset existing generated orders
+                {t.resetExisting}
               </p>
               <p className="mt-1 text-xs text-white/45">
-                Turn on when creating a fresh campaign for this user.
+                {t.resetExistingHelp}
               </p>
             </div>
 
@@ -174,7 +190,7 @@ export default function GenerateOrdersModal({
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <PackagePlus className="h-5 w-5" />
-            {actionLoading ? "Generating..." : "Generate Auto Orders"}
+            {actionLoading ? t.generating : t.generateAutoOrders}
           </button>
         </div>
       </div>

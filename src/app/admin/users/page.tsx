@@ -1622,6 +1622,7 @@ async function handleDeleteUser() {
     profitRate={generateProfitRate}
     resetExisting={generateResetExisting}
     actionLoading={actionLoading}
+    t={t.generateModal}
     onTaskCountChange={setGenerateTaskCount}
     onCapitalAmountChange={setGenerateCapitalAmount}
     onProfitRateChange={setGenerateProfitRate}
@@ -1641,6 +1642,7 @@ async function handleDeleteUser() {
     luckyAmount={luckyAmount}
     profitRate={luckyProfitRate}
     actionLoading={actionLoading}
+        t={t.luckyModal}
     onStepNumberChange={setLuckyStepNumber}
     onProductIdChange={setLuckyProductId}
     onLuckyAmountChange={setLuckyAmount}
@@ -1660,6 +1662,7 @@ async function handleDeleteUser() {
     fallbackName={t.list.fallbackName}
     orders={viewOrders}
     loading={viewOrdersLoading}
+      t={t.viewOrdersModal}
     onClose={() => {
       setViewOrdersUser(null);
       setViewOrders([]);
@@ -1674,6 +1677,7 @@ async function handleDeleteUser() {
     confirmText={resetOrdersConfirmText}
     resetStep={resetOrdersResetStep}
     actionLoading={actionLoading}
+      t={t.resetOrdersModal}
     onConfirmTextChange={setResetOrdersConfirmText}
     onResetStepChange={setResetOrdersResetStep}
     onClose={() => {
@@ -1709,6 +1713,7 @@ async function handleDeleteUser() {
     resetPasscode={resetPasscode}
     resetResult={resetResult}
     actionLoading={actionLoading}
+      t={t.securityModal}
     onPasswordChange={setResetPassword}
     onPasscodeChange={setResetPasscode}
     onGeneratePassword={() => setResetPassword(generateTemporaryPassword())}

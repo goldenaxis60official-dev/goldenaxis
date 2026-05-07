@@ -34,11 +34,38 @@ type GeneratedOrderPreview = {
   user_generated_order_items?: GeneratedOrderItemPreview[];
 };
 
+type ViewOrdersModalText = {
+  tag: string;
+  title: string;
+  description: string;
+  user: string;
+  total: string;
+  completed: string;
+  pending: string;
+  lucky: string;
+  loading: string;
+  noOrdersTitle: string;
+  noOrdersDescription: string;
+  step: string;
+  product: string;
+  type: string;
+  orderTotal: string;
+  profit: string;
+  status: string;
+  completedDate: string;
+  generatedProduct: string;
+  qty: string;
+  subtotal: string;
+  normal: string;
+  cancelled: string;
+};
+
 type ViewOrdersModalProps = {
   user: ModalUser;
   fallbackName: string;
   orders: GeneratedOrderPreview[];
   loading: boolean;
+  t: ViewOrdersModalText;
   onClose: () => void;
 };
 
@@ -70,6 +97,7 @@ export default function ViewOrdersModal({
   fallbackName,
   orders,
   loading,
+  t,
   onClose,
 }: ViewOrdersModalProps) {
   const completedCount = orders.filter(
@@ -82,16 +110,20 @@ export default function ViewOrdersModal({
 
   const luckyCount = orders.filter((order) => order.is_lucky_bonus).length;
 
+  function getStatusText(status: GeneratedOrderPreview["status"]) {
+    if (status === "completed") return t.completed;
+    if (status === "pending") return t.pending;
+    return t.cancelled;
+  }
+
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
       <div className="w-full max-w-5xl rounded-[2rem] border border-blue-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(59,130,246,0.18)]">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-blue-200/80">Generated Order Center</p>
-            <h2 className="text-2xl font-black">View Orders</h2>
-            <p className="mt-1 text-sm text-white/45">
-              Review generated promotion orders for this user.
-            </p>
+            <p className="text-sm text-blue-200/80">{t.tag}</p>
+            <h2 className="text-2xl font-black">{t.title}</h2>
+            <p className="mt-1 text-sm text-white/45">{t.description}</p>
           </div>
 
           <button
@@ -103,29 +135,29 @@ export default function ViewOrdersModal({
         </div>
 
         <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-5">
-          <MiniBox label="User" value={user.display_name || fallbackName} />
+          <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
-          <MiniBox label="Total" value={String(orders.length)} color="gold" />
+          <MiniBox label={t.total} value={String(orders.length)} color="gold" />
 
-          <MiniBox label="Completed" value={String(completedCount)} />
+          <MiniBox label={t.completed} value={String(completedCount)} />
 
-          <MiniBox label="Pending" value={String(pendingCount)} />
+          <MiniBox label={t.pending} value={String(pendingCount)} />
 
-          <MiniBox label="Lucky" value={String(luckyCount)} color="gold" />
+          <MiniBox label={t.lucky} value={String(luckyCount)} color="gold" />
         </div>
 
         {loading && (
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center text-white/55">
-            Loading generated orders...
+            {t.loading}
           </div>
         )}
 
         {!loading && orders.length === 0 && (
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center">
             <Eye className="mx-auto mb-3 h-10 w-10 text-blue-300" />
-            <p className="font-black text-white">No generated orders found</p>
+            <p className="font-black text-white">{t.noOrdersTitle}</p>
             <p className="mt-2 text-sm text-white/45">
-              Generate orders first, then they will appear here.
+              {t.noOrdersDescription}
             </p>
           </div>
         )}
@@ -135,13 +167,13 @@ export default function ViewOrdersModal({
             <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
                 <tr>
-                  <th className="px-4 py-3">Step</th>
-                  <th className="px-4 py-3">Product</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Order Total</th>
-                  <th className="px-4 py-3">Profit</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Completed</th>
+                  <th className="px-4 py-3">{t.step}</th>
+                  <th className="px-4 py-3">{t.product}</th>
+                  <th className="px-4 py-3">{t.type}</th>
+                  <th className="px-4 py-3">{t.orderTotal}</th>
+                  <th className="px-4 py-3">{t.profit}</th>
+                  <th className="px-4 py-3">{t.status}</th>
+                  <th className="px-4 py-3">{t.completedDate}</th>
                 </tr>
               </thead>
 
@@ -161,11 +193,11 @@ export default function ViewOrdersModal({
                       <td className="px-4 py-4">
                         <p className="font-bold text-white">
                           {firstItem?.product_snapshot?.name ||
-                            "Generated product"}
+                            t.generatedProduct}
                         </p>
 
                         <p className="mt-1 text-xs text-white/45">
-                          Qty {firstItem?.quantity || 1} · Subtotal $
+                          {t.qty} {firstItem?.quantity || 1} · {t.subtotal} $
                           {Number(
                             firstItem?.subtotal || order.order_total
                           ).toFixed(2)}
@@ -180,7 +212,7 @@ export default function ViewOrdersModal({
                               : "bg-blue-500/15 text-blue-300"
                           }`}
                         >
-                          {order.is_lucky_bonus ? "Lucky" : "Normal"}
+                          {order.is_lucky_bonus ? t.lucky : t.normal}
                         </span>
                       </td>
 
@@ -207,7 +239,7 @@ export default function ViewOrdersModal({
                                 : "bg-red-400/15 text-red-300"
                           }`}
                         >
-                          {order.status}
+                          {getStatusText(order.status)}
                         </span>
                       </td>
 
