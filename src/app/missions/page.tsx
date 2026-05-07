@@ -186,6 +186,13 @@ function MissionContent({ profile }: { profile: Profile }) {
 
   const activeReward = activeOrder ? Number(activeOrder.profit_amount || 0) : 0;
 
+  const totalProfitAmount = useMemo(() => {
+  return orders.reduce(
+    (sum, order) => sum + Number(order.profit_amount || 0),
+    0
+  );
+}, [orders]);
+
   const missionStatusLabel = loading
     ? t.common.loading
     : totalOrders === 0
@@ -261,8 +268,19 @@ function MissionContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    const reward = Number(data?.profit_amount || 0).toFixed(2);
-    setFinalReward(reward);
+    const reward = Number(data?.profit_amount || 0);
+
+const totalProfitAfterComplete = orders.reduce((sum, item) => {
+  const profit = Number(item.profit_amount || 0);
+
+  if (item.id === order.id) {
+    return sum + reward;
+  }
+
+  return sum + profit;
+}, 0);
+
+setFinalReward(totalProfitAfterComplete.toFixed(2));
 
     const allCompleted = Boolean(data?.all_completed);
 
@@ -273,8 +291,8 @@ function MissionContent({ profile }: { profile: Profile }) {
     }
 
     setSuccessText(
-      t.missions.successCompleted.replace("${reward}", `$${reward}`)
-    );
+  t.missions.successCompleted.replace("${reward}", `$${reward.toFixed(2)}`)
+);
 
     setTimeout(() => {
       window.location.reload();
@@ -427,16 +445,22 @@ const displayTotalBalance =
         )}
 
         {!loading && allGeneratedCompleted && (
-          <div className="rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-center">
-            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-emerald-300" />
-            <h2 className="text-xl font-black">
-              {t.missions.allCompletedTitle}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-white/60">
-              {t.missions.allCompletedNote}
-            </p>
-          </div>
-        )}
+  <div className="rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-center">
+    <CheckCircle className="mx-auto mb-4 h-12 w-12 text-emerald-300" />
+
+    <h2 className="text-xl font-black">Congratulations</h2>
+
+    <div className="mx-auto mt-4 max-w-xs rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+        Total Profit Earned
+      </p>
+
+      <p className="mt-2 text-3xl font-black text-yellow-300">
+        ${totalProfitAmount.toFixed(2)}
+      </p>
+    </div>
+  </div>
+)}
 
         {!loading &&
           totalOrders > 0 &&
@@ -784,34 +808,23 @@ const displayTotalBalance =
                 {t.missions.congratulations}
               </h2>
 
-              <p className="mt-3 text-sm leading-6 text-yellow-100/75">
-                {t.missions.completedPopupNote}
-              </p>
-
               <div className="mt-5 rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
                 <p className="text-xs text-white/45">
-                  {t.missions.finalMissionReward}
+                  Total Profit Earned
                 </p>
                 <p className="mt-1 text-2xl font-black text-yellow-300">
                   ${finalReward}
                 </p>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-bold text-white/80"
-                >
-                  {t.missions.viewStatus}
-                </button>
-
-                <button
-                  onClick={() => router.push("/withdraw")}
-                  className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
-                >
-                  {t.missions.withdrawNow}
-                </button>
-              </div>
+              <div className="mt-5">
+  <button
+    onClick={() => window.location.reload()}
+    className="w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
+  >
+    Continue
+  </button>
+</div>
             </div>
           </div>
         </div>

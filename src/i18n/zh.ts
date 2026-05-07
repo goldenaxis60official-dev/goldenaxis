@@ -151,8 +151,8 @@ missions: {
   "您的专属产品推广任务列表正在准备中。请等待任务准备完成，或联系客服确认。",
   contactSupport: "联系客服",
 
-  allCompletedTitle: "全部任务已完成",
-  allCompletedNote: "您已完成所有已分配的推广任务。",
+  allCompletedTitle: "恭喜！",
+allCompletedNote: "您已完成所有推广任务。",
 
   stepNotAssignedTitle: "当前任务暂不可用",
   stepNotAssignedNote:
@@ -200,12 +200,13 @@ missions: {
   addCredits: "充值积分",
 
   campaignCompleted: "推广已完成",
-  congratulations: "恭喜！",
-  completedPopupNote:
-    "您已成功完成所有推广加速任务。您的推广奖励已准备就绪，现在可以提现全部收益。",
-  finalMissionReward: "最终任务奖励",
-  viewStatus: "查看状态",
-  withdrawNow: "立即提现",
+congratulations: "恭喜！",
+completedPopupNote: "",
+finalMissionReward: "总收益",
+viewStatus: "继续",
+withdrawNow: "立即提现",
+totalProfitEarned: "总收益",
+continue: "继续",
 },
 
 team: {

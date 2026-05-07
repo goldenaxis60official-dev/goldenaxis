@@ -154,8 +154,8 @@ missions: {
     "Your personalized product campaign list is being prepared. Please wait for assignment or contact support for review.",
   contactSupport: "Contact Support",
 
-  allCompletedTitle: "All Missions Completed",
-  allCompletedNote: "You have completed all assigned campaign missions.",
+  allCompletedTitle: "Congratulations!",
+allCompletedNote: "Total profit earned from all completed missions.",
 
   stepNotAssignedTitle: "Mission Step Not Assigned",
   stepNotAssignedNote:
@@ -206,12 +206,13 @@ missions: {
   addCredits: "Add Credits",
 
   campaignCompleted: "Campaign Completed",
-  congratulations: "Congratulations!",
-  completedPopupNote:
-    "You have successfully completed all promo boost tasks. Your campaign rewards are now ready, and you can withdraw all your earnings.",
-  finalMissionReward: "Final Mission Reward",
-  viewStatus: "View Status",
-  withdrawNow: "Withdraw Now",
+congratulations: "Congratulations!",
+completedPopupNote: "",
+finalMissionReward: "Total Profit Earned",
+viewStatus: "Continue",
+withdrawNow: "Withdraw Now",
+totalProfitEarned: "Total Profit Earned",
+continue: "Continue",
 },
 
 team: {
