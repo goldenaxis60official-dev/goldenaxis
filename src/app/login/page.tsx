@@ -4,6 +4,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { guestAuth, type GuestLanguage } from "@/i18n/guestAuth";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -47,35 +48,64 @@ export default function LoginPage() {
   const [errorText, setErrorText] = useState("");
   const [isAdminPortal, setIsAdminPortal] = useState(false);
 
+  const [language, setLanguage] = useState<GuestLanguage>("en");
+const t = guestAuth[language];
+
+function toggleLanguage() {
+  const nextLanguage: GuestLanguage = language === "en" ? "zh" : "en";
+  setLanguage(nextLanguage);
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem("golden-axis-language", nextLanguage);
+    window.dispatchEvent(new Event("golden-axis-language-change"));
+  }
+}
+
 useEffect(() => {
   setIsAdminPortal(isAdminEntrance());
 }, []);
 
+useEffect(() => {
+  const savedLanguage = localStorage.getItem("golden-axis-language");
+
+  if (savedLanguage === "en" || savedLanguage === "zh") {
+    setLanguage(savedLanguage);
+  }
+}, []);
+
 const PortalIcon = isAdminPortal ? Crown : Gem;
 
-const portalLabel = isAdminPortal ? "Control Center" : "Member Portal";
-const secureLabel = isAdminPortal ? "Restricted" : "Secure";
-const accessLabel = isAdminPortal
-  ? "Authorized Control Access"
-  : "Official Member Access";
+const portalLabel = isAdminPortal
+  ? t.login.controlCenter
+  : t.login.memberPortal;
 
-const titleText = isAdminPortal ? "Admin Control Login" : "Welcome Back";
+const secureLabel = isAdminPortal
+  ? t.common.restricted
+  : t.common.secure;
+
+const accessLabel = isAdminPortal
+  ? t.login.controlAccess
+  : t.login.officialAccess;
+
+const titleText = isAdminPortal
+  ? t.login.titleAdmin
+  : t.login.titleMember;
 
 const descriptionText = isAdminPortal
-  ? "Login to manage users, generated orders, wallet reviews, support messages, and platform controls."
-  : "Login to continue your assigned campaign tasks, account records, and support messages.";
+  ? t.login.descAdmin
+  : t.login.descMember;
 
 const securityTitle = isAdminPortal
-  ? "Restricted control access"
-  : "Protected member access";
+  ? t.login.securityTitleAdmin
+  : t.login.securityTitleMember;
 
 const securityDescription = isAdminPortal
-  ? "This entrance is limited to authorized control accounts only. Normal member accounts should use the official member website."
-  : "Your member account, activity records, and support messages are protected through a secure login session.";
+  ? t.login.securityDescAdmin
+  : t.login.securityDescMember;
 
 const footerText = isAdminPortal
-  ? "© Golden Axis 60 · Control Center"
-  : "© Golden Axis 60 · Official Member Portal";
+  ? t.common.footerAdmin
+  : t.common.footerMember;
 
   useEffect(() => {
   async function redirectIfLoggedIn() {
@@ -115,7 +145,7 @@ const footerText = isAdminPortal
     const cleanLoginId = loginId.trim();
 
 if (!cleanLoginId || !password) {
-  setErrorText("Please enter your email or display name and password.");
+  setErrorText(t.login.errors.missingFields);
   setLoading(false);
   return;
 }
@@ -131,7 +161,7 @@ if (!cleanLoginId.includes("@")) {
   );
 
   if (nameError || !foundEmail) {
-    setErrorText("We could not verify those login details.");
+    setErrorText(t.login.errors.cannotVerify);
     setLoading(false);
     return;
   }
@@ -162,29 +192,25 @@ if (!cleanLoginId.includes("@")) {
         .single();
 
       if (profileError || !profileData) {
-        throw new Error("Profile not found.");
+        throw new Error(t.login.errors.profileNotFound);
       }
 
 if (isAdminEntrance() && !isControlRole(profileData.role)) {
   await supabase.auth.signOut();
-  setErrorText(
-    "This control link is only for authorized control accounts. Please use the member website for normal access."
-  );
+    setErrorText(t.login.errors.controlOnly);
   return;
 }
 
 router.replace(getRoleRedirectPath(profileData.role));
     } catch (err) {
       const message =
-  err instanceof Error ? err.message : "Something went wrong.";
+  err instanceof Error ? err.message : t.login.errors.unknown;
 
 if (
   message.toLowerCase().includes("email not confirmed") ||
   message.toLowerCase().includes("not confirmed")
 ) {
-  setErrorText(
-    "This account is not fully activated. Please register again with a valid referral code."
-  );
+  setErrorText(t.login.errors.notActivated);
   return;
 }
 
@@ -212,9 +238,19 @@ setErrorText(message);
             </div>
           </div>
 
-          <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
-            {secureLabel}
-          </div>
+          <div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={toggleLanguage}
+    className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200 transition hover:border-yellow-300/50 hover:bg-yellow-400/15"
+  >
+    {t.langButton}
+  </button>
+
+  <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
+    {secureLabel}
+  </div>
+</div>
         </div>
 
         {/* Main content */}
@@ -250,7 +286,7 @@ setErrorText(message);
               <div className="space-y-4">
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-white/45">
-                    Email or Name
+                    {t.login.emailLabel}
                   </span>
 
                   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
@@ -258,7 +294,7 @@ setErrorText(message);
                     <input
   value={loginId}
   onChange={(e) => setLoginId(e.target.value)}
-  placeholder="Email or display name"
+  placeholder={t.login.emailPlaceholder}
   type="text"
   autoComplete="username"
   className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
@@ -268,7 +304,7 @@ setErrorText(message);
 
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-white/45">
-                    Password
+                    {t.login.passwordLabel}
                   </span>
 
                   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
@@ -277,7 +313,7 @@ setErrorText(message);
                     <input
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter password"
+                      placeholder={t.login.passwordPlaceholder}
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
@@ -310,11 +346,11 @@ setErrorText(message);
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      Logging in...
+                      {t.login.loggingIn}
                     </>
                   ) : (
                     <>
-                      Login
+                      {t.login.login}
                       <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
                     </>
                   )}
@@ -341,19 +377,19 @@ setErrorText(message);
 
             {!isAdminPortal && (
   <p className="mt-6 text-center text-sm text-white/50">
-    New here?{" "}
+    {t.login.newHere}{" "}
     <Link
       href="/register"
       className="font-black text-yellow-300 transition hover:text-yellow-200"
     >
-      Create account
+      {t.login.createAccount}
     </Link>
   </p>
 )}
 
 {isAdminPortal && (
   <p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.24em] text-yellow-200/55">
-    Authorized personnel only
+    {t.login.authorizedOnly}
   </p>
 )}
           </div>
@@ -365,11 +401,11 @@ setErrorText(message);
 
   <div className="mt-2 flex items-center justify-center gap-3">
     <Link href="/terms" className="hover:text-yellow-300">
-      Terms
+      {t.common.terms}
     </Link>
     <span className="text-white/20">•</span>
     <Link href="/support" className="hover:text-yellow-300">
-      Support
+      {t.common.support}
     </Link>
   </div>
 </div>

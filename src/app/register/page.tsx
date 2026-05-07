@@ -4,6 +4,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { guestAuth, type GuestLanguage } from "@/i18n/guestAuth";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -36,6 +37,16 @@ const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
+  const [language, setLanguage] = useState<GuestLanguage>("en");
+const t = guestAuth[language];
+
+function toggleLanguage() {
+  const nextLanguage: GuestLanguage = language === "en" ? "zh" : "en";
+
+  setLanguage(nextLanguage);
+  localStorage.setItem("golden-axis-language", nextLanguage);
+  window.dispatchEvent(new Event("golden-axis-language-change"));
+}
 
   useEffect(() => {
   async function redirectIfLoggedIn() {
@@ -68,12 +79,20 @@ if (profileData.role === "admin" || profileData.role === "super") {
   redirectIfLoggedIn();
 }, [router]);
 
+useEffect(() => {
+  const savedLanguage = localStorage.getItem("golden-axis-language");
+
+  if (savedLanguage === "en" || savedLanguage === "zh") {
+    setLanguage(savedLanguage);
+  }
+}, []);
+
  async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
   setErrorText("");
 
   if (!accepted) {
-    setErrorText("Please accept the member agreement first.");
+    setErrorText(t.register.errors.acceptAgreement);
     return;
   }
 
@@ -86,36 +105,36 @@ if (profileData.role === "admin" || profileData.role === "super") {
     .slice(0, 20);
 
   if (!cleanDisplayName) {
-    setErrorText("Display name is required.");
+    setErrorText(t.register.errors.displayNameRequired);
     return;
   }
 
   if (!cleanEmail || !password) {
-    setErrorText("Email and password are required.");
+    setErrorText(t.register.errors.emailPasswordRequired);
     return;
   }
 
   if (password.length < 6) {
-    setErrorText("Password must be at least 6 characters.");
+    setErrorText(t.register.errors.passwordLength);
     return;
   }
 
   if (password !== confirmPassword) {
-  setErrorText("Passwords do not match.");
+  setErrorText(t.register.errors.passwordMismatch);
   return;
 }
 if (!/^[0-9]{6}$/.test(withdrawPasscode)) {
-  setErrorText("Withdraw passcode must be exactly 6 digits.");
+  setErrorText(t.register.errors.passcodeFormat);
   return;
 }
 
 if (withdrawPasscode !== confirmWithdrawPasscode) {
-  setErrorText("Withdraw passcodes do not match.");
+  setErrorText(t.register.errors.passcodeMismatch);
   return;
 }
 
   if (cleanReferralCode.length < 4) {
-    setErrorText("Valid referral code is required.");
+    setErrorText(t.register.errors.referralRequired);
     return;
   }
 
@@ -134,7 +153,7 @@ if (referralError) throw referralError;
 const referrerProfile = referrerRows?.[0];
 
 if (!referrerProfile?.referrer_id) {
-  setErrorText("Invalid referral code. Please check your code and try again.");
+  setErrorText(t.register.errors.invalidReferral);
   setLoading(false);
   return;
 }
@@ -155,12 +174,12 @@ if (!referrerProfile?.referrer_id) {
     const newUser = signUpData.user;
 
     if (!newUser) {
-      throw new Error("Account created, but user session was not found.");
+      throw new Error(t.register.errors.sessionNotFound);
     }
 
     if (!signUpData.session) {
       throw new Error(
-        "Email confirmation is still enabled in Supabase. Turn off email confirmation first."
+        t.register.errors.emailConfirmEnabled
       );
     }
 
@@ -178,7 +197,7 @@ if (!referrerProfile?.referrer_id) {
       current_step: 1,
       credit_score: 100,
       status: "active",
-      language: "en",
+      language,
     });
 
     if (profileError) throw profileError;
@@ -192,7 +211,7 @@ if (passcodeError) throw passcodeError;
 router.replace("/");
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : "Something went wrong.";
+      err instanceof Error ? err.message : t.register.errors.unknown;
     setErrorText(message);
   } finally {
     setLoading(false);
@@ -213,13 +232,25 @@ router.replace("/");
               <p className="text-sm font-black tracking-wide">
                 Golden Axis 60
               </p>
-              <p className="text-[11px] text-white/40">Member Registration</p>
+              <p className="text-[11px] text-white/40">
+  {t.register.memberRegistration}
+</p>
             </div>
           </div>
 
-          <div className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[10px] font-bold text-yellow-100">
-            Official
-          </div>
+          <div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={toggleLanguage}
+    className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200 transition hover:border-yellow-300/50 hover:bg-yellow-400/15"
+  >
+    {t.langButton}
+  </button>
+
+  <div className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[10px] font-bold text-yellow-100">
+    {t.register.official}
+  </div>
+</div>
         </div>
 
         {/* Main content */}
@@ -234,17 +265,16 @@ router.replace("/");
 
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] font-bold text-yellow-100/80">
                 <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
-                Official Member Registration
+                {t.register.officialMemberRegistration}
               </div>
 
               <h1 className="text-4xl font-black tracking-tight">
-                Create Account
+                {t.register.title}
               </h1>
 
               <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/50">
-                Create your Golden Axis 60 member account to access assigned
-campaign tasks, account records, referral benefits, and support.
-              </p>
+  {t.register.description}
+</p>
             </div>
 
             <form
