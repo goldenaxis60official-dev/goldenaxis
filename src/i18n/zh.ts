@@ -207,6 +207,13 @@ viewStatus: "继续",
 withdrawNow: "立即提现",
 totalProfitEarned: "总收益",
 continue: "继续",
+
+balanceVerification: "余额验证",
+additionalCreditsRequired: "需要补充积分",
+insufficientPopupNote:
+  "此高级任务需要更多推广余额才能完成。请先充值后继续。",
+required: "所需",
+needed: "还需",
 },
 
 team: {

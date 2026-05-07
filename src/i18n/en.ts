@@ -205,6 +205,13 @@ allCompletedNote: "Total profit earned from all completed missions.",
   yourBalance: "Your Balance",
   addCredits: "Add Credits",
 
+  balanceVerification: "Balance Verification",
+additionalCreditsRequired: "Additional credits required",
+insufficientPopupNote:
+  "This premium mission requires more campaign balance before it can be completed.",
+required: "Required",
+needed: "Needed",
+
   campaignCompleted: "Campaign Completed",
 congratulations: "Congratulations!",
 completedPopupNote: "",

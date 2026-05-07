@@ -447,7 +447,7 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
 
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-yellow-200/60">
-          Balance Verification
+          {t.missions.balanceVerification}
         </p>
 
         <h3 className="mt-1 text-lg font-black text-white">
@@ -892,45 +892,52 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
   <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md">
     <div className="max-h-[calc(100vh-4rem)] w-full max-w-md overflow-y-auto rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#6b4c08_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.32)]">
       <div className="relative p-5">
+        <button
+          onClick={() => setShowInsufficientPopup(false)}
+          className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-yellow-300/20 bg-black/35 text-lg font-black text-yellow-100/70 active:scale-[0.96]"
+        >
+          ×
+        </button>
+
         <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
 
-        <div className="relative flex items-start gap-3">
+        <div className="relative flex items-start gap-3 pr-8">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-300 text-black shadow-[0_0_30px_rgba(250,204,21,0.5)]">
             <Gem className="h-7 w-7" />
           </div>
 
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-yellow-200/65">
-              Balance Verification
+              {t.missions.balanceVerification}
             </p>
 
             <h2 className="mt-1 text-2xl font-black text-white">
-              Additional credits required
+              {t.missions.additionalCreditsRequired}
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-yellow-100/70">
-              This premium mission requires more campaign balance before it can be completed.
+              {t.missions.insufficientPopupNote}
             </p>
           </div>
         </div>
 
         <div className="relative mt-5 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-2xl bg-black/40 p-3">
-            <p className="text-[10px] uppercase text-white/35">Required</p>
+            <p className="text-[10px] uppercase text-white/35">{t.missions.required}</p>
             <p className="mt-1 text-sm font-black text-yellow-300">
               ${requiredBalance.toFixed(2)}
             </p>
           </div>
 
           <div className="rounded-2xl bg-black/40 p-3">
-            <p className="text-[10px] uppercase text-white/35">Balance</p>
+            <p className="text-[10px] uppercase text-white/35">{t.missions.balance}</p>
             <p className="mt-1 text-sm font-black text-white">
               ${displayTotalBalance.toFixed(2)}
             </p>
           </div>
 
           <div className="rounded-2xl bg-black/40 p-3">
-            <p className="text-[10px] uppercase text-white/35">Needed</p>
+            <p className="text-[10px] uppercase text-white/35">{t.missions.needed}</p>
             <p className="mt-1 text-sm font-black text-rose-200">
               ${balanceShortage.toFixed(2)}
             </p>
@@ -942,23 +949,16 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
             onClick={() => router.push("/deposit")}
             className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)] active:scale-[0.98]"
           >
-            Add Credits
+            {t.missions.addCredits}
           </button>
 
           <button
-            onClick={() => setShowInsufficientPopup(false)}
+            onClick={() => router.push("/support")}
             className="rounded-2xl border border-yellow-300/25 bg-white/[0.06] px-4 py-3 text-sm font-black text-yellow-100 active:scale-[0.98]"
           >
-            Not Now
+            {t.missions.contactSupport}
           </button>
         </div>
-
-        <button
-          onClick={() => router.push("/support")}
-          className="relative mt-3 w-full rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-white/65 active:scale-[0.98]"
-        >
-          Contact Support
-        </button>
       </div>
     </div>
   </div>
@@ -966,43 +966,41 @@ const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
 
 {showCompletedPopup && (
   <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md">
-          <div className="max-h-[calc(100vh-4rem)] w-full max-w-md overflow-y-auto rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#7a560d_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.35)]">
-            <div className="relative p-6 text-center">
-              <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
+    <div className="max-h-[calc(100vh-4rem)] w-full max-w-md overflow-y-auto rounded-[2.2rem] border border-yellow-300/40 bg-[radial-gradient(circle_at_top,#7a560d_0%,#171003_42%,#050505_100%)] shadow-[0_0_70px_rgba(250,204,21,0.35)]">
+      <div className="relative p-6 text-center">
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-yellow-300/25 blur-3xl" />
 
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 text-black shadow-[0_0_35px_rgba(250,204,21,0.55)]">
-                <Trophy className="h-10 w-10" />
-              </div>
-
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-200/70">
-                {t.missions.campaignCompleted}
-              </p>
-
-              <h2 className="mt-2 text-3xl font-black text-white">
-                {t.missions.congratulations}
-              </h2>
-
-              <div className="mt-5 rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
-                <p className="text-xs text-white/45">
-                  Total Profit Earned
-                </p>
-                <p className="mt-1 text-2xl font-black text-yellow-300">
-                  ${finalReward}
-                </p>
-              </div>
-
-              <div className="mt-5">
-  <button
-    onClick={() => window.location.reload()}
-    className="w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
-  >
-    Continue
-  </button>
-</div>
-            </div>
-          </div>
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 text-black shadow-[0_0_35px_rgba(250,204,21,0.55)]">
+          <Trophy className="h-10 w-10" />
         </div>
-      )}
+
+        <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-200/70">
+          {t.missions.campaignCompleted}
+        </p>
+
+        <h2 className="mt-2 text-3xl font-black text-white">
+          {t.missions.congratulations}
+        </h2>
+
+        <div className="mt-5 rounded-[1.5rem] border border-yellow-300/25 bg-black/35 p-4">
+          <p className="text-xs text-white/45">{t.missions.totalProfitEarned}</p>
+          <p className="mt-1 text-2xl font-black text-yellow-300">
+            ${finalReward}
+          </p>
+        </div>
+
+        <div className="mt-5">
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
+          >
+            {t.missions.continue}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </AppShell>
   );
 }
