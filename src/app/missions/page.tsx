@@ -326,6 +326,12 @@ const splitTotalBalance = earnBalance + referralBalance + depositBalance;
 const displayTotalBalance =
   splitTotalBalance > 0 ? splitTotalBalance : Number(profile.balance || 0);
 
+const isInsufficientBalanceError =
+  errorText === t.missions.insufficientBalance;
+
+const requiredBalance = Number(activeOrder?.order_total || 0);
+const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
+
   return (
     <AppShell>
       <section className="px-5 pb-5 pt-8">
@@ -429,12 +435,76 @@ const displayTotalBalance =
           </div>
         )}
 
-        {errorText && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            <AlertCircle className="h-4 w-4" />
-            {errorText}
-          </div>
-        )}
+        {errorText && isInsufficientBalanceError && (
+  <div className="mb-5 overflow-hidden rounded-[2rem] border border-yellow-300/35 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.22),rgba(24,18,4,0.96)_42%,rgba(5,5,5,0.98)_100%)] p-4 shadow-[0_0_45px_rgba(250,204,21,0.18)]">
+    <div className="flex items-start gap-3">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-300 text-black shadow-[0_0_25px_rgba(250,204,21,0.45)]">
+        <Gem className="h-6 w-6" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-yellow-200/60">
+          Balance Verification
+        </p>
+
+        <h3 className="mt-1 text-lg font-black text-white">
+          Additional credits required
+        </h3>
+
+        <p className="mt-1 text-sm leading-6 text-yellow-100/65">
+          Your current campaign balance is not enough to continue this premium mission.
+          Please add credits and try again.
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+      <div className="rounded-2xl bg-black/35 p-3">
+        <p className="text-[10px] uppercase text-white/35">Required</p>
+        <p className="mt-1 text-sm font-black text-yellow-300">
+          ${requiredBalance.toFixed(2)}
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-black/35 p-3">
+        <p className="text-[10px] uppercase text-white/35">Balance</p>
+        <p className="mt-1 text-sm font-black text-white">
+          ${displayTotalBalance.toFixed(2)}
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-black/35 p-3">
+        <p className="text-[10px] uppercase text-white/35">Needed</p>
+        <p className="mt-1 text-sm font-black text-rose-200">
+          ${balanceShortage.toFixed(2)}
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-4 grid grid-cols-2 gap-3">
+      <button
+        onClick={() => router.push("/deposit")}
+        className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_28px_rgba(250,204,21,0.28)] active:scale-[0.98]"
+      >
+        Add Credits
+      </button>
+
+      <button
+        onClick={() => router.push("/support")}
+        className="rounded-2xl border border-yellow-300/25 bg-white/[0.06] px-4 py-3 text-sm font-black text-yellow-100 active:scale-[0.98]"
+      >
+        Contact Support
+      </button>
+    </div>
+  </div>
+)}
+
+{errorText && !isInsufficientBalanceError && (
+  <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+    <AlertCircle className="h-4 w-4" />
+    {errorText}
+  </div>
+)}
 
         {loading && (
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 text-center text-white/60">
@@ -539,7 +609,7 @@ const displayTotalBalance =
                     </>
                   )}
 
-                  <div className="relative h-64 bg-black/40">
+                  <div className="relative h-72 bg-black/40">
                     {activeImage ? (
                       <img
                         src={activeImage}
@@ -571,29 +641,7 @@ const displayTotalBalance =
                       </span>
                     </div>
 
-                    {lucky && (
-                      <div className="absolute bottom-4 left-4 right-4 rounded-[1.4rem] border border-yellow-300/30 bg-black/55 p-3 backdrop-blur-md">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200/70">
-                              {t.missions.specialBonusUnlocked}
-                            </p>
-                            <p className="mt-1 text-sm font-black text-yellow-100">
-                              {t.missions.premiumJewelOpportunity}
-                            </p>
-                          </div>
 
-                          <div className="rounded-2xl bg-yellow-300 px-3 py-2 text-center text-black">
-                            <p className="text-[10px] font-black">
-                              {t.missions.boost}
-                            </p>
-                            <p className="text-sm font-black">
-                              {profitRate.toFixed(2)}%
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {images.length > 1 && (
                       <>
@@ -652,6 +700,36 @@ const displayTotalBalance =
                         </p>
                       </div>
                     </div>
+
+                    {lucky && (
+  <div className="mb-4 rounded-[1.4rem] border border-yellow-300/25 bg-yellow-300/10 p-3 shadow-[inset_0_0_22px_rgba(250,204,21,0.08)]">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-black shadow-[0_0_18px_rgba(250,204,21,0.35)]">
+          <Sparkles className="h-4 w-4" />
+        </div>
+
+        <div>
+          <p className="text-sm font-black text-yellow-100">
+            {t.missions.specialBonusUnlocked}
+          </p>
+          <p className="mt-0.5 text-xs text-yellow-100/55">
+            {t.missions.premiumJewelOpportunity}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-black/40 px-3 py-2 text-right">
+        <p className="text-[10px] font-black uppercase text-yellow-100/50">
+          {t.missions.boost}
+        </p>
+        <p className="text-sm font-black text-yellow-300">
+          {profitRate.toFixed(2)}%
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
                     <div className="mb-3 flex items-center gap-2">
                       <div className="flex items-center gap-2">
