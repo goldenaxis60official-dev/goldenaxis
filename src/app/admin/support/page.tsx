@@ -357,10 +357,6 @@ useEffect(() => {
     );
   }
 
-  const openCount = tickets.filter((item) => item.status === "open").length;
-  const reviewingCount = tickets.filter((item) => item.status === "reviewing").length;
-  const closedCount = tickets.filter((item) => item.status === "closed").length;
-
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
@@ -382,13 +378,6 @@ useEffect(() => {
           </div>
         </div>
 
-        <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label={t.stats.showing} value={String(filteredTickets.length)} />
-<StatCard label={t.stats.open} value={String(openCount)} />
-<StatCard label={t.stats.reviewing} value={String(reviewingCount)} />
-<StatCard label={t.stats.closed} value={String(closedCount)} />
-        </div>
-
         {successText && (
           <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             <CheckCircle className="h-4 w-4" />
@@ -403,8 +392,8 @@ useEffect(() => {
           </div>
         )}
 
-        <section className="grid min-h-[720px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] xl:h-[calc(100vh-280px)] xl:grid-cols-[390px_1fr]">
-          <aside className="flex min-h-0 flex-col border-r border-white/10 bg-black/25">
+        <section className="grid min-h-[760px] overflow-hidden rounded-[2rem] border border-yellow-400/10 bg-white/[0.035] shadow-[0_24px_90px_rgba(0,0,0,0.34)] xl:h-[calc(100vh-220px)] xl:grid-cols-[420px_1fr]">
+          <aside className="flex min-h-0 flex-col border-r border-white/10 bg-[#0b0b0b]/95">
             <div className="border-b border-white/10 p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
@@ -587,7 +576,7 @@ useEffect(() => {
 
           <div className="flex min-h-0 flex-col">
             {!selectedTicket ? (
-              <div className="flex flex-1 items-center justify-center p-8 text-center">
+              <div className="flex flex-1 items-center justify-center bg-[radial-gradient(circle_at_center,rgba(234,179,8,0.08),transparent_38%),#070707] p-8 text-center">
                 <div>
                   <MessageCircle className="mx-auto mb-4 h-14 w-14 text-yellow-300" />
                   <p className="text-xl font-black">{t.list.selectUserChat}</p>
@@ -741,17 +730,6 @@ function ChatBubble({
           {new Date(time).toLocaleString()}
         </p>
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-      <p className="text-xs text-white/45">{label}</p>
-      <p className="mt-1 truncate text-xl font-black text-yellow-300">
-        {value}
-      </p>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
+  Crown,
   Eye,
   EyeOff,
   Gem,
@@ -18,6 +19,23 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
+const ADMIN_HOSTS = ["goldenaxisadmin.vercel.app"];
+
+function isAdminEntrance() {
+  if (typeof window === "undefined") return false;
+  return ADMIN_HOSTS.includes(window.location.hostname);
+}
+
+function isControlRole(role?: string | null) {
+  return role === "admin" || role === "super" || role === "support";
+}
+
+function getRoleRedirectPath(role?: string | null) {
+  if (role === "support") return "/admin/support";
+  if (role === "admin" || role === "super") return "/admin";
+  return "/";
+}
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -27,6 +45,37 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
+  const [isAdminPortal, setIsAdminPortal] = useState(false);
+
+useEffect(() => {
+  setIsAdminPortal(isAdminEntrance());
+}, []);
+
+const PortalIcon = isAdminPortal ? Crown : Gem;
+
+const portalLabel = isAdminPortal ? "Control Center" : "Member Portal";
+const secureLabel = isAdminPortal ? "Restricted" : "Secure";
+const accessLabel = isAdminPortal
+  ? "Authorized Control Access"
+  : "Official Member Access";
+
+const titleText = isAdminPortal ? "Admin Control Login" : "Welcome Back";
+
+const descriptionText = isAdminPortal
+  ? "Login to manage users, generated orders, wallet reviews, support messages, and platform controls."
+  : "Login to continue your assigned campaign tasks, account records, and support messages.";
+
+const securityTitle = isAdminPortal
+  ? "Restricted control access"
+  : "Protected member access";
+
+const securityDescription = isAdminPortal
+  ? "This entrance is limited to authorized control accounts only. Normal member accounts should use the official member website."
+  : "Your member account, activity records, and support messages are protected through a secure login session.";
+
+const footerText = isAdminPortal
+  ? "© Golden Axis 60 · Control Center"
+  : "© Golden Axis 60 · Official Member Portal";
 
   useEffect(() => {
   async function redirectIfLoggedIn() {
@@ -42,13 +91,17 @@ export default function LoginPage() {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profileData?.role === "admin" || profileData?.role === "super") {
-  router.replace("/admin");
-} else if (profileData?.role === "support") {
-  router.replace("/admin/support");
-} else {
-  router.replace("/");
-}
+    const role = profileData?.role;
+
+    if (isAdminEntrance() && !isControlRole(role)) {
+      await supabase.auth.signOut();
+      setErrorText(
+        "This control link is only for authorized control accounts. Please use the member website for normal access."
+      );
+      return;
+    }
+
+    router.replace(getRoleRedirectPath(role));
   }
 
   redirectIfLoggedIn();
@@ -112,13 +165,15 @@ if (!cleanLoginId.includes("@")) {
         throw new Error("Profile not found.");
       }
 
-      if (profileData.role === "admin" || profileData.role === "super") {
-  router.replace("/admin");
-} else if (profileData.role === "support") {
-  router.replace("/admin/support");
-} else {
-  router.replace("/");
+if (isAdminEntrance() && !isControlRole(profileData.role)) {
+  await supabase.auth.signOut();
+  setErrorText(
+    "This control link is only for authorized control accounts. Please use the member website for normal access."
+  );
+  return;
 }
+
+router.replace(getRoleRedirectPath(profileData.role));
     } catch (err) {
       const message =
   err instanceof Error ? err.message : "Something went wrong.";
@@ -146,19 +201,19 @@ setErrorText(message);
         <div className="flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 shadow-[0_0_30px_rgba(234,179,8,0.22)]">
-              <Gem className="h-5 w-5 text-yellow-300" />
+              <PortalIcon className="h-5 w-5 text-yellow-300" />
             </div>
 
             <div>
               <p className="text-sm font-black tracking-wide">
                 Golden Axis 60
               </p>
-              <p className="text-[11px] text-white/40">Member Portal</p>
+              <p className="text-[11px] text-white/40">{portalLabel}</p>
             </div>
           </div>
 
           <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
-            Secure
+            {secureLabel}
           </div>
         </div>
 
@@ -169,21 +224,20 @@ setErrorText(message);
 
             <div className="relative mb-8 text-center">
               <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-yellow-300/40 bg-gradient-to-br from-yellow-300/20 via-yellow-500/10 to-black shadow-[0_0_55px_rgba(234,179,8,0.28)]">
-                <Gem className="h-10 w-10 text-yellow-300 drop-shadow-[0_0_18px_rgba(250,204,21,0.55)]" />
+                <PortalIcon className="h-10 w-10 text-yellow-300 drop-shadow-[0_0_18px_rgba(250,204,21,0.55)]" />
               </div>
 
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] font-bold text-yellow-100/80">
                 <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
-                Official Member Access
+                {accessLabel}
               </div>
 
               <h1 className="text-4xl font-black tracking-tight">
-                Welcome Back
+                {titleText}
               </h1>
 
               <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/50">
-                Login to continue your assigned campaign tasks, account records,
-and support messages.
+                {descriptionText}
               </p>
             </div>
 
@@ -276,31 +330,38 @@ and support messages.
 
                 <div>
                   <p className="text-sm font-bold text-white/85">
-                    Protected member access
+                    {securityTitle}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-white/45">
-                    Your member account, activity records, and support messages
-are protected through a secure login session.
+                   {securityDescription}
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="mt-6 text-center text-sm text-white/50">
-              New here?{" "}
-              <Link
-                href="/register"
-                className="font-black text-yellow-300 transition hover:text-yellow-200"
-              >
-                Create account
-              </Link>
-            </p>
+            {!isAdminPortal && (
+  <p className="mt-6 text-center text-sm text-white/50">
+    New here?{" "}
+    <Link
+      href="/register"
+      className="font-black text-yellow-300 transition hover:text-yellow-200"
+    >
+      Create account
+    </Link>
+  </p>
+)}
+
+{isAdminPortal && (
+  <p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.24em] text-yellow-200/55">
+    Authorized personnel only
+  </p>
+)}
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-5 pb-5 text-center text-[11px] text-white/35">
-  <p>© Golden Axis 60 · Official Member Portal</p>
+  <p>{footerText}</p>
 
   <div className="mt-2 flex items-center justify-center gap-3">
     <Link href="/terms" className="hover:text-yellow-300">

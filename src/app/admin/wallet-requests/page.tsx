@@ -39,11 +39,14 @@ type AdminWalletRequest = {
   created_at: string;
   reviewed_at: string | null;
   profiles: {
-    display_name: string | null;
-    email: string | null;
-    balance: number;
-    current_step: number;
-  } | null;
+  display_name: string | null;
+  email: string | null;
+  balance: number;
+  deposited_balance: number;
+  referral_bonus_balance: number;
+  task_profit_balance: number;
+  current_step: number;
+} | null;
 };
 
 type AdminWalletRequestsText = typeof en.adminWalletRequests;
@@ -94,11 +97,14 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
       `
       *,
       profiles (
-        display_name,
-        email,
-        balance,
-        current_step
-      )
+  display_name,
+  email,
+  balance,
+  deposited_balance,
+  referral_bonus_balance,
+  task_profit_balance,
+  current_step
+)
     `
     )
     .order("created_at", { ascending: false });
@@ -235,14 +241,6 @@ useEffect(() => {
     );
   }
 
-  const pendingCount = records.filter((item) => item.status === "pending").length;
-const depositCount = records.filter((item) => item.type === "deposit_credit").length;
-const withdrawalCount = records.filter((item) => item.type === "withdrawal").length;
-const totalAmount = filteredRecords.reduce(
-  (sum, item) => sum + Number(item.amount || 0),
-  0
-);
-
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
@@ -263,14 +261,6 @@ const totalAmount = filteredRecords.reduce(
             <Wallet className="h-7 w-7 text-yellow-300" />
           </div>
         </div>
-
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label={t.stats.showing} value={String(records.length)} />
-<StatCard label={t.stats.pending} value={String(pendingCount)} />
-<StatCard label={t.stats.deposits} value={String(depositCount)} />
-<StatCard label={t.stats.totalAmount} value={`$${totalAmount.toFixed(2)}`} />
-        </div>
-
         <div className="mb-6 rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
   <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
     <div>
@@ -399,6 +389,15 @@ const totalAmount = filteredRecords.reduce(
         {paginatedRecords.map((item) => {
           const isDeposit = item.type === "deposit_credit";
           const isPending = item.status === "pending";
+          const separatedBalance =
+  Number(item.profiles?.deposited_balance || 0) +
+  Number(item.profiles?.referral_bonus_balance || 0) +
+  Number(item.profiles?.task_profit_balance || 0);
+
+const displayBalance =
+  separatedBalance > 0
+    ? separatedBalance
+    : Number(item.profiles?.balance || 0);
 
           return (
             <div
@@ -455,20 +454,43 @@ const totalAmount = filteredRecords.reduce(
                   </p>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-white/35">{t.list.balance}</p>
-                      <p className="mt-1 font-black text-white">
-                        ${Number(item.profiles?.balance || 0).toFixed(2)}
-                      </p>
-                    </div>
+  <div>
+    <p className="text-xs text-white/35">{t.list.balance}</p>
+    <p className="mt-1 font-black text-yellow-300">
+      ${displayBalance.toFixed(2)}
+    </p>
+  </div>
 
-                    <div>
-                      <p className="text-xs text-white/35">{t.list.step}</p>
-                      <p className="mt-1 font-black text-white">
-                        {item.profiles?.current_step || 1}
-                      </p>
-                    </div>
-                  </div>
+  <div>
+    <p className="text-xs text-white/35">{t.list.step}</p>
+    <p className="mt-1 font-black text-white">
+      {item.profiles?.current_step || 1}
+    </p>
+  </div>
+</div>
+
+<div className="mt-3 grid grid-cols-3 gap-2">
+  <div className="rounded-xl bg-black/30 p-2">
+    <p className="text-[10px] text-white/35">Deposited</p>
+    <p className="mt-1 text-xs font-black text-white">
+      ${Number(item.profiles?.deposited_balance || 0).toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-xl bg-black/30 p-2">
+    <p className="text-[10px] text-white/35">Referral</p>
+    <p className="mt-1 text-xs font-black text-yellow-300">
+      ${Number(item.profiles?.referral_bonus_balance || 0).toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-xl bg-black/30 p-2">
+    <p className="text-[10px] text-white/35">Profit</p>
+    <p className="mt-1 text-xs font-black text-emerald-300">
+      ${Number(item.profiles?.task_profit_balance || 0).toFixed(2)}
+    </p>
+  </div>
+</div>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -605,17 +627,6 @@ const totalAmount = filteredRecords.reduce(
 </section>
       </div>
     </main>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-      <p className="text-xs text-white/45">{label}</p>
-      <p className="mt-1 truncate text-xl font-black text-yellow-300">
-        {value}
-      </p>
-    </div>
   );
 }
 

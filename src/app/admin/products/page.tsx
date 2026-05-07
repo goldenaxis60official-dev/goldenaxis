@@ -27,6 +27,8 @@ import {
   X,
 } from "lucide-react";
 
+type ProductTier = "tier0" | "tier1" | "tier2" | "tier3" | "out";
+
 type ProductForm = {
   id?: string;
   name: string;
@@ -38,6 +40,7 @@ type ProductForm = {
   description: string;
   images: string[];
   main_image: string;
+  tier: ProductTier;
   is_active: boolean;
   product_type: "normal" | "lucky";
 };
@@ -47,26 +50,34 @@ type AdminProductsText = typeof en.adminProducts;
 const emptyForm: ProductForm = {
   name: "",
   category: "Gold Jewelry",
-  price: 0,
+  price: 1,
   currency: "USD",
   rating: 4.8,
   reviews_count: 0,
   description: "",
   images: [],
   main_image: "",
+  tier: "tier0",
   is_active: true,
   product_type: "normal",
 };
 
-type ProductTier = "tier1" | "tier2" | "tier3" | "out";
-
 const productTierPlan = [
+  {
+    id: "tier0" as ProductTier,
+    label: "Tier 0",
+    range: "$1–$100",
+    target: 20,
+    min: 1,
+    max: 100,
+    helper: "Starter gold accessories, jewel care items, small gift pieces",
+  },
   {
     id: "tier1" as ProductTier,
     label: "Tier 1",
-    range: "$100–$1,000",
+    range: "$101–$1,000",
     target: 60,
-    min: 100,
+    min: 101,
     max: 1000,
     helper: "Basic gold, small jewelry, simple gem pieces",
   },
@@ -100,7 +111,8 @@ const quickCategories = [
 ];
 
 function getProductTier(price: number): ProductTier {
-  if (price >= 100 && price <= 1000) return "tier1";
+  if (price >= 1 && price <= 100) return "tier0";
+  if (price >= 101 && price <= 1000) return "tier1";
   if (price >= 1001 && price <= 5000) return "tier2";
   if (price >= 5001 && price <= 10000) return "tier3";
   return "out";
@@ -109,6 +121,7 @@ function getProductTier(price: number): ProductTier {
 function getTierLabel(price: number) {
   const tier = getProductTier(price);
 
+  if (tier === "tier0") return "Tier 0";
   if (tier === "tier1") return "Tier 1";
   if (tier === "tier2") return "Tier 2";
   if (tier === "tier3") return "Tier 3";
@@ -118,7 +131,7 @@ function getTierLabel(price: number) {
 
 function getTierRange(price: number) {
   const tier = productTierPlan.find((item) => item.id === getProductTier(price));
-  return tier?.range || "Use $100–$10,000";
+  return tier?.range || "Use $1–$10,000";
 }
 
 function buildDefaultDescription(name: string, category: string, price: number) {
@@ -174,20 +187,33 @@ const [pageSize, setPageSize] = useState(10);
 
   const tierCounts = useMemo(() => {
   return {
+    tier0: products.filter(
+      (product) =>
+        product.product_type !== "lucky" &&
+        getProductTier(Number(product.price)) === "tier0"
+    ).length,
     tier1: products.filter(
-      (product) => getProductTier(Number(product.price)) === "tier1"
+      (product) =>
+        product.product_type !== "lucky" &&
+        getProductTier(Number(product.price)) === "tier1"
     ).length,
     tier2: products.filter(
-      (product) => getProductTier(Number(product.price)) === "tier2"
+      (product) =>
+        product.product_type !== "lucky" &&
+        getProductTier(Number(product.price)) === "tier2"
     ).length,
     tier3: products.filter(
-      (product) => getProductTier(Number(product.price)) === "tier3"
+      (product) =>
+        product.product_type !== "lucky" &&
+        getProductTier(Number(product.price)) === "tier3"
     ).length,
     out: products.filter(
-      (product) => getProductTier(Number(product.price)) === "out"
+      (product) =>
+        product.product_type !== "lucky" &&
+        getProductTier(Number(product.price)) === "out"
     ).length,
   };
-}, [products]);
+}, [products]);;
 
 const productTypeCounts = useMemo(() => {
   return {
@@ -318,8 +344,9 @@ useEffect(() => {
       description: product.description || "",
       images: Array.isArray(product.images) ? product.images : [],
       main_image: product.main_image || "",
+      tier: getProductTier(Number(product.price)),
       is_active: product.is_active,
-product_type: product.product_type || "normal",
+      product_type: product.product_type || "normal",
     });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -420,8 +447,8 @@ if (invalidFile) {
       return;
     }
 
-    if (Number(form.price) < 100 || Number(form.price) > 10000) {
-  setErrorText("Product price must be between $100 and $10,000.");
+if (Number(form.price) < 1 || Number(form.price) > 10000) {
+  setErrorText("Product price must be between $1 and $10,000.");
   setSaving(false);
   return;
 }
@@ -432,19 +459,28 @@ if (Number(form.rating) < 0 || Number(form.rating) > 5) {
   return;
 }
 
-    const payload = {
-      name: form.name.trim(),
-      category: form.category.trim() || "Gold Jewelry",
-      price: Number(form.price),
-      currency: form.currency.trim() || "USD",
-      rating: Number(form.rating),
-      reviews_count: Number(form.reviews_count),
-      description: form.description.trim() || null,
-      images: form.images,
-      main_image: form.main_image || form.images[0] || null,
-      is_active: true,
-product_type: form.product_type,
-    };
+    const detectedTier = getProductTier(Number(form.price));
+
+if (detectedTier === "out") {
+  setErrorText("Product tier is invalid. Use price between $1 and $10,000.");
+  setSaving(false);
+  return;
+}
+
+const payload = {
+  name: form.name.trim(),
+  category: form.category.trim() || "Gold Jewelry",
+  price: Number(form.price),
+  currency: form.currency.trim() || "USD",
+  rating: Number(form.rating),
+  reviews_count: Number(form.reviews_count),
+  description: form.description.trim() || null,
+  images: form.images,
+  main_image: form.main_image || form.images[0] || null,
+  tier: form.product_type === "lucky" ? "tier3" : detectedTier,
+  is_active: true,
+  product_type: form.product_type,
+};
 
     if (form.id) {
       const { error } = await supabase
@@ -597,13 +633,13 @@ loadProducts();
 </div>
 
 <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-  <StatCard label="Normal Products" value={`${productTypeCounts.normal} / 120`} />
+  <StatCard label="Normal Products" value={`${productTypeCounts.normal} / 140`} />
   <StatCard label="Lucky Products" value={`${productTypeCounts.lucky} / 10`} />
   <StatCard label="Total Products" value={String(products.length)} />
   <StatCard label="Gallery Status" value={t.stats.galleryReady} />
 </div>
 
-<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
   {productTierPlan.map((tier) => {
     const count = tierCounts[tier.id];
 
@@ -773,10 +809,11 @@ loadProducts();
       type="button"
       onClick={() =>
         setForm({
-          ...form,
-          product_type: "normal",
-          category: form.category || "Gold Jewelry",
-        })
+  ...form,
+  product_type: "normal",
+  category: form.category === "Lucky Order" ? "Gold Jewelry" : form.category || "Gold Jewelry",
+  tier: getProductTier(form.price),
+})
       }
       className={`rounded-xl border px-3 py-3 text-left text-xs font-black transition ${
         form.product_type === "normal"
@@ -794,10 +831,12 @@ loadProducts();
       type="button"
       onClick={() =>
         setForm({
-          ...form,
-          product_type: "lucky",
-          category: "Lucky Order",
-        })
+  ...form,
+  product_type: "lucky",
+  category: "Lucky Order",
+  tier: "tier3",
+  price: form.price < 5001 ? 6200 : form.price,
+})
       }
       className={`rounded-xl border px-3 py-3 text-left text-xs font-black transition ${
         form.product_type === "lucky"
@@ -876,29 +915,30 @@ loadProducts();
   </div>
 
   <div className="grid grid-cols-1 gap-2">
-    {productTierPlan.map((tier) => (
-      <button
-        key={tier.id}
-        type="button"
-        onClick={() =>
-          setForm({
-            ...form,
-            price: tier.min,
-          })
-        }
-        className={`rounded-xl border px-3 py-2 text-left text-xs transition ${
-          getProductTier(form.price) === tier.id
-            ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-200"
-            : "border-white/10 bg-black/30 text-white/50 hover:bg-white/[0.06]"
-        }`}
-      >
-        <span className="font-black">{tier.label}</span>{" "}
-        <span className="text-white/45">{tier.range}</span>
-        <br />
-        <span className="text-[11px] text-white/35">{tier.helper}</span>
-      </button>
-    ))}
-  </div>
+  {productTierPlan.map((tier) => (
+    <button
+      key={tier.id}
+      type="button"
+      onClick={() =>
+        setForm({
+          ...form,
+          price: tier.min,
+          tier: tier.id,
+        })
+      }
+      className={`rounded-xl border px-3 py-2 text-left text-xs transition ${
+        getProductTier(form.price) === tier.id
+          ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-200"
+          : "border-white/10 bg-black/30 text-white/50 hover:bg-white/[0.06]"
+      }`}
+    >
+      <span className="font-black">{tier.label}</span>{" "}
+      <span className="text-white/45">{tier.range}</span>
+      <br />
+      <span className="text-[11px] text-white/35">{tier.helper}</span>
+    </button>
+  ))}
+</div>
 </div>
 
 <div className="grid grid-cols-2 gap-3">
@@ -906,7 +946,13 @@ loadProducts();
     label={`Price (${getTierRange(form.price)})`}
     value={form.price}
     step="0.01"
-    onChange={(value) => setForm({ ...form, price: value })}
+    onChange={(value) =>
+  setForm({
+    ...form,
+    price: value,
+    tier: getProductTier(value),
+  })
+}
   />
 
   <NumberInput

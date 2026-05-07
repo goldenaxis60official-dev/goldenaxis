@@ -3,10 +3,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { en } from "@/i18n/en";
 import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
+import GenerateOrdersModal from "./components/GenerateOrdersModal";
+import LuckyOrderModal from "./components/LuckyOrderModal";
+import ViewOrdersModal from "./components/ViewOrdersModal";
+import ResetOrdersModal from "./components/ResetOrdersModal";
+import SecurityResetModal from "./components/SecurityResetModal";
+import AdjustBalanceModal from "./components/AdjustBalanceModal";
+import DeleteUserModal from "./components/DeleteUserModal";
+import NicknameModal from "./components/NicknameModal";
+import ReferralCodeModal from "./components/ReferralCodeModal";
+import ReferralBonusModal from "./components/ReferralBonusModal";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
@@ -17,18 +26,54 @@ import {
   ChevronLeft,
   ChevronRight,
   Crown,
-  ListChecks,
+  Eye,
+  RotateCcw,
+  PackagePlus,
   Pencil,
-  Save,
   Search,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Users,
-  X,
 } from "lucide-react";
 
 type ManagedUser = Profile & {
   admin_nickname: string | null;
+};
+
+type LuckyProductOption = {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  main_image: string | null;
+};
+
+type GeneratedOrderItemPreview = {
+  id: string;
+  product_snapshot: {
+    name?: string;
+    main_image?: string | null;
+    category?: string;
+    custom_lucky_amount?: string | number;
+  };
+  unit_price: number;
+  quantity: number;
+  subtotal: number;
+};
+
+type GeneratedOrderPreview = {
+  id: string;
+  step_number: number;
+  order_total: number;
+  profit_rate: number;
+  profit_amount: number;
+  order_type: "normal" | "lucky";
+  status: "pending" | "completed" | "cancelled";
+  is_lucky_bonus: boolean;
+  created_at: string;
+  completed_at: string | null;
+  user_generated_order_items?: GeneratedOrderItemPreview[];
 };
 
 type AdminUsersText = typeof en.adminUsers;
@@ -60,12 +105,19 @@ const [sortBy, setSortBy] = useState<
 >("newest");
 const [currentPage, setCurrentPage] = useState(1);
 const [pageSize, setPageSize] = useState(10);
+const [minBalanceFilter, setMinBalanceFilter] = useState("");
+const [maxBalanceFilter, setMaxBalanceFilter] = useState("");
+const [minStepFilter, setMinStepFilter] = useState("");
+const [maxStepFilter, setMaxStepFilter] = useState("");
 const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
 const [nicknameUser, setNicknameUser] = useState<ManagedUser | null>(null);
 const [nicknameValue, setNicknameValue] = useState("");
 
 const [referralUser, setReferralUser] = useState<ManagedUser | null>(null);
 const [referralValue, setReferralValue] = useState("");
+const [referralBonusUser, setReferralBonusUser] =
+  useState<ManagedUser | null>(null);
+const [referralBonusAmount, setReferralBonusAmount] = useState(0);
 
 const [deleteUser, setDeleteUser] = useState<ManagedUser | null>(null);
 const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -73,6 +125,23 @@ const [securityUser, setSecurityUser] = useState<ManagedUser | null>(null);
 const [resetPassword, setResetPassword] = useState("");
 const [resetPasscode, setResetPasscode] = useState("");
 const [resetResult, setResetResult] = useState("");
+const [generateUser, setGenerateUser] = useState<ManagedUser | null>(null);
+const [generateTaskCount, setGenerateTaskCount] = useState(60);
+const [generateCapitalAmount, setGenerateCapitalAmount] = useState(500);
+const [generateProfitRate, setGenerateProfitRate] = useState(0.08);
+const [generateResetExisting, setGenerateResetExisting] = useState(true);
+const [luckyUser, setLuckyUser] = useState<ManagedUser | null>(null);
+const [luckyProducts, setLuckyProducts] = useState<LuckyProductOption[]>([]);
+const [luckyStepNumber, setLuckyStepNumber] = useState(25);
+const [luckyProductId, setLuckyProductId] = useState("");
+const [luckyAmount, setLuckyAmount] = useState(2800);
+const [luckyProfitRate, setLuckyProfitRate] = useState(5);
+const [viewOrdersUser, setViewOrdersUser] = useState<ManagedUser | null>(null);
+const [viewOrders, setViewOrders] = useState<GeneratedOrderPreview[]>([]);
+const [viewOrdersLoading, setViewOrdersLoading] = useState(false);
+const [resetOrdersUser, setResetOrdersUser] = useState<ManagedUser | null>(null);
+const [resetOrdersConfirmText, setResetOrdersConfirmText] = useState("");
+const [resetOrdersResetStep, setResetOrdersResetStep] = useState(true);
 
   const [adjustAmount, setAdjustAmount] = useState(100);
   const [adjustNote, setAdjustNote] = useState("");
@@ -155,9 +224,32 @@ const filteredUsers = useMemo(() => {
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
     const matchesStatus =
-      statusFilter === "all" || user.status === statusFilter;
+  statusFilter === "all" || user.status === statusFilter;
 
-    return matchesSearch && matchesRole && matchesStatus;
+const displayBalance = getDisplayBalance(user);
+const currentStep = Number(user.current_step || 0);
+
+const matchesMinBalance =
+  !minBalanceFilter || displayBalance >= Number(minBalanceFilter);
+
+const matchesMaxBalance =
+  !maxBalanceFilter || displayBalance <= Number(maxBalanceFilter);
+
+const matchesMinStep =
+  !minStepFilter || currentStep >= Number(minStepFilter);
+
+const matchesMaxStep =
+  !maxStepFilter || currentStep <= Number(maxStepFilter);
+
+return (
+  matchesSearch &&
+  matchesRole &&
+  matchesStatus &&
+  matchesMinBalance &&
+  matchesMaxBalance &&
+  matchesMinStep &&
+  matchesMaxStep
+);
   });
 
   return [...result].sort((a, b) => {
@@ -181,7 +273,17 @@ const filteredUsers = useMemo(() => {
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   });
-}, [users, searchText, roleFilter, statusFilter, sortBy]);
+}, [
+  users,
+  searchText,
+  roleFilter,
+  statusFilter,
+  sortBy,
+  minBalanceFilter,
+  maxBalanceFilter,
+  minStepFilter,
+  maxStepFilter,
+]);
 
 const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
 
@@ -197,7 +299,17 @@ const lastResult = Math.min(currentPage * pageSize, filteredUsers.length);
 
 useEffect(() => {
   setCurrentPage(1);
-}, [searchText, roleFilter, statusFilter, sortBy, pageSize]);
+}, [
+  searchText,
+  roleFilter,
+  statusFilter,
+  sortBy,
+  pageSize,
+  minBalanceFilter,
+  maxBalanceFilter,
+  minStepFilter,
+  maxStepFilter,
+]);
 
 useEffect(() => {
   if (currentPage > totalPages) {
@@ -205,12 +317,98 @@ useEffect(() => {
   }
 }, [currentPage, totalPages]);
 
-  const adminCount = users.filter((user) => user.role === "admin").length;
-  const activeCount = users.filter((user) => user.status === "active").length;
-  const totalBalance = users.reduce(
-    (sum, user) => sum + Number(user.balance || 0),
-    0
-  );
+function formatMoney(value: number | null | undefined) {
+  return `$${Number(value || 0).toFixed(2)}`;
+}
+
+function shortId(value: string) {
+  if (!value) return "-";
+  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString();
+}
+
+function getDisplayBalance(user: ManagedUser) {
+  const separatedBalance =
+    Number(user.deposited_balance || 0) +
+    Number(user.referral_bonus_balance || 0) +
+    Number(user.task_profit_balance || 0);
+
+  return separatedBalance > 0 ? separatedBalance : Number(user.balance || 0);
+}
+
+function escapeCsv(value: string | number | null | undefined) {
+  const cleanValue = String(value ?? "").replaceAll('"', '""');
+  return `"${cleanValue}"`;
+}
+
+function exportUsersToCsv() {
+  const headers = [
+    "Name",
+    "Email",
+    "User ID",
+    "Phone",
+    "Nickname",
+    "Role",
+    "Status",
+    "Total Balance",
+    "Deposited Balance",
+    "Referral Bonus",
+    "Task Profit",
+    "Today Earnings",
+    "Total Earnings",
+    "Current Step",
+    "Credit Score",
+    "Referral Code",
+    "Language",
+    "Created At",
+  ];
+
+  const rows = filteredUsers.map((user) => [
+    user.display_name || "",
+    user.email || "",
+    user.id,
+    user.phone || "",
+    user.admin_nickname || "",
+    user.role,
+    user.status,
+    getDisplayBalance(user).toFixed(2),
+    Number(user.deposited_balance || 0).toFixed(2),
+    Number(user.referral_bonus_balance || 0).toFixed(2),
+    Number(user.task_profit_balance || 0).toFixed(2),
+    Number(user.today_earnings || 0).toFixed(2),
+    Number(user.total_earnings || 0).toFixed(2),
+    user.current_step,
+    user.credit_score,
+    user.referral_code || "",
+    user.language || "en",
+    user.created_at,
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) => row.map(escapeCsv).join(","))
+    .join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `golden-axis-users-${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
 
 function generateSixDigitPasscode() {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -308,6 +506,225 @@ async function handleResetWithdrawPasscode() {
   );
   setSuccessText("Withdraw passcode reset successfully.");
   setActionLoading(false);
+}
+
+async function handleGenerateOrders() {
+  if (!generateUser) return;
+
+  if (generateTaskCount < 1 || generateTaskCount > 80) {
+    setErrorText("Task count must be between 1 and 80.");
+    return;
+  }
+
+  if (generateCapitalAmount <= 0) {
+    setErrorText("Capital amount must be greater than 0.");
+    return;
+  }
+
+  if (generateProfitRate < 0) {
+    setErrorText("Profit rate cannot be negative.");
+    return;
+  }
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { error } = await supabase.rpc("generate_user_orders", {
+    p_user_id: generateUser.id,
+    p_task_count: generateTaskCount,
+    p_capital_amount: generateCapitalAmount,
+    p_profit_rate_percent: generateProfitRate,
+    p_reset_existing: generateResetExisting,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  setSuccessText(
+    `Generated ${generateTaskCount} auto orders for ${
+      generateUser.display_name || generateUser.email || "user"
+    }.`
+  );
+
+  setGenerateUser(null);
+  setGenerateTaskCount(60);
+  setGenerateCapitalAmount(500);
+  setGenerateProfitRate(0.08);
+  setGenerateResetExisting(true);
+  setActionLoading(false);
+  loadUsers();
+}
+
+async function openLuckyOrderModal(user: ManagedUser) {
+  setLuckyUser(user);
+  setLuckyStepNumber(25);
+  setLuckyAmount(2800);
+  setLuckyProfitRate(5);
+  setLuckyProductId("");
+  setSuccessText("");
+  setErrorText("");
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, price, category, main_image")
+    .eq("product_type", "lucky")
+    .eq("is_active", true)
+    .eq("stock_status", "in_stock")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    setErrorText(error.message);
+    return;
+  }
+
+  const products = (data || []) as LuckyProductOption[];
+  setLuckyProducts(products);
+
+  if (products.length > 0) {
+    setLuckyProductId(products[0].id);
+  }
+}
+
+async function handleInjectLuckyOrder() {
+  if (!luckyUser) return;
+
+  if (!luckyProductId) {
+    setErrorText("Please choose a lucky product.");
+    return;
+  }
+
+  if (luckyStepNumber < 1 || luckyStepNumber > 80) {
+    setErrorText("Lucky step must be between 1 and 80.");
+    return;
+  }
+
+  if (luckyAmount <= 0) {
+    setErrorText("Lucky amount must be greater than 0.");
+    return;
+  }
+
+  if (luckyProfitRate < 0) {
+    setErrorText("Lucky profit rate cannot be negative.");
+    return;
+  }
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { error } = await supabase.rpc("inject_lucky_order", {
+    p_user_id: luckyUser.id,
+    p_step_number: luckyStepNumber,
+    p_lucky_product_id: luckyProductId,
+    p_lucky_amount: luckyAmount,
+    p_profit_rate_percent: luckyProfitRate,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  setSuccessText(
+    `Lucky order injected at step ${luckyStepNumber} for ${
+      luckyUser.display_name || luckyUser.email || "user"
+    }.`
+  );
+
+  setLuckyUser(null);
+  setLuckyProducts([]);
+  setLuckyProductId("");
+  setLuckyStepNumber(25);
+  setLuckyAmount(2800);
+  setLuckyProfitRate(5);
+  setActionLoading(false);
+  loadUsers();
+}
+
+async function openViewOrdersModal(user: ManagedUser) {
+  setViewOrdersUser(user);
+  setViewOrders([]);
+  setViewOrdersLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { data, error } = await supabase
+    .from("user_generated_orders")
+    .select(
+      `
+      id,
+      step_number,
+      order_total,
+      profit_rate,
+      profit_amount,
+      order_type,
+      status,
+      is_lucky_bonus,
+      created_at,
+      completed_at,
+      user_generated_order_items (
+        id,
+        product_snapshot,
+        unit_price,
+        quantity,
+        subtotal
+      )
+    `
+    )
+    .eq("user_id", user.id)
+    .order("step_number", { ascending: true });
+
+  if (error) {
+    setErrorText(error.message);
+    setViewOrdersLoading(false);
+    return;
+  }
+
+  setViewOrders((data || []) as unknown as GeneratedOrderPreview[]);
+  setViewOrdersLoading(false);
+}
+
+async function handleResetGeneratedOrders() {
+  if (!resetOrdersUser) return;
+
+  if (resetOrdersConfirmText !== "RESET") {
+    setErrorText("Type RESET to confirm.");
+    return;
+  }
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { error } = await supabase.rpc("reset_user_generated_orders", {
+    p_user_id: resetOrdersUser.id,
+    p_reset_step: resetOrdersResetStep,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  setSuccessText(
+    `Generated orders reset for ${
+      resetOrdersUser.display_name || resetOrdersUser.email || "user"
+    }.`
+  );
+
+  setResetOrdersUser(null);
+  setResetOrdersConfirmText("");
+  setResetOrdersResetStep(true);
+  setViewOrdersUser(null);
+  setViewOrders([]);
+  setActionLoading(false);
+  loadUsers();
 }
 
   async function handleAdjustBalance() {
@@ -430,6 +847,61 @@ async function handleSaveReferralCode() {
   setActionLoading(false);
 }
 
+async function handleSaveReferralBonus() {
+  if (!referralBonusUser) return;
+
+  if (referralBonusAmount < 0) {
+    setErrorText("Referral bonus cannot be negative.");
+    return;
+  }
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { data, error } = await supabase.rpc(
+    "admin_set_user_referral_bonus_balance",
+    {
+      input_user_id: referralBonusUser.id,
+      input_referral_bonus_balance: referralBonusAmount,
+    }
+  );
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  const newReferral = Number(
+    data?.new_referral_bonus_balance ?? referralBonusAmount
+  );
+
+  const newBalance = Number(
+    data?.balance_after ??
+      Number(referralBonusUser.deposited_balance || 0) +
+        newReferral +
+        Number(referralBonusUser.task_profit_balance || 0)
+  );
+
+  setUsers((currentUsers) =>
+    currentUsers.map((user) =>
+      user.id === referralBonusUser.id
+        ? {
+            ...user,
+            referral_bonus_balance: newReferral,
+            balance: newBalance,
+          }
+        : user
+    )
+  );
+
+  setSuccessText(t.messages.referralBonusUpdated);
+  setReferralBonusUser(null);
+  setReferralBonusAmount(0);
+  setActionLoading(false);
+}
+
 async function handleDeleteUser() {
   if (!deleteUser) return;
 
@@ -488,11 +960,11 @@ async function handleDeleteUser() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8">
+  <main className="min-h-screen overflow-x-hidden bg-[#050505] text-white">
+  <div className="w-full px-3 py-4 sm:px-5">
         <AdminNav language={currentLanguage} profile={profile} />
 
-        <div className="mb-8 flex items-center justify-between gap-5">
+        <div className="mb-5 flex items-center justify-between gap-5">
           <div>
             <p className="text-sm font-bold text-yellow-200/80">
   {t.pageTag}
@@ -503,20 +975,6 @@ async function handleDeleteUser() {
 </p>
           </div>
 
-          <Link
-            href="/admin/user-tasks"
-            className="flex items-center gap-2 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 hover:bg-yellow-400/15"
-          >
-            <ListChecks className="h-4 w-4" />
-            {t.userTaskAssignment}
-          </Link>
-        </div>
-
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label={t.stats.users} value={String(users.length)} />
-<StatCard label={t.stats.active} value={String(activeCount)} />
-<StatCard label={t.stats.admins} value={String(adminCount)} />
-<StatCard label={t.stats.totalBalance} value={`$${totalBalance.toFixed(2)}`} />
         </div>
 
         {successText && (
@@ -532,267 +990,457 @@ async function handleDeleteUser() {
             {errorText}
           </div>
         )}
+<style>{`
+  .users-white-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+  }
 
-        <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
-  <div className="mb-5 flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
-    <div>
-      <p className="text-sm text-yellow-200/80">{t.list.members}</p>
-<h2 className="text-2xl font-black">{t.list.registeredUsers}</h2>
-<p className="mt-1 text-xs text-white/40">
-  {t.list.description}
-</p>
+  .users-white-card [class*="bg-[#101010]"],
+  .users-white-card [class*="bg-[#181818]"],
+  .users-white-card [class*="bg-black"],
+  .users-white-card [class*="bg-white/"] {
+    background: #ffffff !important;
+  }
+
+  .users-white-card [class*="border-white"] {
+    border-color: #e2e8f0 !important;
+  }
+
+  .users-white-card [class*="text-white"] {
+    color: #334155 !important;
+  }
+
+  .users-white-card h2,
+  .users-white-card .font-black {
+    color: #0f172a !important;
+  }
+
+  .users-white-card input,
+  .users-white-card select {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .users-white-card input::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  .users-white-card thead {
+    background: #f8fafc !important;
+    color: #475569 !important;
+  }
+
+  .users-white-card tbody tr {
+    background: #ffffff !important;
+  }
+
+  .users-white-card tbody tr:hover {
+    background: #fff7ed !important;
+  }
+
+  .users-white-card button[class*="bg-blue"],
+  .users-white-card button[class*="bg-fuchsia"],
+  .users-white-card button[class*="bg-orange"],
+  .users-white-card button[class*="bg-red"] {
+    color: #ffffff !important;
+  }
+
+  .users-white-card button[class*="bg-yellow"] {
+    color: #111827 !important;
+  }
+
+  .users-white-card button[class*="bg-emerald"] {
+    color: #022c22 !important;
+  }
+`}</style>
+
+<section className="users-white-card overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
+  <div className="border-b border-white/10 bg-[#101010] px-4 py-3">
+    <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <div>
+        <p className="text-xs font-bold text-yellow-300">{t.panel.tag}</p>
+        <h2 className="text-xl font-black text-white">{t.panel.title}</h2>
+        <p className="mt-1 text-xs text-white/45">{t.panel.description}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="rounded-lg border border-yellow-400/25 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-300">
+          {filteredUsers.length} {t.panel.shown} / {users.length} {t.panel.total}
+        </div>
+
+        <button
+          type="button"
+          onClick={loadUsers}
+          className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1]"
+        >
+          {t.panel.refresh}
+        </button>
+
+        <button
+          type="button"
+          onClick={exportUsersToCsv}
+          className="rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-300 hover:bg-emerald-500/15"
+        >
+          {t.panel.exportCsv}
+        </button>
+      </div>
     </div>
 
-    <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-300">
-      {filteredUsers.length} {t.list.shown} / {users.length} {t.list.total}
-    </div>
-  </div>
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.5fr_0.7fr_0.8fr_0.9fr_0.6fr]">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+        <input
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          placeholder={t.filters.searchPlaceholder}
+          className="h-10 w-full rounded-lg border border-white/10 bg-black/40 py-2 pl-10 pr-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+        />
+      </div>
 
-  <div className="mb-5 grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_0.7fr_0.8fr_0.9fr_0.6fr]">
-    <div className="relative">
-      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-      <input
-        value={searchText}
-        onChange={(event) => setSearchText(event.target.value)}
-        placeholder={t.list.searchPlaceholder}
-        className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
-      />
-    </div>
-
-    <select
-      value={roleFilter}
-      onChange={(event) =>
-  setRoleFilter(
-    event.target.value as "all" | "user" | "admin" | "super" | "support"
-  )
-}
-      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
-    >
-      <option className="bg-black" value="all">
-        {t.list.allRoles}
-      </option>
-      <option className="bg-black" value="user">
-        {t.list.users}
-      </option>
-      <option className="bg-black" value="super">
-  Super
-</option>
-<option className="bg-black" value="support">
-  Support
-</option>
-    </select>
-
-    <select
-      value={statusFilter}
-      onChange={(event) => setStatusFilter(event.target.value)}
-      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
-    >
-      <option className="bg-black" value="all">
-        {t.list.allStatus}
-      </option>
-
-      {userStatuses.map((status) => (
-        <option key={status} className="bg-black" value={status}>
-          {status}
+      <select
+        value={roleFilter}
+        onChange={(event) =>
+          setRoleFilter(
+            event.target.value as "all" | "user" | "admin" | "super" | "support"
+          )
+        }
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="all">
+          {t.filters.allRoles}
         </option>
-      ))}
-    </select>
+        <option className="bg-black" value="user">
+          {t.filters.users}
+        </option>
+        <option className="bg-black" value="admin">
+          {t.filters.admin}
+        </option>
+        <option className="bg-black" value="super">
+          {t.filters.super}
+        </option>
+        <option className="bg-black" value="support">
+          {t.filters.support}
+        </option>
+      </select>
 
-    <select
-      value={sortBy}
-      onChange={(event) =>
-        setSortBy(
-          event.target.value as
-            | "newest"
-            | "name"
-            | "balance_high"
-            | "today_high"
-            | "step_high"
-        )
-      }
-      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
-    >
-      <option className="bg-black" value="newest">
-        {t.list.newestFirst}
-      </option>
-      <option className="bg-black" value="name">
-        {t.list.nameAZ}
-      </option>
-      <option className="bg-black" value="balance_high">
-        {t.list.balanceHigh}
-      </option>
-      <option className="bg-black" value="today_high">
-        {t.list.todayHigh}
-      </option>
-      <option className="bg-black" value="step_high">
-        {t.list.stepHigh}
-      </option>
-    </select>
+      <select
+        value={statusFilter}
+        onChange={(event) => setStatusFilter(event.target.value)}
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="all">
+          {t.filters.allStatus}
+        </option>
+        {userStatuses.map((status) => (
+          <option key={status} className="bg-black" value={status}>
+            {status}
+          </option>
+        ))}
+      </select>
 
-    <select
-      value={pageSize}
-      onChange={(event) => setPageSize(Number(event.target.value))}
-      className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none focus:border-yellow-400/50"
-    >
-      <option className="bg-black" value={10}>
-        10
-      </option>
-      <option className="bg-black" value={25}>
-        25
-      </option>
-      <option className="bg-black" value={50}>
-        50
-      </option>
-      <option className="bg-black" value={100}>
-        100
-      </option>
-    </select>
+      <select
+        value={sortBy}
+        onChange={(event) =>
+          setSortBy(
+            event.target.value as
+              | "newest"
+              | "name"
+              | "balance_high"
+              | "today_high"
+              | "step_high"
+          )
+        }
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value="newest">
+          {t.filters.newestFirst}
+        </option>
+        <option className="bg-black" value="name">
+          {t.filters.nameAz}
+        </option>
+        <option className="bg-black" value="balance_high">
+          {t.filters.balanceHigh}
+        </option>
+        <option className="bg-black" value="today_high">
+          {t.filters.todayHigh}
+        </option>
+        <option className="bg-black" value="step_high">
+          {t.filters.stepHigh}
+        </option>
+      </select>
+
+      <select
+        value={pageSize}
+        onChange={(event) => setPageSize(Number(event.target.value))}
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+      >
+        <option className="bg-black" value={10}>10</option>
+        <option className="bg-black" value={25}>25</option>
+        <option className="bg-black" value={50}>50</option>
+        <option className="bg-black" value={100}>100</option>
+      </select>
+    </div>
+
+    <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[0.7fr_0.7fr_0.7fr_0.7fr_auto]">
+      <input
+        value={minBalanceFilter}
+        onChange={(event) => setMinBalanceFilter(event.target.value)}
+        type="number"
+        placeholder={t.filters.minBalance}
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+      />
+
+      <input
+        value={maxBalanceFilter}
+        onChange={(event) => setMaxBalanceFilter(event.target.value)}
+        type="number"
+        placeholder={t.filters.maxBalance}
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+      />
+
+      <input
+        value={minStepFilter}
+        onChange={(event) => setMinStepFilter(event.target.value)}
+        type="number"
+        placeholder={t.filters.minStep}
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+      />
+
+      <input
+        value={maxStepFilter}
+        onChange={(event) => setMaxStepFilter(event.target.value)}
+        type="number"
+        placeholder={t.filters.maxStep}
+        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+      />
+
+      <button
+        type="button"
+        onClick={() => {
+          setSearchText("");
+          setRoleFilter("all");
+          setStatusFilter("all");
+          setSortBy("newest");
+          setMinBalanceFilter("");
+          setMaxBalanceFilter("");
+          setMinStepFilter("");
+          setMaxStepFilter("");
+        }}
+        className="h-10 rounded-lg border border-red-400/25 bg-red-500/10 px-3 text-xs font-black text-red-300 hover:bg-red-500/15"
+      >
+        {t.filters.clearFilters}
+      </button>
+    </div>
   </div>
 
   {loading && (
-    <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 text-center text-white/60">
-      {t.list.loading}
+    <div className="p-8 text-center text-sm text-white/60">
+      {t.loadingUsers}
     </div>
   )}
 
   {!loading && filteredUsers.length === 0 && (
-    <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center">
-      <Users className="mx-auto mb-4 h-12 w-12 text-yellow-300" />
-      <p className="font-black">{t.list.noUsersFound}</p>
-<p className="mt-2 text-sm text-white/50">
-  {t.list.noUsersFoundDescription}
-</p>
+    <div className="p-10 text-center">
+      <Users className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
+      <p className="font-black text-white">{t.noUsersFound}</p>
+      <p className="mt-2 text-sm text-white/45">{t.noUsersNote}</p>
     </div>
   )}
 
   {!loading && filteredUsers.length > 0 && (
     <>
-      <div className="max-h-[650px] overflow-auto rounded-[1.5rem] border border-white/10">
-        <table className="w-full min-w-[1180px] text-left text-sm">
-          <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
+      <div className="overflow-auto rounded-b-xl">
+        <table className="w-full min-w-[1780px] border-collapse text-left text-[12px]">
+          <thead className="sticky top-0 z-10 bg-[#181818] text-[11px] uppercase tracking-wide text-white/45">
             <tr>
-              <th className="px-4 py-3">{t.list.user}</th>
-<th className="px-4 py-3">{t.list.adminNickname}</th>
-<th className="px-4 py-3">{t.list.role}</th>
-<th className="px-4 py-3">{t.list.balance}</th>
-<th className="px-4 py-3">{t.list.today}</th>
-<th className="px-4 py-3">{t.list.step}</th>
-<th className="px-4 py-3">{t.list.inviteCode}</th>
-<th className="px-4 py-3">{t.list.status}</th>
-<th className="px-4 py-3 text-right">{t.list.actions}</th>
+              <th className="border-b border-white/10 px-4 py-3">{t.table.userInfo}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.loginId}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.nickname}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.role}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.balance}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.splitBalance}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.earnings}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.campaign}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.referralCode}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.account}</th>
+              <th className="border-b border-white/10 px-3 py-3">{t.table.created}</th>
+              <th className="border-b border-white/10 px-3 py-3 text-right">{t.table.actions}</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-white/10">
+          <tbody>
             {paginatedUsers.map((user) => {
               const isUserAdmin = user.role === "admin";
+              const displayBalance = getDisplayBalance(user);
 
               return (
                 <tr
                   key={user.id}
-                  className="bg-black/20 transition hover:bg-white/[0.04]"
+                  className="border-b border-white/10 bg-black/20 hover:bg-yellow-400/[0.04]"
                 >
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
+                  <td className="px-3 py-3 align-top">
+                    <div className="flex min-w-[220px] items-start gap-2">
                       <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
                           isUserAdmin
                             ? "bg-yellow-400/10 text-yellow-300"
                             : "bg-blue-400/10 text-blue-300"
                         }`}
                       >
                         {isUserAdmin ? (
-                          <Crown className="h-6 w-6" />
+                          <Crown className="h-5 w-5" />
                         ) : (
-                          <Users className="h-6 w-6" />
+                          <Users className="h-5 w-5" />
                         )}
                       </div>
 
                       <div>
-                        <p className="font-black">
-                          {user.display_name || t.list.fallbackName}
+                        <p className="font-black text-white">
+                          {user.display_name || t.row.noName}
                         </p>
-                        <p className="mt-1 text-xs text-white/45">
-                          {user.email || t.list.noEmail}
+                        <p className="mt-1 text-white/45">
+                          {user.email || t.row.noEmail}
                         </p>
-                        <p className="mt-1 max-w-[220px] truncate text-[10px] text-white/30">
-                          {user.id}
+                        <p className="mt-1 text-[10px] text-white/25">
+                          {shortId(user.id)}
                         </p>
                       </div>
                     </div>
                   </td>
 
-                  <td className="px-4 py-4">
-                    <div className="min-w-[170px]">
-                      {user.admin_nickname ? (
-                        <p className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-200">
-                          {user.admin_nickname}
-                        </p>
-                      ) : (
-                        <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/35">
-                          {t.list.noNickname}
-                        </p>
-                      )}
+                  <td className="px-3 py-3 align-top">
+                    <div className="min-w-[180px]">
+                      <p className="text-white/70">{user.email || "-"}</p>
+                      <p className="mt-1 text-[10px] text-white/35">
+                        {t.row.uid}: {shortId(user.id)}
+                      </p>
+                      <p className="mt-1 text-[10px] text-white/35">
+                        {t.row.phone}: {user.phone || "-"}
+                      </p>
+                    </div>
+                  </td>
+
+                  <td className="px-3 py-3 align-top">
+                    <div className="min-w-[140px]">
+                      <p className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-white/70">
+                        {user.admin_nickname || t.row.noNickname}
+                      </p>
 
                       <button
                         onClick={() => {
                           setNicknameUser(user);
                           setNicknameValue(user.admin_nickname || "");
                         }}
-                        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-white/45 hover:text-yellow-300"
+                        className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200"
                       >
-                        <Pencil className="h-3 w-3" />
-                        {t.list.edit}
+                        {t.row.edit}
                       </button>
                     </div>
                   </td>
 
-                  <td className="px-4 py-4">
+                  <td className="px-3 py-3 align-top">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-black ${
+                      className={`rounded-md px-2 py-1 text-[11px] font-black ${
                         isUserAdmin
                           ? "bg-yellow-300 text-black"
-                          : "bg-white/10 text-white/70"
+                          : user.role === "support"
+                            ? "bg-blue-400/15 text-blue-300"
+                            : user.role === "super"
+                              ? "bg-fuchsia-400/15 text-fuchsia-300"
+                              : "bg-white/10 text-white/70"
                       }`}
                     >
                       {user.role}
                     </span>
                   </td>
 
-                  <td className="px-4 py-4 font-black text-yellow-300">
-                    ${Number(user.balance).toFixed(2)}
+                  <td className="px-3 py-3 align-top">
+                    <p className="font-black text-yellow-300">
+                      {formatMoney(displayBalance)}
+                    </p>
+                    <p className="mt-1 text-[10px] text-white/35">
+                      {t.row.legacy}: {formatMoney(user.balance)}
+                    </p>
                   </td>
 
-                  <td className="px-4 py-4 font-bold text-emerald-300">
-                    ${Number(user.today_earnings).toFixed(2)}
+                  <td className="px-3 py-3 align-top">
+                    <div className="min-w-[145px] space-y-1 text-[11px]">
+                      <p className="text-white/55">
+                        {t.row.deposit}:{" "}
+                        <span className="font-bold text-white">
+                          {formatMoney(user.deposited_balance)}
+                        </span>
+                      </p>
+                      <p className="text-white/55">
+                        {t.row.referral}:{" "}
+                        <span className="font-bold text-yellow-300">
+                          {formatMoney(user.referral_bonus_balance)}
+                        </span>
+                      </p>
+                      <p className="text-white/55">
+                        {t.row.profit}:{" "}
+                        <span className="font-bold text-emerald-300">
+                          {formatMoney(user.task_profit_balance)}
+                        </span>
+                      </p>
+                    </div>
                   </td>
 
-                  <td className="px-4 py-4 font-bold text-white">
-                    {user.current_step}
+                  <td className="px-3 py-3 align-top">
+                    <div className="min-w-[125px] space-y-1 text-[11px]">
+                      <p className="text-white/55">
+                        {t.row.today}:{" "}
+                        <span className="font-bold text-emerald-300">
+                          {formatMoney(user.today_earnings)}
+                        </span>
+                      </p>
+                      <p className="text-white/55">
+                        {t.row.total}:{" "}
+                        <span className="font-bold text-white">
+                          {formatMoney(user.total_earnings)}
+                        </span>
+                      </p>
+                    </div>
                   </td>
 
-                  <td className="px-4 py-4">
-  <div className="min-w-[130px]">
-    <p className="font-black text-yellow-200">
-      {user.referral_code || "-"}
-    </p>
+                  <td className="px-3 py-3 align-top">
+                    <div className="min-w-[110px] space-y-1 text-[11px]">
+                      <p className="font-black text-white">
+                        {t.row.step} {user.current_step}
+                      </p>
+                      <p className="text-white/45">
+                        {t.row.credit}: {user.credit_score}
+                      </p>
+                      <p className="text-white/45">
+                        {t.row.terms}: {user.terms_accepted ? t.row.yes : t.row.no}
+                      </p>
+                    </div>
+                  </td>
 
-    <button
-      onClick={() => {
-        setReferralUser(user);
-        setReferralValue(user.referral_code || "");
-      }}
-      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-white/45 hover:text-yellow-300"
-    >
-      <Pencil className="h-3 w-3" />
-      {t.list.edit}
-    </button>
-  </div>
-</td>
+                  <td className="px-3 py-3 align-top">
+                    <div className="min-w-[120px]">
+                      <p className="font-black text-yellow-200">
+                        {user.referral_code || "-"}
+                      </p>
 
-                  <td className="px-4 py-4">
+                      <button
+                        onClick={() => {
+                          setReferralUser(user);
+                          setReferralValue(user.referral_code || "");
+                        }}
+                        className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200"
+                      >
+                        {t.row.edit}
+                      </button>
+                    </div>
+                  </td>
+
+                  <td className="px-3 py-3 align-top">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-black ${
+                      className={`rounded-md px-2 py-1 text-[11px] font-black ${
                         user.status === "active"
                           ? "bg-emerald-400/15 text-emerald-300"
                           : "bg-red-500/15 text-red-300"
@@ -800,17 +1448,61 @@ async function handleDeleteUser() {
                     >
                       {user.status}
                     </span>
+
+                    <p className="mt-2 text-[10px] text-white/35">
+                      {t.row.lang}: {user.language || "en"}
+                    </p>
                   </td>
 
-                  <td className="px-4 py-4">
-                    <div className="flex justify-end gap-2">
-                      <Link
-                        href={`/admin/user-tasks?user=${user.id}`}
-                        className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-2 text-yellow-300 hover:bg-yellow-400/15"
-                        title={t.list.manageUserTasks}
+                  <td className="px-3 py-3 align-top">
+                    <p className="min-w-[90px] text-white/45">
+                      {formatDate(user.created_at)}
+                    </p>
+                  </td>
+
+                  <td className="px-3 py-3 align-top">
+                    <div className="flex min-w-[310px] flex-wrap justify-end gap-1.5">
+                      <button
+                        onClick={() => {
+                          setGenerateUser(user);
+                          setGenerateTaskCount(60);
+                          setGenerateCapitalAmount(500);
+                          setGenerateProfitRate(0.08);
+                          setGenerateResetExisting(true);
+                        }}
+                        disabled={user.role !== "user"}
+                        className="rounded-md bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
                       >
-                        <ListChecks className="h-4 w-4" />
-                      </Link>
+                        {t.actions.generate}
+                      </button>
+
+                      <button
+                        onClick={() => openLuckyOrderModal(user)}
+                        disabled={user.role !== "user"}
+                        className="rounded-md bg-fuchsia-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        {t.actions.lucky}
+                      </button>
+
+                      <button
+                        onClick={() => openViewOrdersModal(user)}
+                        disabled={user.role !== "user"}
+                        className="rounded-md bg-blue-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        {t.actions.orders}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setResetOrdersUser(user);
+                          setResetOrdersConfirmText("");
+                          setResetOrdersResetStep(true);
+                        }}
+                        disabled={user.role !== "user"}
+                        className="rounded-md bg-orange-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        {t.actions.reset}
+                      </button>
 
                       <button
                         onClick={() => {
@@ -818,32 +1510,40 @@ async function handleDeleteUser() {
                           setAdjustAmount(100);
                           setAdjustNote("");
                         }}
-                        className="rounded-xl border border-white/10 bg-white/[0.06] p-2 text-white/70 hover:bg-white/[0.1]"
-                        title={t.list.adjustBalance}
+                        className="rounded-md border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-[11px] font-black text-white/80 hover:bg-white/[0.14]"
                       >
-                        <Pencil className="h-4 w-4" />
+                        {t.actions.balance}
                       </button>
 
                       <button
-  onClick={() => openSecurityReset(user)}
-  disabled={user.role !== "user" && profile.role !== "super"}
-  className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-35"
-  title="Security Reset"
+  onClick={() => {
+    setReferralBonusUser(user);
+    setReferralBonusAmount(Number(user.referral_bonus_balance || 0));
+  }}
+  disabled={user.role !== "user"}
+  className="rounded-md border border-yellow-400/25 bg-yellow-400/10 px-2.5 py-1.5 text-[11px] font-black text-yellow-300 hover:bg-yellow-400/15 disabled:cursor-not-allowed disabled:opacity-35"
 >
-  <ShieldCheck className="h-4 w-4" />
+  {t.actions.referralBonus}
 </button>
 
                       <button
-  onClick={() => {
-    setDeleteUser(user);
-    setDeleteConfirmText("");
-  }}
-  disabled={user.id === profile.id || user.role === "admin"}
-  className="rounded-xl border border-red-400/30 bg-red-500/10 p-2 text-red-300 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-35"
-  title={t.list.removeUser}
->
-  <Trash2 className="h-4 w-4" />
-</button>
+                        onClick={() => openSecurityReset(user)}
+                        disabled={user.role !== "user" && profile.role !== "super"}
+                        className="rounded-md bg-emerald-500 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        {t.actions.security}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDeleteUser(user);
+                          setDeleteConfirmText("");
+                        }}
+                        disabled={user.id === profile.id || user.role === "admin"}
+                        className="rounded-md bg-red-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        {t.actions.delete}
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -853,33 +1553,33 @@ async function handleDeleteUser() {
         </table>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/50 md:flex-row md:items-center md:justify-between">
-          <p>
-  {t.list.showing}{" "}
-  <span className="font-black text-white">{firstResult}</span>
-  {" - "}
-  <span className="font-black text-white">{lastResult}</span>
-  {" "}
-  {t.list.of}{" "}
-  <span className="font-black text-yellow-300">
-    {filteredUsers.length}
-  </span>{" "}
-  {t.list.users}
-</p>
+      <div className="flex flex-col gap-3 border-t border-white/10 bg-[#101010] px-4 py-3 text-xs text-white/50 md:flex-row md:items-center md:justify-between">
+        <p>
+          {t.pagination.showing}{" "}
+          <span className="font-black text-white">{firstResult}</span>
+          {" - "}
+          <span className="font-black text-white">{lastResult}</span>
+          {" "}
+          {t.pagination.of}{" "}
+          <span className="font-black text-yellow-300">
+            {filteredUsers.length}
+          </span>{" "}
+          {t.pagination.users}
+        </p>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 text-[11px] font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ChevronLeft className="h-4 w-4" />
-            {t.list.prev}
+            <ChevronLeft className="h-3.5 w-3.5" />
+            {t.pagination.prev}
           </button>
 
-          <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-            {t.list.page} {currentPage} / {totalPages}
+          <div className="rounded-md border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-[11px] font-black text-yellow-300">
+            {t.pagination.page} {currentPage} / {totalPages}
           </div>
 
           <button
@@ -888,10 +1588,10 @@ async function handleDeleteUser() {
             onClick={() =>
               setCurrentPage((page) => Math.min(totalPages, page + 1))
             }
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 text-[11px] font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {t.list.next}
-            <ChevronRight className="h-4 w-4" />
+            {t.pagination.next}
+            <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -899,430 +1599,183 @@ async function handleDeleteUser() {
   )}
 </section>
 
-        {selectedUser && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-            <div className="w-full max-w-xl rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-yellow-200/80">{t.adjustModal.tag}</p>
-<h2 className="text-2xl font-black">{t.adjustModal.title}</h2>
-                </div>
-
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="rounded-2xl bg-white/10 p-3 text-white/70"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="mb-5 grid grid-cols-3 gap-3">
-                <MiniBox
-                  label={t.adjustModal.user}
-value={selectedUser.display_name || t.list.fallbackName}
-                />
-                <MiniBox
-                  label={t.adjustModal.balance}
-                  value={`$${Number(selectedUser.balance).toFixed(2)}`}
-                  color="gold"
-                />
-                <MiniBox label={t.adjustModal.step} value={String(selectedUser.current_step)} />
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="mb-2 text-sm font-bold text-white/80">
-                    {t.adjustModal.amount}
-                  </p>
-                  <input
-                    value={adjustAmount}
-                    onChange={(event) =>
-                      setAdjustAmount(Number(event.target.value))
-                    }
-                    type="number"
-                    step="0.01"
-                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
-                  />
-                  <p className="mt-2 text-xs text-white/45">
-                    {t.adjustModal.amountHelp}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-bold text-white/80">
-                    {t.adjustModal.note}
-                  </p>
-                  <textarea
-                    value={adjustNote}
-                    onChange={(event) => setAdjustNote(event.target.value)}
-                    placeholder={t.adjustModal.notePlaceholder}
-                    className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-                  />
-                </div>
-
-                <button
-                  onClick={handleAdjustBalance}
-                  disabled={actionLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
-                >
-                  <Save className="h-5 w-5" />
-                  {actionLoading ? t.adjustModal.saving : t.adjustModal.saveAdjustment}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {securityUser && (
-  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-    <div className="w-full max-w-lg rounded-[2rem] border border-emerald-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(16,185,129,0.16)]">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-emerald-300/80">Account Security</p>
-          <h2 className="text-2xl font-black">Security Reset</h2>
-        </div>
-
-        <button
-          onClick={() => {
-  setSecurityUser(null);
-  setResetPassword("");
-  setResetPasscode("");
-  setResetResult("");
-}}
-          className="rounded-2xl bg-white/10 p-3 text-white/70"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="mb-5 grid grid-cols-2 gap-3">
-        <MiniBox
-          label="User"
-          value={securityUser.display_name || t.list.fallbackName}
-        />
-        <MiniBox
-          label="Email"
-          value={securityUser.email || t.list.noEmail}
-          color="gold"
-        />
-      </div>
-
-      <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100/75">
-        Reset only. Old password/passcode is never shown. Give the new code to
-        the user privately after reset.
-      </div>
-
-      <div className="mt-5">
-  <p className="mb-2 text-sm font-bold text-white/80">
-    New Login Password
-  </p>
-
-  <div className="flex gap-3">
-    <input
-      value={resetPassword}
-      onChange={(event) => setResetPassword(event.target.value)}
-      placeholder="Temporary password"
-      className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-emerald-400/50"
-    />
-
-    <button
-      type="button"
-      onClick={() => setResetPassword(generateTemporaryPassword())}
-      className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white/75 hover:bg-white/[0.1]"
-    >
-      Generate
-    </button>
-  </div>
-
-  <button
-    onClick={handleResetLoginPassword}
-    disabled={actionLoading || resetPassword.length < 6}
-    className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    <ShieldCheck className="h-5 w-5" />
-    {actionLoading ? "Resetting..." : "Reset Login Password"}
-  </button>
-</div>
-
-      <div className="mt-5">
-        <p className="mb-2 text-sm font-bold text-white/80">
-          New Withdraw Passcode
-        </p>
-
-        <div className="flex gap-3">
-          <input
-            value={resetPasscode}
-            onChange={(event) =>
-              setResetPasscode(
-                event.target.value.replace(/\D/g, "").slice(0, 6)
-              )
-            }
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="6-digit code"
-            className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-emerald-400/50"
-          />
-
-          <button
-            type="button"
-            onClick={() => setResetPasscode(generateSixDigitPasscode())}
-            className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-black text-white/75 hover:bg-white/[0.1]"
-          >
-            Generate
-          </button>
-        </div>
-      </div>
-
-      {resetResult && (
-        <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-200">
-          {resetResult}
-        </div>
-      )}
-
-      <button
-        onClick={handleResetWithdrawPasscode}
-        disabled={actionLoading || resetPasscode.length !== 6}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-300 to-emerald-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <ShieldCheck className="h-5 w-5" />
-        {actionLoading ? "Resetting..." : "Reset Withdraw Passcode"}
-      </button>
-    </div>
-  </div>
+{generateUser && (
+  <GenerateOrdersModal
+    user={generateUser}
+    fallbackName={t.list.fallbackName}
+    taskCount={generateTaskCount}
+    capitalAmount={generateCapitalAmount}
+    profitRate={generateProfitRate}
+    resetExisting={generateResetExisting}
+    actionLoading={actionLoading}
+    onTaskCountChange={setGenerateTaskCount}
+    onCapitalAmountChange={setGenerateCapitalAmount}
+    onProfitRateChange={setGenerateProfitRate}
+    onResetExistingChange={setGenerateResetExisting}
+    onClose={() => setGenerateUser(null)}
+    onSubmit={handleGenerateOrders}
+  />
 )}
 
-        {deleteUser && (
-  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-    <div className="w-full max-w-lg rounded-[2rem] border border-red-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(239,68,68,0.16)]">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-red-300/80">{t.deleteModal.tag}</p>
-<h2 className="text-2xl font-black">{t.deleteModal.title}</h2>
-        </div>
-
-        <button
-          onClick={() => {
-            setDeleteUser(null);
-            setDeleteConfirmText("");
-          }}
-          className="rounded-2xl bg-white/10 p-3 text-white/70"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="mb-5 grid grid-cols-2 gap-3">
-        <MiniBox
-          label={t.deleteModal.user}
-value={deleteUser.display_name || t.list.fallbackName}
-        />
-        <MiniBox
-          label={t.deleteModal.email}
-value={deleteUser.email || t.list.noEmail}
-          color="gold"
-        />
-      </div>
-
-      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm leading-6 text-red-100/75">
-        {t.deleteModal.warningStart}{" "}
-<span className="font-black text-red-200">DELETE</span>{" "}
-{t.deleteModal.warningEnd}
-      </div>
-
-      <div className="mt-5">
-        <p className="mb-2 text-sm font-bold text-white/80">
-          {t.deleteModal.confirmDelete}
-        </p>
-
-        <input
-          value={deleteConfirmText}
-          onChange={(event) => setDeleteConfirmText(event.target.value)}
-          placeholder={t.deleteModal.typeDeletePlaceholder}
-          className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-red-400/50"
-        />
-      </div>
-
-      <button
-        onClick={handleDeleteUser}
-        disabled={actionLoading || deleteConfirmText !== "DELETE"}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/20 px-5 py-4 font-black text-red-100 hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Trash2 className="h-5 w-5" />
-        {actionLoading ? t.deleteModal.removing : t.deleteModal.removeUser}
-      </button>
-    </div>
-  </div>
+{luckyUser && (
+  <LuckyOrderModal
+    user={luckyUser}
+    fallbackName={t.list.fallbackName}
+    luckyProducts={luckyProducts}
+    stepNumber={luckyStepNumber}
+    productId={luckyProductId}
+    luckyAmount={luckyAmount}
+    profitRate={luckyProfitRate}
+    actionLoading={actionLoading}
+    onStepNumberChange={setLuckyStepNumber}
+    onProductIdChange={setLuckyProductId}
+    onLuckyAmountChange={setLuckyAmount}
+    onProfitRateChange={setLuckyProfitRate}
+    onClose={() => {
+      setLuckyUser(null);
+      setLuckyProducts([]);
+      setLuckyProductId("");
+    }}
+    onSubmit={handleInjectLuckyOrder}
+  />
 )}
 
-        {nicknameUser && (
-  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-    <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-yellow-200/80">{t.nicknameModal.tag}</p>
-<h2 className="text-2xl font-black">{t.nicknameModal.title}</h2>
-        </div>
+{viewOrdersUser && (
+  <ViewOrdersModal
+    user={viewOrdersUser}
+    fallbackName={t.list.fallbackName}
+    orders={viewOrders}
+    loading={viewOrdersLoading}
+    onClose={() => {
+      setViewOrdersUser(null);
+      setViewOrders([]);
+    }}
+  />
+)}
 
-        <button
-          onClick={() => {
-            setNicknameUser(null);
-            setNicknameValue("");
-          }}
-          className="rounded-2xl bg-white/10 p-3 text-white/70"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+{resetOrdersUser && (
+  <ResetOrdersModal
+    user={resetOrdersUser}
+    fallbackName={t.list.fallbackName}
+    confirmText={resetOrdersConfirmText}
+    resetStep={resetOrdersResetStep}
+    actionLoading={actionLoading}
+    onConfirmTextChange={setResetOrdersConfirmText}
+    onResetStepChange={setResetOrdersResetStep}
+    onClose={() => {
+      setResetOrdersUser(null);
+      setResetOrdersConfirmText("");
+      setResetOrdersResetStep(true);
+    }}
+    onSubmit={handleResetGeneratedOrders}
+  />
+)}
 
-      <div className="mb-5 grid grid-cols-2 gap-3">
-        <MiniBox
-          label={t.nicknameModal.user}
-value={nicknameUser.display_name || t.list.fallbackName}
-        />
-        <MiniBox
-          label={t.nicknameModal.email}
-value={nicknameUser.email || t.list.noEmail}
-          color="gold"
-        />
-      </div>
+{selectedUser && (
+  <AdjustBalanceModal
+    user={selectedUser}
+    fallbackName={t.list.fallbackName}
+    amount={adjustAmount}
+    note={adjustNote}
+    actionLoading={actionLoading}
+    t={t.adjustModal}
+    onAmountChange={setAdjustAmount}
+    onNoteChange={setAdjustNote}
+    onClose={() => setSelectedUser(null)}
+    onSubmit={handleAdjustBalance}
+  />
+)}
 
-      <div>
-        <p className="mb-2 text-sm font-bold text-white/80">
-          {t.nicknameModal.adminNickname}
-        </p>
+{securityUser && (
+  <SecurityResetModal
+    user={securityUser}
+    fallbackName={t.list.fallbackName}
+    noEmailText={t.list.noEmail}
+    resetPassword={resetPassword}
+    resetPasscode={resetPasscode}
+    resetResult={resetResult}
+    actionLoading={actionLoading}
+    onPasswordChange={setResetPassword}
+    onPasscodeChange={setResetPasscode}
+    onGeneratePassword={() => setResetPassword(generateTemporaryPassword())}
+    onGeneratePasscode={() => setResetPasscode(generateSixDigitPasscode())}
+    onResetLoginPassword={handleResetLoginPassword}
+    onResetWithdrawPasscode={handleResetWithdrawPasscode}
+    onClose={() => {
+      setSecurityUser(null);
+      setResetPassword("");
+      setResetPasscode("");
+      setResetResult("");
+    }}
+  />
+)}
 
-        <input
-          value={nicknameValue}
-          onChange={(event) => setNicknameValue(event.target.value)}
-          placeholder={t.nicknameModal.placeholder}
-          className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-        />
+{deleteUser && (
+  <DeleteUserModal
+    user={deleteUser}
+    fallbackName={t.list.fallbackName}
+    noEmailText={t.list.noEmail}
+    confirmText={deleteConfirmText}
+    actionLoading={actionLoading}
+    t={t.deleteModal}
+    onConfirmTextChange={setDeleteConfirmText}
+    onClose={() => {
+      setDeleteUser(null);
+      setDeleteConfirmText("");
+    }}
+    onSubmit={handleDeleteUser}
+  />
+)}
 
-        <p className="mt-2 text-xs text-white/45">
-          {t.nicknameModal.note}
-        </p>
-      </div>
-
-      <button
-        onClick={handleSaveNickname}
-        disabled={actionLoading}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
-      >
-        <Save className="h-5 w-5" />
-        {actionLoading ? t.nicknameModal.saving : t.nicknameModal.saveNickname}
-      </button>
-    </div>
-  </div>
+{nicknameUser && (
+  <NicknameModal
+    user={nicknameUser}
+    fallbackName={t.list.fallbackName}
+    noEmailText={t.list.noEmail}
+    nicknameValue={nicknameValue}
+    actionLoading={actionLoading}
+    t={t.nicknameModal}
+    onNicknameChange={setNicknameValue}
+    onClose={() => {
+      setNicknameUser(null);
+      setNicknameValue("");
+    }}
+    onSubmit={handleSaveNickname}
+  />
 )}
       </div>
 
-      {referralUser && (
-  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-    <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-yellow-200/80">
-            {t.referralModal.tag}
-          </p>
-          <h2 className="text-2xl font-black">
-            {t.referralModal.title}
-          </h2>
-        </div>
-
-        <button
-          onClick={() => {
-            setReferralUser(null);
-            setReferralValue("");
-          }}
-          className="rounded-2xl bg-white/10 p-3 text-white/70"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="mb-5 grid grid-cols-2 gap-3">
-        <MiniBox
-          label={t.referralModal.user}
-          value={referralUser.display_name || t.list.fallbackName}
-        />
-        <MiniBox
-          label={t.referralModal.currentCode}
-          value={referralUser.referral_code || "-"}
-          color="gold"
-        />
-      </div>
-
-      <div>
-        <p className="mb-2 text-sm font-bold text-white/80">
-          {t.referralModal.referralCode}
-        </p>
-
-        <input
-          value={referralValue}
-          onChange={(event) =>
-            setReferralValue(
-              event.target.value
-                .toUpperCase()
-                .replace(/[^A-Z0-9_-]/g, "")
-                .slice(0, 20)
-            )
-          }
-          placeholder={t.referralModal.placeholder}
-          className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-        />
-
-        <p className="mt-2 text-xs text-white/45">
-          {t.referralModal.note}
-        </p>
-      </div>
-
-      <button
-        onClick={handleSaveReferralCode}
-        disabled={actionLoading}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
-      >
-        <Save className="h-5 w-5" />
-        {actionLoading
-          ? t.referralModal.saving
-          : t.referralModal.saveReferralCode}
-      </button>
-    </div>
-  </div>
+{referralUser && (
+  <ReferralCodeModal
+    user={referralUser}
+    fallbackName={t.list.fallbackName}
+    referralValue={referralValue}
+    actionLoading={actionLoading}
+    t={t.referralModal}
+    onReferralChange={setReferralValue}
+    onClose={() => {
+      setReferralUser(null);
+      setReferralValue("");
+    }}
+    onSubmit={handleSaveReferralCode}
+  />
 )}
+{referralBonusUser && (
+  <ReferralBonusModal
+    user={referralBonusUser}
+    fallbackName={t.list.fallbackName}
+    amount={referralBonusAmount}
+    actionLoading={actionLoading}
+    t={t.referralBonusModal}
+    onAmountChange={setReferralBonusAmount}
+    onClose={() => {
+      setReferralBonusUser(null);
+      setReferralBonusAmount(0);
+    }}
+    onSubmit={handleSaveReferralBonus}
+  />
+)}
+
     </main>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-      <p className="text-xs text-white/45">{label}</p>
-      <p className="mt-1 truncate text-xl font-black text-yellow-300">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function MiniBox({
-  label,
-  value,
-  color = "white",
-}: {
-  label: string;
-  value: string;
-  color?: "white" | "gold";
-}) {
-  return (
-    <div className="rounded-2xl bg-black/30 p-3">
-      <p className="text-xs text-white/45">{label}</p>
-      <p
-        className={`mt-1 truncate font-bold ${
-          color === "gold" ? "text-yellow-300" : "text-white/75"
-        }`}
-      >
-        {value}
-      </p>
-    </div>
   );
 }

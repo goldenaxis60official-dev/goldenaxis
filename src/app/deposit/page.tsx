@@ -77,6 +77,14 @@ function DepositContent({ profile }: { profile: Profile }) {
 
   const finalAmount = customAmount ? Number(customAmount) : Number(amount);
 
+  const separatedBalance =
+  Number(profile.deposited_balance || 0) +
+  Number(profile.referral_bonus_balance || 0) +
+  Number(profile.task_profit_balance || 0);
+
+const displayBalance =
+  separatedBalance > 0 ? separatedBalance : Number(profile.balance || 0);
+
   async function loadWalletAddresses() {
     setAddressLoading(true);
 
@@ -274,8 +282,31 @@ setLoading(false);
             <div>
               <p className="text-sm text-white/50">{t.deposit.currentBalance}</p>
               <h2 className="mt-2 text-4xl font-black">
-                ${Number(profile.balance).toFixed(2)}
+                ${displayBalance.toFixed(2)}
               </h2>
+
+              <div className="mt-4 grid grid-cols-3 gap-2">
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Deposited</p>
+    <p className="mt-1 text-sm font-black text-white">
+      ${Number(profile.deposited_balance || 0).toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Referral</p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      ${Number(profile.referral_bonus_balance || 0).toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Profit</p>
+    <p className="mt-1 text-sm font-black text-emerald-300">
+      ${Number(profile.task_profit_balance || 0).toFixed(2)}
+    </p>
+  </div>
+</div>
             </div>
 
             <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">

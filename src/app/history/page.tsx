@@ -16,43 +16,55 @@ import {
   ChevronRight,
   Gem,
   Search,
+  Sparkles,
   Star,
 } from "lucide-react";
 import type { Profile } from "@/types/profile";
 
-type ProductSnapshot = {
-  id: string | null;
-  name: string | null;
-  category: string | null;
-  price: number | string | null;
-  currency: string | null;
-  rating: number | string | null;
-  reviews_count: number | string | null;
-  description: string | null;
-  main_image: string | null;
-  images: string[] | null;
+type GeneratedSnapshot = {
+  id?: string | null;
+  name?: string | null;
+  category?: string | null;
+  price?: number | string | null;
+  original_price?: number | string | null;
+  custom_lucky_amount?: number | string | null;
+  currency?: string | null;
+  rating?: number | string | null;
+  reviews_count?: number | string | null;
+  description?: string | null;
+  main_image?: string | null;
+  images?: string[] | null;
+  tier?: string | null;
+  product_type?: string | null;
 };
 
-type TaskRelation = {
-  title: string;
-  category: string;
-  task_type: "standard" | "lucky_bonus";
-  image_url: string | null;
+type GeneratedOrderItem = {
+  id: string;
+  product_snapshot: GeneratedSnapshot;
+  unit_price: number;
+  quantity: number;
+  subtotal: number;
 };
 
-type HistoryRow = {
+type TransactionPreview = {
+  reference_id: string | null;
+  balance_before: number | null;
+  balance_after: number | null;
+};
+
+type GeneratedHistoryRow = {
   id: string;
   step_number: number;
-  task_price: number;
-  commission_earned: number;
-  multiplier_applied: number;
-  balance_before: number;
-  balance_after: number;
-  status: string;
-  unlock_method: string | null;
+  order_total: number;
+  profit_rate: number;
+  profit_amount: number;
+  order_type: "normal" | "lucky";
+  status: "pending" | "completed" | "cancelled";
+  is_lucky_bonus: boolean;
   created_at: string;
-  product_snapshot: ProductSnapshot | null;
-  tasks: TaskRelation | TaskRelation[] | null;
+  completed_at: string | null;
+  user_generated_order_items?: GeneratedOrderItem[];
+  transaction?: TransactionPreview | null;
 };
 
 export default function HistoryPage() {
@@ -66,55 +78,55 @@ export default function HistoryPage() {
 function HistoryContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
   const t = messages[lang];
-  const ui =
-  lang === "zh"
-    ? {
-        searchPlaceholder: "搜索任务、产品或步骤...",
-        allTypes: "全部类型",
-        newest: "最新优先",
-        oldest: "最旧优先",
-        commissionHigh: "佣金最高",
-        valueHigh: "价值最高",
-        perPage: "每页",
-        showing: "显示",
-        of: "共",
-        records: "条记录",
-        noMatchTitle: "没有匹配记录",
-        noMatchNote: "请尝试其他关键词或更改筛选条件。",
-        page: "页",
-        prev: "上一页",
-        next: "下一页",
-      }
-    : {
-        searchPlaceholder: "Search task, product, or step...",
-        allTypes: "All Types",
-        newest: "Newest First",
-        oldest: "Oldest First",
-        commissionHigh: "Commission High",
-        valueHigh: "Value High",
-        perPage: "Per Page",
-        showing: "Showing",
-        of: "of",
-        records: "records",
-        noMatchTitle: "No matching records",
-        noMatchNote: "Try another keyword or change the filters.",
-        page: "Page",
-        prev: "Prev",
-        next: "Next",
-      };
-  const [history, setHistory] = useState<HistoryRow[]>([]);
-const [loading, setLoading] = useState(true);
-const [errorText, setErrorText] = useState("");
 
-const [searchText, setSearchText] = useState("");
-const [typeFilter, setTypeFilter] = useState<
-  "all" | "standard" | "lucky_bonus"
->("all");
-const [sortBy, setSortBy] = useState<
-  "newest" | "oldest" | "commission_high" | "value_high"
->("newest");
-const [currentPage, setCurrentPage] = useState(1);
-const [pageSize, setPageSize] = useState(5);
+  const ui =
+    lang === "zh"
+      ? {
+          searchPlaceholder: "搜索订单、产品或步骤...",
+          allTypes: "全部类型",
+          newest: "最新优先",
+          oldest: "最旧优先",
+          commissionHigh: "收益最高",
+          valueHigh: "价值最高",
+          showing: "显示",
+          of: "共",
+          records: "条记录",
+          noMatchTitle: "没有匹配记录",
+          noMatchNote: "请尝试其他关键词或更改筛选条件。",
+          page: "页",
+          prev: "上一页",
+          next: "下一页",
+        }
+      : {
+          searchPlaceholder: "Search order, product, or step...",
+          allTypes: "All Types",
+          newest: "Newest First",
+          oldest: "Oldest First",
+          commissionHigh: "Profit High",
+          valueHigh: "Value High",
+          showing: "Showing",
+          of: "of",
+          records: "records",
+          noMatchTitle: "No matching records",
+          noMatchNote: "Try another keyword or change the filters.",
+          page: "Page",
+          prev: "Prev",
+          next: "Next",
+        };
+
+  const [history, setHistory] = useState<GeneratedHistoryRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorText, setErrorText] = useState("");
+
+  const [searchText, setSearchText] = useState("");
+  const [typeFilter, setTypeFilter] = useState<
+    "all" | "standard" | "lucky_bonus"
+  >("all");
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "commission_high" | "value_high"
+  >("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     async function loadHistory() {
@@ -122,30 +134,31 @@ const [pageSize, setPageSize] = useState(5);
       setErrorText("");
 
       const { data, error } = await supabase
-        .from("task_history")
+        .from("user_generated_orders")
         .select(
           `
           id,
           step_number,
-          task_price,
-          commission_earned,
-          multiplier_applied,
-          balance_before,
-          balance_after,
+          order_total,
+          profit_rate,
+          profit_amount,
+          order_type,
           status,
-          unlock_method,
+          is_lucky_bonus,
           created_at,
-          product_snapshot,
-          tasks (
-            title,
-            category,
-            task_type,
-            image_url
+          completed_at,
+          user_generated_order_items (
+            id,
+            product_snapshot,
+            unit_price,
+            quantity,
+            subtotal
           )
         `
         )
         .eq("user_id", profile.id)
-.order("created_at", { ascending: false });
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false });
 
       if (error) {
         setErrorText(error.message);
@@ -153,107 +166,132 @@ const [pageSize, setPageSize] = useState(5);
         return;
       }
 
-      setHistory((data || []) as unknown as HistoryRow[]);
+      const rows = (data || []) as unknown as GeneratedHistoryRow[];
+      const orderIds = rows.map((row) => row.id);
+
+      let transactionMap = new Map<string, TransactionPreview>();
+
+      if (orderIds.length > 0) {
+        const { data: txData } = await supabase
+          .from("transactions")
+          .select("reference_id, balance_before, balance_after")
+          .eq("user_id", profile.id)
+          .in("reference_id", orderIds)
+          .in("type", ["task_commission", "lucky_order_profit"]);
+
+        transactionMap = new Map(
+          ((txData || []) as TransactionPreview[])
+            .filter((tx) => tx.reference_id)
+            .map((tx) => [tx.reference_id as string, tx])
+        );
+      }
+
+      setHistory(
+        rows.map((row) => ({
+          ...row,
+          transaction: transactionMap.get(row.id) || null,
+        }))
+      );
+
       setLoading(false);
     }
 
     loadHistory();
   }, [profile.id]);
 
-  function getTask(item: HistoryRow) {
-    if (Array.isArray(item.tasks)) {
-      return item.tasks[0] || null;
-    }
-
-    return item.tasks;
+  function getItems(item: GeneratedHistoryRow) {
+    return item.user_generated_order_items || [];
   }
 
-  function isLuckyHistory(item: HistoryRow) {
-    const task = getTask(item);
+  function getFirstSnapshot(item: GeneratedHistoryRow) {
+    return getItems(item)[0]?.product_snapshot || {};
+  }
 
-    return (
-      task?.task_type === "lucky_bonus" ||
-      Number(item.multiplier_applied || 1) > 1
-    );
+  function isLuckyHistory(item: GeneratedHistoryRow) {
+    return item.is_lucky_bonus || item.order_type === "lucky";
   }
 
   const filteredHistory = useMemo(() => {
-  const keyword = searchText.trim().toLowerCase();
+    const keyword = searchText.trim().toLowerCase();
 
-  const result = history.filter((item) => {
-    const task = getTask(item);
-    const snapshot = item.product_snapshot;
-    const lucky = isLuckyHistory(item);
+    const result = history.filter((item) => {
+      const snapshot = getFirstSnapshot(item);
+      const lucky = isLuckyHistory(item);
 
-    const productName =
-      snapshot?.name ||
-      task?.title ||
-      `${t.history.step} ${item.step_number}`;
+      const productName =
+        snapshot?.name || `${t.history.step} ${item.step_number}`;
 
-    const productCategory =
-      snapshot?.category || task?.category || t.history.campaign;
+      const productCategory =
+        snapshot?.category || t.history.campaign;
 
-    const matchesSearch =
-      !keyword ||
-      String(item.step_number).includes(keyword) ||
-      item.status.toLowerCase().includes(keyword) ||
-      productName.toLowerCase().includes(keyword) ||
-      productCategory.toLowerCase().includes(keyword);
+      const matchesSearch =
+        !keyword ||
+        String(item.step_number).includes(keyword) ||
+        item.status.toLowerCase().includes(keyword) ||
+        productName.toLowerCase().includes(keyword) ||
+        productCategory.toLowerCase().includes(keyword);
 
-    const matchesType =
-      typeFilter === "all" ||
-      (typeFilter === "lucky_bonus" && lucky) ||
-      (typeFilter === "standard" && !lucky);
+      const matchesType =
+        typeFilter === "all" ||
+        (typeFilter === "lucky_bonus" && lucky) ||
+        (typeFilter === "standard" && !lucky);
 
-    return matchesSearch && matchesType;
-  });
+      return matchesSearch && matchesType;
+    });
 
-  return [...result].sort((a, b) => {
-    if (sortBy === "oldest") {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return [...result].sort((a, b) => {
+      const aTime = new Date(a.completed_at || a.created_at).getTime();
+      const bTime = new Date(b.completed_at || b.created_at).getTime();
+
+      if (sortBy === "oldest") {
+        return aTime - bTime;
+      }
+
+      if (sortBy === "commission_high") {
+        return Number(b.profit_amount || 0) - Number(a.profit_amount || 0);
+      }
+
+      if (sortBy === "value_high") {
+        return Number(b.order_total || 0) - Number(a.order_total || 0);
+      }
+
+      return bTime - aTime;
+    });
+  }, [history, searchText, typeFilter, sortBy, t.history.step, t.history.campaign]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
+
+  const paginatedHistory = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredHistory.slice(start, start + pageSize);
+  }, [filteredHistory, currentPage, pageSize]);
+
+  const firstResult =
+    filteredHistory.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+
+  const lastResult = Math.min(currentPage * pageSize, filteredHistory.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, typeFilter, sortBy, pageSize]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
-
-    if (sortBy === "commission_high") {
-      return Number(b.commission_earned || 0) - Number(a.commission_earned || 0);
-    }
-
-    if (sortBy === "value_high") {
-      return Number(b.task_price || 0) - Number(a.task_price || 0);
-    }
-
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
-}, [history, searchText, typeFilter, sortBy, t.history.step, t.history.campaign]);
-
-const totalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
-
-const paginatedHistory = useMemo(() => {
-  const start = (currentPage - 1) * pageSize;
-  return filteredHistory.slice(start, start + pageSize);
-}, [filteredHistory, currentPage, pageSize]);
-
-const firstResult =
-  filteredHistory.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-
-const lastResult = Math.min(currentPage * pageSize, filteredHistory.length);
-
-useEffect(() => {
-  setCurrentPage(1);
-}, [searchText, typeFilter, sortBy, pageSize]);
-
-useEffect(() => {
-  if (currentPage > totalPages) {
-    setCurrentPage(totalPages);
-  }
-}, [currentPage, totalPages]);
+  }, [currentPage, totalPages]);
 
   return (
     <AppShell>
       <section className="px-5 pt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-yellow-200/80">{t.history.missionLedger}</p>
-            <h1 className="text-2xl font-black">{t.history.historicalRecord}</h1>
+            <p className="text-sm text-yellow-200/80">
+              {t.history.missionLedger}
+            </p>
+            <h1 className="text-2xl font-black">
+              {t.history.historicalRecord}
+            </h1>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
@@ -262,20 +300,24 @@ useEffect(() => {
         </div>
 
         <div className="mb-5 grid grid-cols-3 gap-3">
-<StatCard label={t.history.all} value={String(history.length)} color="white" />
+          <StatCard
+            label={t.history.all}
+            value={String(history.length)}
+            color="white"
+          />
 
-  <StatCard
-    label={t.history.completed}
-    value={String(history.filter((h) => h.status === "completed").length)}
-    color="green"
-  />
+          <StatCard
+            label={t.history.completed}
+            value={String(history.filter((h) => h.status === "completed").length)}
+            color="green"
+          />
 
-  <StatCard
-    label={t.history.bonus}
-    value={String(history.filter((h) => isLuckyHistory(h)).length)}
-    color="gold"
-  />
-</div>
+          <StatCard
+            label={t.history.bonus}
+            value={String(history.filter((h) => isLuckyHistory(h)).length)}
+            color="gold"
+          />
+        </div>
 
         {history.length > 0 && (
           <LuxuryCard className="mb-5 p-4">
@@ -375,8 +417,8 @@ useEffect(() => {
 
         {loading && (
           <LuxuryCard className="p-5 text-center text-white/60">
-  {t.history.loadingRecords}
-</LuxuryCard>
+            {t.history.loadingRecords}
+          </LuxuryCard>
         )}
 
         {errorText && (
@@ -388,55 +430,49 @@ useEffect(() => {
 
         {!loading && !errorText && history.length === 0 && (
           <LuxuryCard goldGlow className="p-6 text-center">
-  <Gem className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
-  <p className="font-black">{t.history.noRecordsTitle}</p>
-  <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
-    {t.history.noRecordsNote}
-  </p>
-</LuxuryCard>
+            <Gem className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
+            <p className="font-black">{t.history.noRecordsTitle}</p>
+            <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+              {t.history.noRecordsNote}
+            </p>
+          </LuxuryCard>
         )}
 
-        {!loading && !errorText && history.length > 0 && filteredHistory.length === 0 && (
-  <LuxuryCard className="p-6 text-center">
-    <Search className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
-    <p className="font-black">{ui.noMatchTitle}</p>
-    <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
-      {ui.noMatchNote}
-    </p>
-  </LuxuryCard>
-)}
+        {!loading &&
+          !errorText &&
+          history.length > 0 &&
+          filteredHistory.length === 0 && (
+            <LuxuryCard className="p-6 text-center">
+              <Search className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
+              <p className="font-black">{ui.noMatchTitle}</p>
+              <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+                {ui.noMatchNote}
+              </p>
+            </LuxuryCard>
+          )}
 
         <div className="space-y-4 pb-6">
           {paginatedHistory.map((item) => {
-            const task = getTask(item);
-            const snapshot = item.product_snapshot;
+            const snapshot = getFirstSnapshot(item);
+            const items = getItems(item);
             const lucky = isLuckyHistory(item);
 
             const productName =
-  snapshot?.name ||
-  task?.title ||
-  `${t.history.step} ${item.step_number}`;
+              snapshot?.name || `${t.history.step} ${item.step_number}`;
 
-const productCategory =
-  snapshot?.category || task?.category || t.history.campaign;
+            const productCategory =
+              snapshot?.category || t.history.campaign;
 
             const productImage =
-              snapshot?.main_image ||
-              snapshot?.images?.[0] ||
-              task?.image_url ||
-              "";
+              snapshot?.main_image || snapshot?.images?.[0] || "";
 
             const productCurrency = snapshot?.currency || "USD";
-            const productValue = Number(snapshot?.price || item.task_price || 0);
+            const productValue = Number(item.order_total || 0);
             const productRating = Number(snapshot?.rating || 0);
             const productReviews = Number(snapshot?.reviews_count || 0);
 
             return (
-              <LuxuryCard
-  key={item.id}
-  goldGlow={lucky}
-  className="overflow-hidden p-0"
->
+              <LuxuryCard key={item.id} goldGlow={lucky} className="overflow-hidden p-0">
                 <div className="relative h-44 bg-black/35">
                   {productImage ? (
                     <img
@@ -454,12 +490,13 @@ const productCategory =
 
                   <div className="absolute left-4 top-4 flex items-center gap-2">
                     <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold ${
+                      className={`flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold ${
                         lucky
                           ? "bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 text-black shadow-[0_0_22px_rgba(250,204,21,0.35)]"
-: "bg-white/10 text-white/80 backdrop-blur"
+                          : "bg-white/10 text-white/80 backdrop-blur"
                       }`}
                     >
+                      {lucky && <Sparkles className="h-3.5 w-3.5" />}
                       {lucky ? t.history.luckyBonus : t.history.standard}
                     </span>
 
@@ -491,48 +528,96 @@ const productCategory =
                       )}
 
                       <p className="mt-2 text-xs text-white/35">
-                        {new Date(item.created_at).toLocaleString()}
+                        {new Date(item.completed_at || item.created_at).toLocaleString()}
                       </p>
                     </div>
 
                     <CheckCircle className="h-6 w-6 shrink-0 text-emerald-300" />
                   </div>
 
+                  {items.length > 0 && (
+                    <div className="mb-3 rounded-2xl border border-white/10 bg-black/25 p-3">
+                      <p className="mb-2 text-xs font-black uppercase tracking-wide text-white/40">
+                        Order Items
+                      </p>
+
+                      <div className="space-y-2">
+                        {items.map((orderItem) => (
+                          <div
+                            key={orderItem.id}
+                            className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.04] px-3 py-2 text-xs"
+                          >
+                            <div>
+                              <p className="font-bold text-white/80">
+                                {orderItem.product_snapshot?.name || productName}
+                              </p>
+                              <p className="mt-0.5 text-white/40">
+                                Qty {orderItem.quantity} × $
+                                {Number(orderItem.unit_price || 0).toFixed(2)}
+                              </p>
+                            </div>
+
+                            <p className="font-black text-yellow-300">
+                              ${Number(orderItem.subtotal || 0).toFixed(2)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">{t.history.productValue}</p>
+                      <p className="text-xs text-white/45">
+                        {t.history.productValue}
+                      </p>
                       <p className="mt-1 font-bold text-white">
                         {productCurrency} {productValue.toFixed(2)}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">{t.history.commission}</p>
+                      <p className="text-xs text-white/45">
+                        {t.history.commission}
+                      </p>
                       <p className="mt-1 font-bold text-yellow-300">
-                        ${Number(item.commission_earned).toFixed(2)}
+                        ${Number(item.profit_amount).toFixed(2)}
+                      </p>
+                      <p className="mt-1 text-[10px] text-white/35">
+                        {Number(item.profit_rate || 0).toFixed(2)}%
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">{t.history.before}</p>
+                      <p className="text-xs text-white/45">
+                        {t.history.before}
+                      </p>
                       <p className="mt-1 font-bold text-white/70">
-                        ${Number(item.balance_before).toFixed(2)}
+                        {item.transaction?.balance_before !== null &&
+                        item.transaction?.balance_before !== undefined
+                          ? `$${Number(item.transaction.balance_before).toFixed(2)}`
+                          : "-"}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">{t.history.after}</p>
+                      <p className="text-xs text-white/45">
+                        {t.history.after}
+                      </p>
                       <p className="mt-1 font-bold text-emerald-300">
-                        ${Number(item.balance_after).toFixed(2)}
+                        {item.transaction?.balance_after !== null &&
+                        item.transaction?.balance_after !== undefined
+                          ? `$${Number(item.transaction.balance_after).toFixed(2)}`
+                          : "-"}
                       </p>
                     </div>
                   </div>
 
-                  {Number(item.multiplier_applied) > 1 && (
+                  {lucky && (
                     <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/80">
-                      {t.history.bonusMultiplierApplied}{" "}
+                      Lucky promotion profit rate{" "}
                       <span className="font-black text-yellow-300">
-                        {Number(item.multiplier_applied).toFixed(1)}x
+                        {Number(item.profit_rate || 0).toFixed(2)}%
                       </span>
                     </div>
                   )}
@@ -540,7 +625,7 @@ const productCategory =
               </LuxuryCard>
             );
           })}
-                </div>
+        </div>
 
         {!loading && !errorText && filteredHistory.length > 0 && (
           <LuxuryCard className="mb-6 p-3">

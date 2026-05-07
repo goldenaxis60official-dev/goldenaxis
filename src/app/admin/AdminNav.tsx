@@ -12,16 +12,12 @@ import type { Profile } from "@/types/profile";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
 import {
   AlertCircle,
-  ClipboardList,
   Headphones,
   KeyRound,
   Landmark,
   Languages,
-  LayoutDashboard,
-  ListChecks,
   Loader2,
   LogOut,
-  Package,
   Save,
   Users,
   Wallet,
@@ -38,26 +34,6 @@ type AdminNavProps = {
 
 function getAdminLinks(t: AdminNavText) {
   return [
-    {
-      label: t.dashboard,
-      href: "/admin",
-      icon: LayoutDashboard,
-    },
-    {
-      label: t.products,
-      href: "/admin/products",
-      icon: Package,
-    },
-    {
-      label: t.taskLibrary,
-      href: "/admin/tasks",
-      icon: ClipboardList,
-    },
-    {
-      label: t.userTasks,
-      href: "/admin/user-tasks",
-      icon: ListChecks,
-    },
     {
       label: t.users,
       href: "/admin/users",
@@ -319,7 +295,7 @@ export default function AdminNav({ language, profile }: AdminNavProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2 xl:grid-cols-8">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {visibleLinks.map((item) => {
             const Icon = item.icon;
             const active =

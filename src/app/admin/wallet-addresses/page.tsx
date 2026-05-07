@@ -261,7 +261,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                 return (
                   <div
                     key={key}
-                    className="rounded-[1.7rem] border border-white/10 bg-black/25 p-5"
+                    className="rounded-[1.7rem] border border-white/10 bg-black/25 p-5 transition hover:border-yellow-400/25 hover:bg-white/[0.035]"
                   >
                     <div className="mb-4 flex items-center justify-between gap-4">
                       <div>
@@ -313,7 +313,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
       <img
         src={row.qr_image_url}
         alt={`${item.asset} ${item.network} QR`}
-        className="h-24 w-24 rounded-2xl border border-white/10 bg-white object-cover p-1"
+        className="h-24 w-24 rounded-2xl border border-white/10 bg-white object-contain p-1"
       />
 
       <div className="min-w-0">

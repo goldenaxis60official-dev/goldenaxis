@@ -1,3 +1,5 @@
+export type ProductTier = "tier0" | "tier1" | "tier2" | "tier3";
+
 export type Product = {
   id: string;
   name: string;
@@ -9,6 +11,7 @@ export type Product = {
   description: string | null;
   images: string[];
   main_image: string | null;
+  tier: ProductTier;
   product_type: "normal" | "lucky";
   is_active: boolean;
   created_at: string;

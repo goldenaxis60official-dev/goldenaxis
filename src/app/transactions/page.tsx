@@ -28,7 +28,15 @@ function getTransactionLabel(
   type: string,
   labels: Record<string, string>
 ) {
-  return labels[type] || type.replaceAll("_", " ");
+  const fallbackLabels: Record<string, string> = {
+    task_commission: "Promotion Order Profit",
+    lucky_order_profit: "Lucky Order Profit",
+    deposit_credit: "Deposit Credit",
+    withdrawal: "Withdrawal Request",
+    admin_adjustment: "Balance Adjustment",
+  };
+
+  return labels[type] || fallbackLabels[type] || type.replaceAll("_", " ");
 }
 
 function isPositiveAmount(amount: number) {
@@ -191,6 +199,25 @@ useEffect(() => {
 
   const netChange = totalIn - totalOut;
 
+  const separatedBalance =
+  Number(profile.deposited_balance || 0) +
+  Number(profile.referral_bonus_balance || 0) +
+  Number(profile.task_profit_balance || 0);
+
+const displayBalance =
+  separatedBalance > 0 ? separatedBalance : Number(profile.balance || 0);
+
+const generatedProfitTotal = transactions
+  .filter(
+    (item) =>
+      item.type === "task_commission" || item.type === "lucky_order_profit"
+  )
+  .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+const luckyProfitTotal = transactions
+  .filter((item) => item.type === "lucky_order_profit")
+  .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
   return (
     <AppShell>
       <section className="px-5 pt-8">
@@ -208,8 +235,31 @@ useEffect(() => {
         <LuxuryCard goldGlow className="mb-5 p-5">
           <p className="text-sm text-white/50">{t.transactions.currentBalance}</p>
           <h2 className="mt-2 text-3xl font-black">
-            ${Number(profile.balance).toFixed(2)}
+            ${displayBalance.toFixed(2)}
           </h2>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Deposited</p>
+    <p className="mt-1 text-sm font-black text-white">
+      ${Number(profile.deposited_balance || 0).toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Referral</p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      ${Number(profile.referral_bonus_balance || 0).toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Profit</p>
+    <p className="mt-1 text-sm font-black text-emerald-300">
+      ${Number(profile.task_profit_balance || 0).toFixed(2)}
+    </p>
+  </div>
+</div>
 
           <div className="mt-4 grid grid-cols-3 gap-3">
   <StatCard
@@ -325,19 +375,23 @@ useEffect(() => {
           </LuxuryCard>
         )}
 
-        <div className="mb-5 grid grid-cols-3 gap-3">
-  <StatCard label={t.transactions.all} value={String(transactions.length)} color="white" />
-
+<div className="mb-5 grid grid-cols-3 gap-3">
   <StatCard
-    label={t.transactions.showing}
-    value={String(filteredTransactions.length)}
-    color="gold"
+    label={t.transactions.all}
+    value={String(transactions.length)}
+    color="white"
   />
 
   <StatCard
-    label={t.transactions.today}
-    value={`$${Number(profile.today_earnings).toFixed(2)}`}
+    label="Order Profit"
+    value={`$${generatedProfitTotal.toFixed(2)}`}
     color="green"
+  />
+
+  <StatCard
+    label="Lucky Profit"
+    value={`$${luckyProfitTotal.toFixed(2)}`}
+    color="gold"
   />
 </div>
 
