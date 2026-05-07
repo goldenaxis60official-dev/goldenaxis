@@ -245,13 +245,28 @@ function MissionContent({ profile }: { profile: Profile }) {
   }
 
   async function handleCompleteGeneratedOrder(order: GeneratedOrder) {
-    if (order.step_number !== profile.current_step) return;
+  if (order.step_number !== profile.current_step) return;
 
-    setActionLoading(true);
-    setErrorText("");
-    setSuccessText("");
+  const availableBalance =
+    Number(profile.deposited_balance || 0) +
+    Number(profile.referral_bonus_balance || 0) +
+    Number(profile.task_profit_balance || 0);
 
-    const { data, error } = await supabase.rpc("complete_generated_order");
+  const fallbackBalance =
+    availableBalance > 0 ? availableBalance : Number(profile.balance || 0);
+
+  const orderTotal = Number(order.order_total || 0);
+
+  if (fallbackBalance < orderTotal) {
+    setErrorText(t.missions.insufficientBalance);
+    return;
+  }
+
+  setActionLoading(true);
+  setErrorText("");
+  setSuccessText("");
+
+  const { data, error } = await supabase.rpc("complete_generated_order");
 
     if (error) {
       if (error.message.includes("no_generated_orders")) {
@@ -259,10 +274,12 @@ function MissionContent({ profile }: { profile: Profile }) {
       } else if (error.message.includes("current_generated_order_not_found")) {
         setErrorText(t.missions.stepNotAssignedTitle);
       } else if (error.message.includes("account_not_active")) {
-        setErrorText(t.missions.assignedTaskNotFound);
-      } else {
-        setErrorText(error.message);
-      }
+  setErrorText(t.missions.assignedTaskNotFound);
+} else if (error.message.includes("insufficient_balance")) {
+  setErrorText(t.missions.insufficientBalance);
+} else {
+  setErrorText(error.message);
+}
 
       setActionLoading(false);
       return;
