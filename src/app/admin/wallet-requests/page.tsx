@@ -42,12 +42,17 @@ type AdminWalletRequest = {
   member_id: string | null;
   display_name: string | null;
   email: string | null;
+  referral_code: string | null;
+  referred_by: string | null;
   balance: number;
   deposited_balance: number;
   referral_bonus_balance: number;
   task_profit_balance: number;
   current_step: number;
 } | null;
+
+used_referral_code?: string | null;
+used_referral_owner?: string | null;
 };
 
 type AdminWalletRequestsText = typeof en.adminWalletRequests;
@@ -88,7 +93,7 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   return t.filters[value];
 }
 
-  async function loadRecords() {
+ async function loadRecords() {
   setLoading(true);
   setErrorText("");
 
@@ -97,16 +102,18 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
     .select(
       `
       *,
-  profiles (
-  member_id,
-  display_name,
-  email,
-  balance,
-  deposited_balance,
-  referral_bonus_balance,
-  task_profit_balance,
-  current_step
-)
+      profiles (
+        member_id,
+        display_name,
+        email,
+        referral_code,
+        referred_by,
+        balance,
+        deposited_balance,
+        referral_bonus_balance,
+        task_profit_balance,
+        current_step
+      )
     `
     )
     .order("created_at", { ascending: false });
@@ -117,7 +124,57 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
     return;
   }
 
-  setRecords((data || []) as AdminWalletRequest[]);
+  const rawRecords = (data || []) as AdminWalletRequest[];
+
+  const referrerIds = Array.from(
+    new Set(
+      rawRecords
+        .map((item) => item.profiles?.referred_by)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
+  if (referrerIds.length === 0) {
+    setRecords(rawRecords);
+    setLoading(false);
+    return;
+  }
+
+  const { data: referrerData, error: referrerError } = await supabase
+    .from("profiles")
+    .select("id, referral_code, display_name, member_id")
+    .in("id", referrerIds);
+
+  if (referrerError) {
+    setErrorText(referrerError.message);
+    setRecords(rawRecords);
+    setLoading(false);
+    return;
+  }
+
+  const referrerMap = new Map(
+    ((referrerData || []) as {
+      id: string;
+      referral_code: string | null;
+      display_name: string | null;
+      member_id: string | null;
+    }[]).map((referrer) => [referrer.id, referrer])
+  );
+
+  const enrichedRecords = rawRecords.map((item) => {
+    const referrer = item.profiles?.referred_by
+      ? referrerMap.get(item.profiles.referred_by)
+      : null;
+
+    return {
+      ...item,
+      used_referral_code: referrer?.referral_code || null,
+      used_referral_owner:
+        referrer?.display_name || referrer?.member_id || null,
+    };
+  });
+
+  setRecords(enrichedRecords);
   setLoading(false);
 }
 
@@ -178,16 +235,20 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
     const matchesStatus = filter === "all" || item.status === filter;
     const matchesType = typeFilter === "all" || item.type === typeFilter;
 
-    const matchesSearch =
-      !keyword ||
-      item.profiles?.display_name?.toLowerCase().includes(keyword) ||
-      item.profiles?.email?.toLowerCase().includes(keyword) ||
-item.profiles?.member_id?.toLowerCase().includes(keyword) ||
-item.user_id.toLowerCase().includes(keyword) ||
-item.method?.toLowerCase().includes(keyword) ||
-      item.note?.toLowerCase().includes(keyword) ||
-      item.admin_note?.toLowerCase().includes(keyword) ||
-      item.id.toLowerCase().includes(keyword);
+const matchesSearch =
+  !keyword ||
+  item.profiles?.display_name?.toLowerCase().includes(keyword) ||
+  item.profiles?.email?.toLowerCase().includes(keyword) ||
+  item.profiles?.member_id?.toLowerCase().includes(keyword) ||
+  item.profiles?.referral_code?.toLowerCase().includes(keyword) ||
+  item.profiles?.referred_by?.toLowerCase().includes(keyword) ||
+  item.used_referral_code?.toLowerCase().includes(keyword) ||
+  item.used_referral_owner?.toLowerCase().includes(keyword) ||
+  item.user_id.toLowerCase().includes(keyword) ||
+  item.method?.toLowerCase().includes(keyword) ||
+  item.note?.toLowerCase().includes(keyword) ||
+  item.admin_note?.toLowerCase().includes(keyword) ||
+  item.id.toLowerCase().includes(keyword);
 
     return matchesStatus && matchesType && matchesSearch;
   });
@@ -460,6 +521,20 @@ const displayBalance =
                   <p className="mt-1 text-xs font-bold text-yellow-300">
   ID: {item.profiles?.member_id || item.user_id.slice(0, 8)}
 </p>
+
+<div className="mt-2 rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2">
+  <p className="text-[10px] font-bold uppercase tracking-wide text-yellow-200/70">
+    Used Referral Code
+  </p>
+  <p className="mt-1 text-sm font-black text-yellow-300">
+    {item.used_referral_code || "-"}
+  </p>
+  {item.used_referral_owner && (
+    <p className="mt-1 text-[10px] text-white/40">
+      Owner: {item.used_referral_owner}
+    </p>
+  )}
+</div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
   <div>
