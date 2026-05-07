@@ -1375,8 +1375,9 @@ adminWalletRequests: {
     "例如：500、3000、8000、20000。系统会自动选择最接近的产品等级。",
   profitRate: "利润比例 %",
   profitRateHelp: "例如：0.08 表示每个普通订单利润为 0.08%。",
-  resetExisting: "重置现有生成订单",
-  resetExistingHelp: "为此用户创建新的推广计划时开启。",
+  resetExisting: "清除旧任务并从第 1 步重新开始",
+resetExistingHelp:
+  "关闭时，新任务会添加到用户最后一个任务之后。只有需要删除该用户全部旧任务并重新开始时才开启。",
   generating: "生成中...",
   generateAutoOrders: "生成自动订单",
 },

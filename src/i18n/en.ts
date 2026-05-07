@@ -1327,8 +1327,9 @@ generateModal: {
     "Example: 500, 3000, 8000, 20000. System will pick closest product tier.",
   profitRate: "Profit Rate %",
   profitRateHelp: "Example: 0.08 means 0.08% per normal order.",
-  resetExisting: "Reset existing generated orders",
-  resetExistingHelp: "Turn on when creating a fresh campaign for this user.",
+  resetExisting: "Clear previous tasks and start from Step 1",
+resetExistingHelp:
+  "Keep this off to add new tasks after the user's last task. Turn on only when you want to remove all previous generated tasks.",
   generating: "Generating...",
   generateAutoOrders: "Generate Auto Orders",
 },

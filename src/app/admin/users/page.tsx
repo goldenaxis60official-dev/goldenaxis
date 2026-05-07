@@ -127,9 +127,8 @@ const [resetPasscode, setResetPasscode] = useState("");
 const [resetResult, setResetResult] = useState("");
 const [generateUser, setGenerateUser] = useState<ManagedUser | null>(null);
 const [generateTaskCount, setGenerateTaskCount] = useState(60);
-const [generateCapitalAmount, setGenerateCapitalAmount] = useState(500);
-const [generateProfitRate, setGenerateProfitRate] = useState(0.08);
-const [generateResetExisting, setGenerateResetExisting] = useState(true);
+const [generateProfitRate, setGenerateProfitRate] = useState(0.8);
+const [generateResetExisting, setGenerateResetExisting] = useState(false);
 const [luckyUser, setLuckyUser] = useState<ManagedUser | null>(null);
 const [luckyProducts, setLuckyProducts] = useState<LuckyProductOption[]>([]);
 const [luckyStepNumber, setLuckyStepNumber] = useState(25);
@@ -388,6 +387,16 @@ function getDisplayBalance(user: ManagedUser) {
   return separatedBalance > 0 ? separatedBalance : Number(user.balance || 0);
 }
 
+function getAutoOrderAmount(user: ManagedUser) {
+  const availableBalance = getDisplayBalance(user);
+
+  if (availableBalance <= 0) return 0;
+
+  // Product pool max is currently $10,000.
+  // If user balance is higher, still keep order amount inside product pool range.
+  return Number(Math.min(availableBalance, 10000).toFixed(2));
+}
+
 function escapeCsv(value: string | number | null | undefined) {
   const cleanValue = String(value ?? "").replaceAll('"', '""');
   return `"${cleanValue}"`;
@@ -564,8 +573,10 @@ async function handleGenerateOrders() {
     return;
   }
 
-  if (generateCapitalAmount <= 0) {
-    setErrorText("Capital amount must be greater than 0.");
+  const autoCapitalAmount = getAutoOrderAmount(generateUser);
+
+  if (autoCapitalAmount <= 0) {
+    setErrorText("This user has no available balance for auto order generation.");
     return;
   }
 
@@ -581,7 +592,7 @@ async function handleGenerateOrders() {
   const { error } = await supabase.rpc("generate_user_orders", {
     p_user_id: generateUser.id,
     p_task_count: generateTaskCount,
-    p_capital_amount: generateCapitalAmount,
+    p_capital_amount: autoCapitalAmount,
     p_profit_rate_percent: generateProfitRate,
     p_reset_existing: generateResetExisting,
   });
@@ -595,14 +606,13 @@ async function handleGenerateOrders() {
   setSuccessText(
     `Generated ${generateTaskCount} auto orders for ${
       generateUser.display_name || generateUser.email || "user"
-    }.`
+    } using auto amount ${formatMoney(autoCapitalAmount)} based on user balance.`
   );
 
   setGenerateUser(null);
   setGenerateTaskCount(60);
-  setGenerateCapitalAmount(500);
   setGenerateProfitRate(0.08);
-  setGenerateResetExisting(true);
+  setGenerateResetExisting(false);
   setActionLoading(false);
   loadUsers();
 }
@@ -1529,9 +1539,8 @@ async function handleDeleteUser() {
                         onClick={() => {
                           setGenerateUser(user);
                           setGenerateTaskCount(60);
-                          setGenerateCapitalAmount(500);
                           setGenerateProfitRate(0.08);
-                          setGenerateResetExisting(true);
+                          setGenerateResetExisting(false);
                         }}
                         disabled={!canManageOrders || user.role !== "user"}
                         className="rounded-md bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
@@ -1668,13 +1677,11 @@ async function handleDeleteUser() {
     user={generateUser}
     fallbackName={t.list.fallbackName}
     taskCount={generateTaskCount}
-    capitalAmount={generateCapitalAmount}
     profitRate={generateProfitRate}
     resetExisting={generateResetExisting}
     actionLoading={actionLoading}
     t={t.generateModal}
     onTaskCountChange={setGenerateTaskCount}
-    onCapitalAmountChange={setGenerateCapitalAmount}
     onProfitRateChange={setGenerateProfitRate}
     onResetExistingChange={setGenerateResetExisting}
     onClose={() => setGenerateUser(null)}

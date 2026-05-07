@@ -1,11 +1,12 @@
-//src>app>users>components>GenerateOrdersModal.tsx
-
 import { PackagePlus, X } from "lucide-react";
 
 type ModalUser = {
   display_name: string | null;
   email: string | null;
   balance: number;
+  deposited_balance?: number | null;
+  referral_bonus_balance?: number | null;
+  task_profit_balance?: number | null;
   current_step: number;
 };
 
@@ -18,8 +19,6 @@ type GenerateOrdersModalText = {
   step: string;
   taskCount: string;
   taskCountHelp: string;
-  capitalAmount: string;
-  capitalAmountHelp: string;
   profitRate: string;
   profitRateHelp: string;
   resetExisting: string;
@@ -32,18 +31,33 @@ type GenerateOrdersModalProps = {
   user: ModalUser;
   fallbackName: string;
   taskCount: number;
-  capitalAmount: number;
   profitRate: number;
   resetExisting: boolean;
   actionLoading: boolean;
   t: GenerateOrdersModalText;
   onTaskCountChange: (value: number) => void;
-  onCapitalAmountChange: (value: number) => void;
   onProfitRateChange: (value: number) => void;
   onResetExistingChange: (value: boolean) => void;
   onClose: () => void;
   onSubmit: () => void;
 };
+
+function getAvailableBalance(user: ModalUser) {
+  const separatedBalance =
+    Number(user.deposited_balance || 0) +
+    Number(user.referral_bonus_balance || 0) +
+    Number(user.task_profit_balance || 0);
+
+  return separatedBalance > 0 ? separatedBalance : Number(user.balance || 0);
+}
+
+function getAutoOrderAmount(user: ModalUser) {
+  const availableBalance = getAvailableBalance(user);
+
+  if (availableBalance <= 0) return 0;
+
+  return Number(Math.min(availableBalance, 10000).toFixed(2));
+}
 
 function MiniBox({
   label,
@@ -72,18 +86,19 @@ export default function GenerateOrdersModal({
   user,
   fallbackName,
   taskCount,
-  capitalAmount,
   profitRate,
   resetExisting,
   actionLoading,
   t,
   onTaskCountChange,
-  onCapitalAmountChange,
   onProfitRateChange,
   onResetExistingChange,
   onClose,
   onSubmit,
 }: GenerateOrdersModalProps) {
+  const availableBalance = getAvailableBalance(user);
+  const autoOrderAmount = getAutoOrderAmount(user);
+
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
       <div className="w-full max-w-xl rounded-[2rem] border border-yellow-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.18)]">
@@ -107,7 +122,7 @@ export default function GenerateOrdersModal({
 
           <MiniBox
             label={t.balance}
-            value={`$${Number(user.balance || 0).toFixed(2)}`}
+            value={`$${availableBalance.toFixed(2)}`}
             color="gold"
           />
 
@@ -130,22 +145,18 @@ export default function GenerateOrdersModal({
             <p className="mt-2 text-xs text-white/45">{t.taskCountHelp}</p>
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-bold text-white/80">
-              {t.capitalAmount}
+          <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3">
+            <p className="text-sm font-black text-yellow-200">
+              Auto Order Amount
             </p>
-            <input
-              value={capitalAmount}
-              onChange={(event) =>
-                onCapitalAmountChange(Number(event.target.value))
-              }
-              type="number"
-              min={1}
-              step="0.01"
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
-            />
+
+            <p className="mt-1 text-2xl font-black text-yellow-300">
+              ${autoOrderAmount.toFixed(2)}
+            </p>
+
             <p className="mt-2 text-xs text-white/45">
-              {t.capitalAmountHelp}
+              The system calculates this from the user&apos;s available balance
+              and automatically selects the closest affordable product tier.
             </p>
           </div>
 
@@ -186,7 +197,7 @@ export default function GenerateOrdersModal({
 
           <button
             onClick={onSubmit}
-            disabled={actionLoading}
+            disabled={actionLoading || autoOrderAmount <= 0}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <PackagePlus className="h-5 w-5" />
