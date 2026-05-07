@@ -26,10 +26,14 @@ type LuckyOrderModalText = {
   currentStep: string;
   luckyStepNumber: string;
   luckyStepHelp: string;
-  luckyProduct: string;
-  noLuckyProducts: string;
   customLuckyAmount: string;
-  customLuckyAmountHelp: string;
+customLuckyAmountHelp: string;
+recommendedProduct: string;
+autoBadge: string;
+productValue: string;
+luckyOrderAmount: string;
+noLuckyProducts: string;
+noMatchingProduct: string;
   luckyProfitRate: string;
   luckyProfitRateHelp: string;
   injecting: string;
@@ -40,14 +44,13 @@ type LuckyOrderModalProps = {
   user: ModalUser;
   fallbackName: string;
   luckyProducts: LuckyProductOption[];
+  recommendedProduct: LuckyProductOption | null;
   stepNumber: number;
-  productId: string;
   luckyAmount: number;
   profitRate: number;
   actionLoading: boolean;
   t: LuckyOrderModalText;
   onStepNumberChange: (value: number) => void;
-  onProductIdChange: (value: string) => void;
   onLuckyAmountChange: (value: number) => void;
   onProfitRateChange: (value: number) => void;
   onClose: () => void;
@@ -81,14 +84,13 @@ export default function LuckyOrderModal({
   user,
   fallbackName,
   luckyProducts,
+  recommendedProduct,
   stepNumber,
-  productId,
   luckyAmount,
   profitRate,
   actionLoading,
   t,
   onStepNumberChange,
-  onProductIdChange,
   onLuckyAmountChange,
   onProfitRateChange,
   onClose,
@@ -101,12 +103,14 @@ export default function LuckyOrderModal({
           <div>
             <p className="text-sm text-fuchsia-200/80">{t.tag}</p>
             <h2 className="text-2xl font-black">{t.title}</h2>
-            <p className="mt-1 text-sm text-white/45">{t.description}</p>
+            <p className="mt-1 text-sm text-white/45">
+              {t.description}
+            </p>
           </div>
 
           <button
             onClick={onClose}
-            className="rounded-2xl bg-white/10 p-3 text-white/70"
+            className="rounded-2xl bg-white/10 p-3 text-white/70 hover:bg-white/15"
           >
             <X className="h-5 w-5" />
           </button>
@@ -132,7 +136,9 @@ export default function LuckyOrderModal({
 
             <input
               value={stepNumber}
-              onChange={(event) => onStepNumberChange(Number(event.target.value))}
+              onChange={(event) =>
+                onStepNumberChange(Number(event.target.value))
+              }
               type="number"
               min={1}
               max={80}
@@ -140,30 +146,6 @@ export default function LuckyOrderModal({
             />
 
             <p className="mt-2 text-xs text-white/45">{t.luckyStepHelp}</p>
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-bold text-white/80">
-              {t.luckyProduct}
-            </p>
-
-            <select
-              value={productId}
-              onChange={(event) => onProductIdChange(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-fuchsia-400/50"
-            >
-              {luckyProducts.length === 0 && (
-                <option className="bg-black" value="">
-                  {t.noLuckyProducts}
-                </option>
-              )}
-
-              {luckyProducts.map((product) => (
-                <option key={product.id} className="bg-black" value={product.id}>
-                  {product.name} - ${Number(product.price || 0).toFixed(2)}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div>
@@ -185,6 +167,60 @@ export default function LuckyOrderModal({
             <p className="mt-2 text-xs text-white/45">
               {t.customLuckyAmountHelp}
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-black text-fuchsia-100">
+                {t.recommendedProduct}
+              </p>
+
+              <span className="rounded-full bg-yellow-400 px-3 py-1 text-[10px] font-black text-black">
+                {t.autoBadge}
+              </span>
+            </div>
+
+            {recommendedProduct ? (
+              <div className="flex items-center gap-3">
+                {recommendedProduct.main_image ? (
+                  <img
+                    src={recommendedProduct.main_image}
+                    alt={recommendedProduct.name}
+                    className="h-14 w-14 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-black/40 text-xl">
+                    💎
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-black text-white">
+                    {recommendedProduct.name}
+                  </p>
+
+                  <p className="mt-1 text-xs text-white/45">
+                    {recommendedProduct.category || "Product"} · {t.productValue}{" "}
+                    <span className="font-bold text-yellow-300">
+                      ${Number(recommendedProduct.price || 0).toFixed(2)}
+                    </span>
+                  </p>
+
+                  <p className="mt-1 text-xs text-white/45">
+                    {t.luckyOrderAmount}{" "}
+                    <span className="font-bold text-fuchsia-200">
+                      ${Number(luckyAmount || 0).toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-red-200">
+                {luckyProducts.length === 0
+                  ? t.noLuckyProducts
+                  : t.noMatchingProduct}
+              </p>
+            )}
           </div>
 
           <div>
@@ -210,7 +246,7 @@ export default function LuckyOrderModal({
 
           <button
             onClick={onSubmit}
-            disabled={actionLoading || !productId}
+            disabled={actionLoading || !recommendedProduct}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-300 to-yellow-500 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Sparkles className="h-5 w-5" />

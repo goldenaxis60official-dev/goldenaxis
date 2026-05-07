@@ -335,6 +335,40 @@ function formatMoney(value: number | null | undefined) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+function pickRecommendedLuckyProduct(
+  products: LuckyProductOption[],
+  amount: number
+) {
+  if (products.length === 0) return null;
+
+  const cleanAmount = Number(amount || 0);
+
+  if (cleanAmount <= 0) {
+    return [...products].sort(
+      (a, b) => Number(a.price || 0) - Number(b.price || 0)
+    )[0];
+  }
+
+  const affordableProducts = products.filter(
+    (product) => Number(product.price || 0) <= cleanAmount
+  );
+
+  const productPool =
+    affordableProducts.length > 0 ? affordableProducts : products;
+
+  return [...productPool].sort((a, b) => {
+    const aPrice = Number(a.price || 0);
+    const bPrice = Number(b.price || 0);
+
+    const aGap = Math.abs(aPrice - cleanAmount);
+    const bGap = Math.abs(bPrice - cleanAmount);
+
+    if (aGap !== bGap) return aGap - bGap;
+
+    return bPrice - aPrice;
+  })[0];
+}
+
 function shortId(value: string) {
   if (!value) return "-";
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
@@ -574,9 +608,14 @@ async function handleGenerateOrders() {
 }
 
 async function openLuckyOrderModal(user: ManagedUser) {
+  const defaultLuckyAmount = Math.max(
+    1,
+    Math.min(100, Math.floor(Number(user.balance || 100)))
+  );
+
   setLuckyUser(user);
   setLuckyStepNumber(25);
-  setLuckyAmount(2800);
+  setLuckyAmount(defaultLuckyAmount);
   setLuckyProfitRate(5);
   setLuckyProductId("");
   setSuccessText("");
@@ -585,10 +624,10 @@ async function openLuckyOrderModal(user: ManagedUser) {
   const { data, error } = await supabase
     .from("products")
     .select("id, name, price, category, main_image")
-    .eq("product_type", "lucky")
+    .in("product_type", ["normal", "lucky"])
     .eq("is_active", true)
     .eq("stock_status", "in_stock")
-    .order("created_at", { ascending: false });
+    .order("price", { ascending: true });
 
   if (error) {
     setErrorText(error.message);
@@ -598,16 +637,24 @@ async function openLuckyOrderModal(user: ManagedUser) {
   const products = (data || []) as LuckyProductOption[];
   setLuckyProducts(products);
 
-  if (products.length > 0) {
-    setLuckyProductId(products[0].id);
-  }
+  const recommendedProduct = pickRecommendedLuckyProduct(
+    products,
+    defaultLuckyAmount
+  );
+
+  setLuckyProductId(recommendedProduct?.id || "");
 }
 
 async function handleInjectLuckyOrder() {
   if (!luckyUser) return;
 
-  if (!luckyProductId) {
-    setErrorText("Please choose a lucky product.");
+  const recommendedProduct = pickRecommendedLuckyProduct(
+    luckyProducts,
+    luckyAmount
+  );
+
+  if (!recommendedProduct) {
+    setErrorText("No available product found for this lucky amount.");
     return;
   }
 
@@ -633,7 +680,7 @@ async function handleInjectLuckyOrder() {
   const { error } = await supabase.rpc("inject_lucky_order", {
     p_user_id: luckyUser.id,
     p_step_number: luckyStepNumber,
-    p_lucky_product_id: luckyProductId,
+    p_lucky_product_id: recommendedProduct.id,
     p_lucky_amount: luckyAmount,
     p_profit_rate_percent: luckyProfitRate,
   });
@@ -645,7 +692,7 @@ async function handleInjectLuckyOrder() {
   }
 
   setSuccessText(
-    `Lucky order injected at step ${luckyStepNumber} for ${
+    `Lucky order injected at step ${luckyStepNumber} using ${recommendedProduct.name} for ${
       luckyUser.display_name || luckyUser.email || "user"
     }.`
   );
@@ -654,7 +701,7 @@ async function handleInjectLuckyOrder() {
   setLuckyProducts([]);
   setLuckyProductId("");
   setLuckyStepNumber(25);
-  setLuckyAmount(2800);
+  setLuckyAmount(100);
   setLuckyProfitRate(5);
   setActionLoading(false);
   loadUsers();
@@ -1640,14 +1687,16 @@ async function handleDeleteUser() {
     user={luckyUser}
     fallbackName={t.list.fallbackName}
     luckyProducts={luckyProducts}
+    recommendedProduct={pickRecommendedLuckyProduct(
+      luckyProducts,
+      luckyAmount
+    )}
     stepNumber={luckyStepNumber}
-    productId={luckyProductId}
     luckyAmount={luckyAmount}
     profitRate={luckyProfitRate}
     actionLoading={actionLoading}
-        t={t.luckyModal}
+    t={t.luckyModal}
     onStepNumberChange={setLuckyStepNumber}
-    onProductIdChange={setLuckyProductId}
     onLuckyAmountChange={setLuckyAmount}
     onProfitRateChange={setLuckyProfitRate}
     onClose={() => {

@@ -1337,21 +1337,30 @@ luckyModal: {
   tag: "Lucky Order Engine",
   title: "Inject Lucky Order",
   description:
-    "Replace one pending generated order with a special lucky order.",
+    "Replace one pending generated order with an auto-matched lucky order.",
   user: "User",
   balance: "Balance",
   currentStep: "Current Step",
+
   luckyStepNumber: "Lucky Step Number",
   luckyStepHelp:
     "Choose a pending step only. Completed steps cannot be replaced.",
-  luckyProduct: "Lucky Product",
-  noLuckyProducts: "No lucky products found",
+
   customLuckyAmount: "Custom Lucky Amount",
   customLuckyAmountHelp:
-    "Example: 2800. This replaces the order total for this lucky step.",
+    "Fill any amount. The system will auto-pick the closest suitable product.",
+
+  recommendedProduct: "Auto Recommended Product",
+  autoBadge: "AUTO",
+  productValue: "Product value",
+  luckyOrderAmount: "Lucky order amount",
+  noLuckyProducts: "No available products found",
+  noMatchingProduct: "No matching product found for this amount.",
+
   luckyProfitRate: "Lucky Profit Rate %",
   luckyProfitRateHelp:
     "Example: 5 means 5%. A $2,800 lucky order gives $140 profit.",
+
   injecting: "Injecting...",
   injectLuckyOrder: "Inject Lucky Order",
 },

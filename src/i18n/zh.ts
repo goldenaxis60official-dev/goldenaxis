@@ -1384,20 +1384,29 @@ adminWalletRequests: {
 luckyModal: {
   tag: "幸运订单系统",
   title: "插入幸运订单",
-  description: "将一个待完成的生成订单替换为特殊幸运订单。",
+  description: "将一个待完成的生成订单替换为自动匹配的幸运订单。",
   user: "用户",
   balance: "余额",
   currentStep: "当前步骤",
+
   luckyStepNumber: "幸运步骤编号",
   luckyStepHelp: "只能选择待完成步骤。已完成步骤不能替换。",
-  luckyProduct: "幸运产品",
-  noLuckyProducts: "未找到幸运产品",
+
   customLuckyAmount: "自定义幸运金额",
   customLuckyAmountHelp:
-    "例如：2800。此金额会替换该幸运步骤的订单总额。",
+    "填写任意金额，系统会自动匹配最接近、最合适的产品。",
+
+  recommendedProduct: "自动推荐产品",
+  autoBadge: "自动",
+  productValue: "产品价值",
+  luckyOrderAmount: "幸运订单金额",
+  noLuckyProducts: "未找到可用产品",
+  noMatchingProduct: "未找到适合此金额的产品。",
+
   luckyProfitRate: "幸运利润比例 %",
   luckyProfitRateHelp:
     "例如：5 表示 5%。$2,800 的幸运订单会获得 $140 利润。",
+
   injecting: "插入中...",
   injectLuckyOrder: "插入幸运订单",
 },
