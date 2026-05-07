@@ -22,7 +22,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-type SupportFilter = "open" | "reviewing" | "closed" | "all";
 type SupportStatus = "open" | "reviewing" | "closed";
 
 type AdminTicket = {
@@ -71,7 +70,6 @@ function AdminSupportContent({ profile }: { profile: Profile }) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
-  const [filter, setFilter] = useState<SupportFilter>("open");
 const [searchText, setSearchText] = useState("");
 const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 const [currentPage, setCurrentPage] = useState(1);
@@ -86,9 +84,6 @@ const [replyText, setReplyText] = useState("");
   const [errorText, setErrorText] = useState("");
 
   const hasPageAccess = canAccessAdminPath(profile.role, "/admin/support");
-  function getSupportFilterLabel(value: SupportFilter) {
-  return t.filters[value];
-}
 
 function getSupportStatusLabel(value: SupportStatus) {
   return t.status[value];
@@ -114,8 +109,6 @@ useEffect(() => {
     const name = ticket.profiles?.display_name || "";
     const email = ticket.profiles?.email || "";
 
-    const matchesStatus = filter === "all" || ticket.status === filter;
-
     const matchesSearch =
       !keyword ||
       ticket.subject.toLowerCase().includes(keyword) ||
@@ -124,7 +117,7 @@ useEffect(() => {
       email.toLowerCase().includes(keyword) ||
       ticket.id.toLowerCase().includes(keyword);
 
-    return matchesStatus && matchesSearch;
+    return matchesSearch;
   });
 
   return [...result].sort((a, b) => {
@@ -134,7 +127,7 @@ useEffect(() => {
 
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
-}, [tickets, filter, searchText, sortBy]);
+}, [tickets, searchText, sortBy]);
 
 const totalPages = Math.max(1, Math.ceil(filteredTickets.length / pageSize));
 
@@ -150,7 +143,7 @@ const lastResult = Math.min(currentPage * pageSize, filteredTickets.length);
 
 useEffect(() => {
   setCurrentPage(1);
-}, [filter, searchText, sortBy, pageSize]);
+}, [searchText, sortBy, pageSize]);
 
 useEffect(() => {
   if (currentPage > totalPages) {
@@ -410,24 +403,6 @@ useEffect(() => {
 <h2 className="text-xl font-black">{t.filters.userChats}</h2>
                 </div>
               </div>
-
-              <div className="mb-4 grid grid-cols-2 gap-2">
-  {(["open", "reviewing", "closed", "all"] as SupportFilter[]).map(
-    (item) => (
-      <button
-        key={item}
-        onClick={() => setFilter(item)}
-        className={`rounded-xl border px-3 py-2 text-xs font-black capitalize ${
-          filter === item
-            ? "border-yellow-400 bg-yellow-400 text-black"
-            : "border-white/10 bg-black/35 text-white/55 hover:bg-white/[0.08]"
-        }`}
-      >
-        {getSupportFilterLabel(item)}
-      </button>
-    )
-  )}
-</div>
 
 <div className="space-y-3">
   <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3 py-2">
