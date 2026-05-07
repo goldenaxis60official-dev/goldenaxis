@@ -1416,23 +1416,6 @@ securityModal: {
   resetWithdrawPasscode: "Reset Withdraw Passcode",
 },
 
-securityModal: {
-  tag: "账户安全",
-  title: "安全重置",
-  user: "用户",
-  email: "邮箱",
-  warning:
-    "仅用于重置。旧密码/提现密码不会显示。重置后请私下把新代码交给用户。",
-  newLoginPassword: "新登录密码",
-  temporaryPassword: "临时密码",
-  generate: "生成",
-  resetting: "重置中...",
-  resetLoginPassword: "重置登录密码",
-  newWithdrawPasscode: "新提现密码",
-  sixDigitCode: "6 位数字代码",
-  resetWithdrawPasscode: "重置提现密码",
-},
-
 },
 
 adminWalletRequests: {
