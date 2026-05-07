@@ -1,7 +1,8 @@
 //types>profile.ts
 
 export type Profile = {
-  id: string;
+    id: string;
+  member_id: string | null;
   email: string | null;
   phone: string | null;
   display_name: string | null;

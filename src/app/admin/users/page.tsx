@@ -229,7 +229,8 @@ const filteredUsers = useMemo(() => {
       user.email?.toLowerCase().includes(keyword) ||
       user.admin_nickname?.toLowerCase().includes(keyword) ||
       user.referral_code?.toLowerCase().includes(keyword) ||
-      user.id.toLowerCase().includes(keyword);
+user.member_id?.toLowerCase().includes(keyword) ||
+user.id.toLowerCase().includes(keyword);
 
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
@@ -359,7 +360,7 @@ function exportUsersToCsv() {
   const headers = [
     "Name",
     "Email",
-    "User ID",
+    "ID",
     "Phone",
     "Nickname",
     "Role",
@@ -1315,7 +1316,7 @@ async function handleDeleteUser() {
                           {user.email || t.row.noEmail}
                         </p>
                         <p className="mt-1 text-[10px] text-white/25">
-                          {shortId(user.id)}
+                          ID: {user.member_id || shortId(user.id)}
                         </p>
                       </div>
                     </div>
@@ -1325,7 +1326,7 @@ async function handleDeleteUser() {
                     <div className="min-w-[180px]">
                       <p className="text-white/70">{user.email || "-"}</p>
                       <p className="mt-1 text-[10px] text-white/35">
-                        {t.row.uid}: {shortId(user.id)}
+                        {t.row.uid}: {user.member_id || shortId(user.id)}
                       </p>
                       <p className="mt-1 text-[10px] text-white/35">
                         {t.row.phone}: {user.phone || "-"}

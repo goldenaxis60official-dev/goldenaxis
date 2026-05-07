@@ -39,6 +39,7 @@ type AdminWalletRequest = {
   created_at: string;
   reviewed_at: string | null;
   profiles: {
+  member_id: string | null;
   display_name: string | null;
   email: string | null;
   balance: number;
@@ -96,7 +97,8 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
     .select(
       `
       *,
-      profiles (
+  profiles (
+  member_id,
   display_name,
   email,
   balance,
@@ -180,7 +182,9 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
       !keyword ||
       item.profiles?.display_name?.toLowerCase().includes(keyword) ||
       item.profiles?.email?.toLowerCase().includes(keyword) ||
-      item.method?.toLowerCase().includes(keyword) ||
+item.profiles?.member_id?.toLowerCase().includes(keyword) ||
+item.user_id.toLowerCase().includes(keyword) ||
+item.method?.toLowerCase().includes(keyword) ||
       item.note?.toLowerCase().includes(keyword) ||
       item.admin_note?.toLowerCase().includes(keyword) ||
       item.id.toLowerCase().includes(keyword);
@@ -452,6 +456,10 @@ const displayBalance =
                   <p className="mt-1 truncate text-xs text-white/45">
                     {item.profiles?.email || t.list.noEmail}
                   </p>
+
+                  <p className="mt-1 text-xs font-bold text-yellow-300">
+  ID: {item.profiles?.member_id || item.user_id.slice(0, 8)}
+</p>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
   <div>
