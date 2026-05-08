@@ -1,6 +1,9 @@
 //src>app>admin>users>components>ReferralCodeModal.tsx
 
-import { Save, X } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Check, Copy, Save, X } from "lucide-react";
 
 type ModalUser = {
   display_name: string | null;
@@ -35,14 +38,38 @@ function MiniBox({
   label,
   value,
   color = "white",
+  onCopy,
+  copied = false,
 }: {
   label: string;
   value: string;
   color?: "white" | "gold";
+  onCopy?: () => void;
+  copied?: boolean;
 }) {
+  const canCopy = Boolean(onCopy && value && value !== "-");
+
   return (
     <div className="rounded-2xl bg-black/30 p-3">
-      <p className="text-xs text-white/45">{label}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-white/45">{label}</p>
+
+        {canCopy && (
+          <button
+            type="button"
+            onClick={onCopy}
+            className="inline-flex items-center gap-1 rounded-lg border border-yellow-400/20 bg-yellow-400/10 px-2 py-1 text-[10px] font-black text-yellow-200 transition hover:bg-yellow-400/20"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copied ? "Copied" : "Copy"}
+          </button>
+        )}
+      </div>
+
       <p
         className={`mt-1 truncate font-bold ${
           color === "gold" ? "text-yellow-300" : "text-white/75"
@@ -64,6 +91,21 @@ export default function ReferralCodeModal({
   onClose,
   onSubmit,
 }: ReferralCodeModalProps) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopyCurrentCode() {
+    const code = user.referral_code || "";
+
+    if (!code) return;
+
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+
+    window.setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+  }
+
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
@@ -74,8 +116,9 @@ export default function ReferralCodeModal({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-2xl bg-white/10 p-3 text-white/70"
+            className="rounded-2xl bg-white/10 p-3 text-white/70 transition hover:bg-white/15"
           >
             <X className="h-5 w-5" />
           </button>
@@ -88,6 +131,8 @@ export default function ReferralCodeModal({
             label={t.currentCode}
             value={user.referral_code || "-"}
             color="gold"
+            onCopy={handleCopyCurrentCode}
+            copied={copied}
           />
         </div>
 
@@ -114,6 +159,7 @@ export default function ReferralCodeModal({
         </div>
 
         <button
+          type="button"
           onClick={onSubmit}
           disabled={actionLoading}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 to-yellow-600 px-5 py-4 font-black text-black disabled:opacity-60"
