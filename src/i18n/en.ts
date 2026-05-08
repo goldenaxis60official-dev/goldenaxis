@@ -988,7 +988,7 @@ adminUserTasks: {
   messages: {
     selectUserFirst: "Please select a user first.",
     selectTaskFirst: "Please select a task first.",
-    maxTasks: "This user already has the maximum 80 assigned tasks.",
+    maxTasks: "This user already has the maximum assigned tasks.",
     stepRange: "Assigned step must be between 1 and 80.",
     stepExists:
       "Step {step} already exists for this user. Delete that step first or choose another step.",
@@ -1321,7 +1321,7 @@ generateModal: {
   balance: "Balance",
   step: "Step",
   taskCount: "Task Count",
-  taskCountHelp: "Minimum 1, maximum 80.",
+  taskCountHelp: "Minimum 1, maximum.",
   capitalAmount: "Capital / Order Amount",
   capitalAmountHelp:
     "Example: 500, 3000, 8000, 20000. System will pick closest product tier.",

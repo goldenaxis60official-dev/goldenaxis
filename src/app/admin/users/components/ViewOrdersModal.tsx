@@ -1,6 +1,6 @@
-//src>app>admin>users<components<ViewOrdersModal.tsx
+// src/app/admin/users/components/ViewOrdersModal.tsx
 
-import { Eye, X } from "lucide-react";
+import { Eye, Pencil, Trash2, X } from "lucide-react";
 
 type ModalUser = {
   display_name: string | null;
@@ -10,6 +10,7 @@ type ModalUser = {
 type GeneratedOrderItemPreview = {
   id: string;
   product_snapshot: {
+    id?: string;
     name?: string;
     main_image?: string | null;
     category?: string;
@@ -68,6 +69,7 @@ type ViewOrdersModalProps = {
   t: ViewOrdersModalText;
   onClose: () => void;
   onDeleteOrder: (order: GeneratedOrderPreview) => void;
+  onEditLuckyOrder: (order: GeneratedOrderPreview) => void;
 };
 
 function MiniBox({
@@ -101,6 +103,7 @@ export default function ViewOrdersModal({
   t,
   onClose,
   onDeleteOrder,
+  onEditLuckyOrder,
 }: ViewOrdersModalProps) {
   const completedCount = orders.filter(
     (order) => order.status === "completed"
@@ -120,7 +123,7 @@ export default function ViewOrdersModal({
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
-      <div className="w-full max-w-5xl rounded-[2rem] border border-blue-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(59,130,246,0.18)]">
+      <div className="w-full max-w-6xl rounded-[2rem] border border-blue-400/25 bg-[#090909] p-6 shadow-[0_0_60px_rgba(59,130,246,0.18)]">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-blue-200/80">{t.tag}</p>
@@ -130,7 +133,7 @@ export default function ViewOrdersModal({
 
           <button
             onClick={onClose}
-            className="rounded-2xl bg-white/10 p-3 text-white/70"
+            className="rounded-2xl bg-white/10 p-3 text-white/70 hover:bg-white/15"
           >
             <X className="h-5 w-5" />
           </button>
@@ -138,13 +141,9 @@ export default function ViewOrdersModal({
 
         <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-5">
           <MiniBox label={t.user} value={user.display_name || fallbackName} />
-
           <MiniBox label={t.total} value={String(orders.length)} color="gold" />
-
           <MiniBox label={t.completed} value={String(completedCount)} />
-
           <MiniBox label={t.pending} value={String(pendingCount)} />
-
           <MiniBox label={t.lucky} value={String(luckyCount)} color="gold" />
         </div>
 
@@ -166,7 +165,7 @@ export default function ViewOrdersModal({
 
         {!loading && orders.length > 0 && (
           <div className="max-h-[620px] overflow-auto rounded-2xl border border-white/10">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="w-full min-w-[1080px] text-left text-sm">
               <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
                 <tr>
                   <th className="px-4 py-3">{t.step}</th>
@@ -187,7 +186,11 @@ export default function ViewOrdersModal({
                   return (
                     <tr
                       key={order.id}
-                      className="bg-black/20 hover:bg-white/[0.04]"
+                      className={
+                        order.is_lucky_bonus
+                          ? "bg-fuchsia-500/[0.07] hover:bg-fuchsia-500/[0.11]"
+                          : "bg-black/20 hover:bg-white/[0.04]"
+                      }
                     >
                       <td className="px-4 py-4 font-black text-yellow-300">
                         #{order.step_number}
@@ -205,17 +208,28 @@ export default function ViewOrdersModal({
                             firstItem?.subtotal || order.order_total
                           ).toFixed(2)}
                         </p>
+
+                        {order.is_lucky_bonus && (
+                          <p className="mt-1 text-[11px] font-bold text-fuchsia-200">
+                            Lucky custom amount: $
+                            {Number(
+                              firstItem?.product_snapshot?.custom_lucky_amount ||
+                                order.order_total ||
+                                0
+                            ).toFixed(2)}
+                          </p>
+                        )}
                       </td>
 
                       <td className="px-4 py-4">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-black ${
                             order.is_lucky_bonus
-                              ? "bg-fuchsia-500/15 text-fuchsia-300"
+                              ? "bg-fuchsia-500/20 text-fuchsia-200"
                               : "bg-blue-500/15 text-blue-300"
                           }`}
                         >
-                          {order.is_lucky_bonus ? t.lucky : t.normal}
+                          {order.is_lucky_bonus ? "Lucky Bonus" : t.normal}
                         </span>
                       </td>
 
@@ -251,18 +265,32 @@ export default function ViewOrdersModal({
                           ? new Date(order.completed_at).toLocaleString()
                           : "-"}
                       </td>
+
                       <td className="px-4 py-4 text-right">
-  {order.status === "pending" ? (
-    <button
-      onClick={() => onDeleteOrder(order)}
-      className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-black text-red-300 hover:bg-red-500/25"
-    >
-      Delete
-    </button>
-  ) : (
-    <span className="text-xs text-white/30">Locked</span>
-  )}
-</td>
+                        {order.status === "pending" ? (
+                          <div className="flex justify-end gap-2">
+                            {order.is_lucky_bonus && (
+                              <button
+                                onClick={() => onEditLuckyOrder(order)}
+                                className="inline-flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-3 py-1.5 text-xs font-black text-fuchsia-200 hover:bg-fuchsia-500/25"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                Edit Lucky
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => onDeleteOrder(order)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-black text-red-300 hover:bg-red-500/25"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-white/30">Locked</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

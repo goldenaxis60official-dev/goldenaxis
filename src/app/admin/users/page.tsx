@@ -52,11 +52,12 @@ type LuckyProductOption = {
 type GeneratedOrderItemPreview = {
   id: string;
   product_snapshot: {
-    name?: string;
-    main_image?: string | null;
-    category?: string;
-    custom_lucky_amount?: string | number;
-  };
+  id?: string;
+  name?: string;
+  main_image?: string | null;
+  category?: string;
+  custom_lucky_amount?: string | number;
+};
   unit_price: number;
   quantity: number;
   subtotal: number;
@@ -74,6 +75,14 @@ type GeneratedOrderPreview = {
   created_at: string;
   completed_at: string | null;
   user_generated_order_items?: GeneratedOrderItemPreview[];
+};
+
+type UserOrderSummary = {
+  totalOrders: number;
+  maxStep: number;
+  completedOrders: number;
+  pendingOrders: number;
+  luckySteps: number[];
 };
 
 type AdminUsersText = typeof en.adminUsers;
@@ -138,6 +147,9 @@ const [luckyProfitRate, setLuckyProfitRate] = useState(5);
 const [viewOrdersUser, setViewOrdersUser] = useState<ManagedUser | null>(null);
 const [viewOrders, setViewOrders] = useState<GeneratedOrderPreview[]>([]);
 const [viewOrdersLoading, setViewOrdersLoading] = useState(false);
+const [orderStatsByUser, setOrderStatsByUser] = useState<
+  Record<string, UserOrderSummary>
+>({});
 const [resetOrdersUser, setResetOrdersUser] = useState<ManagedUser | null>(null);
 const [resetOrdersConfirmText, setResetOrdersConfirmText] = useState("");
 const [resetOrdersResetStep, setResetOrdersResetStep] = useState(true);
@@ -166,16 +178,16 @@ const canManageSecurity = isStaffControlRole;
 const canDeleteUsers = isFullControlRole;
 const canEditUserInfo = isFullControlRole;
 
-  async function loadUsers() {
+ async function loadUsers() {
   setLoading(true);
   setErrorText("");
 
   const [profilesResult, notesResult] = await Promise.all([
     supabase
-  .from("profiles")
-  .select("*")
-  .neq("status", "deleted")
-  .order("created_at", { ascending: false }),
+      .from("profiles")
+      .select("*")
+      .neq("status", "deleted")
+      .order("created_at", { ascending: false }),
 
     supabase.from("admin_user_notes").select("user_id, nickname"),
   ]);
@@ -203,7 +215,66 @@ const canEditUserInfo = isFullControlRole;
     admin_nickname: noteMap.get(user.id) || null,
   }));
 
+  const userIds = mergedUsers.map((user) => user.id);
+
+  const summaryMap: Record<string, UserOrderSummary> = {};
+
+  if (userIds.length > 0) {
+    const { data: orderRows, error: orderError } = await supabase
+      .from("user_generated_orders")
+      .select("user_id, step_number, status, is_lucky_bonus")
+      .in("user_id", userIds);
+
+    if (orderError) {
+      setErrorText(orderError.message);
+      setUsers(mergedUsers);
+      setOrderStatsByUser({});
+      setLoading(false);
+      return;
+    }
+
+    ((orderRows || []) as {
+      user_id: string;
+      step_number: number | null;
+      status: string | null;
+      is_lucky_bonus: boolean | null;
+    }[]).forEach((order) => {
+      const userId = order.user_id;
+      const stepNumber = Number(order.step_number || 0);
+
+      if (!summaryMap[userId]) {
+        summaryMap[userId] = {
+          totalOrders: 0,
+          maxStep: 0,
+          completedOrders: 0,
+          pendingOrders: 0,
+          luckySteps: [],
+        };
+      }
+
+      summaryMap[userId].totalOrders += 1;
+      summaryMap[userId].maxStep = Math.max(summaryMap[userId].maxStep, stepNumber);
+
+      if (order.status === "completed") {
+        summaryMap[userId].completedOrders += 1;
+      }
+
+      if (order.status === "pending") {
+        summaryMap[userId].pendingOrders += 1;
+      }
+
+      if (order.is_lucky_bonus && stepNumber > 0) {
+        summaryMap[userId].luckySteps.push(stepNumber);
+      }
+    });
+
+    Object.values(summaryMap).forEach((summary) => {
+      summary.luckySteps.sort((a, b) => a - b);
+    });
+  }
+
   setUsers(mergedUsers);
+  setOrderStatsByUser(summaryMap);
   setLoading(false);
 }
 
@@ -397,6 +468,15 @@ function getAutoOrderAmount(user: ManagedUser) {
   return Number(Math.min(availableBalance, 10000).toFixed(2));
 }
 
+async function openGenerateOrdersModal(user: ManagedUser) {
+  setGenerateUser(user);
+  setGenerateTaskCount(60);
+  setGenerateProfitRate(0.08);
+  setGenerateResetExisting(false);
+  setSuccessText("");
+  setErrorText("");
+}
+
 function escapeCsv(value: string | number | null | undefined) {
   const cleanValue = String(value ?? "").replaceAll('"', '""');
   return `"${cleanValue}"`;
@@ -568,10 +648,10 @@ async function handleResetWithdrawPasscode() {
 async function handleGenerateOrders() {
   if (!generateUser) return;
 
-  if (generateTaskCount < 1 || generateTaskCount > 80) {
-    setErrorText("Task count must be between 1 and 80.");
-    return;
-  }
+  if (generateTaskCount < 1) {
+  setErrorText("Task count must be at least 1.");
+  return;
+}
 
   const autoCapitalAmount = getAutoOrderAmount(generateUser);
 
@@ -604,9 +684,11 @@ async function handleGenerateOrders() {
   }
 
   setSuccessText(
-    `Generated ${generateTaskCount} auto orders for ${
+    `${generateResetExisting ? "Reset and generated" : "Added"} ${generateTaskCount} auto orders for ${
       generateUser.display_name || generateUser.email || "user"
-    } using auto amount ${formatMoney(autoCapitalAmount)} based on user balance.`
+    } using ${generateProfitRate}% profit rate and auto amount ${formatMoney(
+      autoCapitalAmount
+    )}.`
   );
 
   setGenerateUser(null);
@@ -658,20 +740,19 @@ async function openLuckyOrderModal(user: ManagedUser) {
 async function handleInjectLuckyOrder() {
   if (!luckyUser) return;
 
-  const recommendedProduct = pickRecommendedLuckyProduct(
-    luckyProducts,
-    luckyAmount
-  );
+  const selectedLuckyProduct =
+  luckyProducts.find((product) => product.id === luckyProductId) ||
+  pickRecommendedLuckyProduct(luckyProducts, luckyAmount);
 
-  if (!recommendedProduct) {
-    setErrorText("No available product found for this lucky amount.");
-    return;
-  }
+if (!selectedLuckyProduct) {
+  setErrorText("No available product found for this lucky amount.");
+  return;
+}
 
-  if (luckyStepNumber < 1 || luckyStepNumber > 80) {
-    setErrorText("Lucky step must be between 1 and 80.");
-    return;
-  }
+  if (luckyStepNumber < 1) {
+  setErrorText("Lucky step must be at least 1.");
+  return;
+}
 
   if (luckyAmount <= 0) {
     setErrorText("Lucky amount must be greater than 0.");
@@ -690,7 +771,7 @@ async function handleInjectLuckyOrder() {
   const { error } = await supabase.rpc("inject_lucky_order", {
     p_user_id: luckyUser.id,
     p_step_number: luckyStepNumber,
-    p_lucky_product_id: recommendedProduct.id,
+    p_lucky_product_id: selectedLuckyProduct.id,
     p_lucky_amount: luckyAmount,
     p_profit_rate_percent: luckyProfitRate,
   });
@@ -702,7 +783,7 @@ async function handleInjectLuckyOrder() {
   }
 
   setSuccessText(
-    `Lucky order injected at step ${luckyStepNumber} using ${recommendedProduct.name} for ${
+    `Lucky order injected at step ${luckyStepNumber} using ${selectedLuckyProduct.name} for ${
       luckyUser.display_name || luckyUser.email || "user"
     }.`
   );
@@ -758,6 +839,58 @@ async function openViewOrdersModal(user: ManagedUser) {
 
   setViewOrders((data || []) as unknown as GeneratedOrderPreview[]);
   setViewOrdersLoading(false);
+}
+
+async function openEditLuckyOrderModal(order: GeneratedOrderPreview) {
+  if (!viewOrdersUser) return;
+
+  if (order.status !== "pending") {
+    setErrorText("Only pending lucky orders can be edited.");
+    return;
+  }
+
+  const firstItem = order.user_generated_order_items?.[0];
+  const snapshotProductId = firstItem?.product_snapshot?.id;
+
+  setLuckyUser(viewOrdersUser);
+  setLuckyStepNumber(order.step_number);
+  setLuckyAmount(Number(order.order_total || 0));
+  setLuckyProfitRate(Number(order.profit_rate || 0));
+  setLuckyProductId("");
+  setSuccessText("");
+  setErrorText("");
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, price, category, main_image")
+    .in("product_type", ["normal", "lucky"])
+    .eq("is_active", true)
+    .eq("stock_status", "in_stock")
+    .order("price", { ascending: true });
+
+  if (error) {
+    setErrorText(error.message);
+    return;
+  }
+
+  const products = (data || []) as LuckyProductOption[];
+  setLuckyProducts(products);
+
+  const existingProductStillAvailable =
+    snapshotProductId &&
+    products.some((product) => product.id === snapshotProductId);
+
+  if (existingProductStillAvailable) {
+    setLuckyProductId(snapshotProductId);
+    return;
+  }
+
+  const recommendedProduct = pickRecommendedLuckyProduct(
+    products,
+    Number(order.order_total || 0)
+  );
+
+  setLuckyProductId(recommendedProduct?.id || "");
 }
 
 async function handleDeleteGeneratedOrder(order: GeneratedOrderPreview) {
@@ -1419,7 +1552,17 @@ async function handleDeleteUser() {
           <tbody>
             {paginatedUsers.map((user) => {
               const isUserAdmin = user.role === "admin";
-              const displayBalance = getDisplayBalance(user);
+const displayBalance = getDisplayBalance(user);
+const depositBalance = Number(user.deposited_balance || 0);
+const referralBalance = Number(user.referral_bonus_balance || 0);
+const profitBalance = Number(user.task_profit_balance || 0);
+const orderSummary = orderStatsByUser[user.id];
+const campaignTotal = orderSummary?.maxStep || 0;
+const campaignCurrent =
+  campaignTotal > 0
+    ? Math.min(Number(user.current_step || 1), campaignTotal)
+    : Number(user.current_step || 1);
+const luckySteps = orderSummary?.luckySteps || [];
 
               return (
                 <tr
@@ -1504,67 +1647,130 @@ async function handleDeleteUser() {
                   </td>
 
                   <td className="px-3 py-3 align-top">
-                    <p className="font-black text-yellow-300">
-                      {formatMoney(displayBalance)}
-                    </p>
-                    <p className="mt-1 text-[10px] text-white/35">
-                      {t.row.legacy}: {formatMoney(user.balance)}
-                    </p>
-                  </td>
+  <div className="min-w-[150px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
+    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+      Total Balance
+    </p>
 
-                  <td className="px-3 py-3 align-top">
-                    <div className="min-w-[145px] space-y-1 text-[11px]">
-                      <p className="text-white/55">
-                        {t.row.deposit}:{" "}
-                        <span className="font-bold text-white">
-                          {formatMoney(user.deposited_balance)}
-                        </span>
-                      </p>
-                      <p className="text-white/55">
-                        {t.row.referral}:{" "}
-                        <span className="font-bold text-yellow-300">
-                          {formatMoney(user.referral_bonus_balance)}
-                        </span>
-                      </p>
-                      <p className="text-white/55">
-                        {t.row.profit}:{" "}
-                        <span className="font-bold text-emerald-300">
-                          {formatMoney(user.task_profit_balance)}
-                        </span>
-                      </p>
-                    </div>
-                  </td>
+    <p className="mt-1 text-xl font-black text-slate-950">
+      {formatMoney(displayBalance)}
+    </p>
 
-                  <td className="px-3 py-3 align-top">
-                    <div className="min-w-[125px] space-y-1 text-[11px]">
-                      <p className="text-white/55">
-                        {t.row.today}:{" "}
-                        <span className="font-bold text-emerald-300">
-                          {formatMoney(user.today_earnings)}
-                        </span>
-                      </p>
-                      <p className="text-white/55">
-                        {t.row.total}:{" "}
-                        <span className="font-bold text-white">
-                          {formatMoney(user.total_earnings)}
-                        </span>
-                      </p>
-                    </div>
-                  </td>
+    <p className="mt-1 text-[10px] font-semibold text-slate-500">
+      Deposit + Referral + Profit
+    </p>
+  </div>
+</td>
 
-                  <td className="px-3 py-3 align-top">
-                    <div className="min-w-[110px] space-y-1 text-[11px]">
-                      <p className="font-black text-white">
-                        {t.row.step} {user.current_step}
-                      </p>
-                      <p className="text-white/45">
-                        {t.row.credit}: {user.credit_score}
-                      </p>
-                      <p className="text-white/45">
-                        {t.row.terms}: {user.terms_accepted ? t.row.yes : t.row.no}
-                      </p>
-                    </div>
-                  </td>
+<td className="px-3 py-3 align-top">
+  <div className="min-w-[175px] space-y-1.5">
+    <div className="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5">
+      <span className="text-[10px] font-black uppercase text-blue-700">
+        Deposit
+      </span>
+      <span className="text-xs font-black text-slate-950">
+        {formatMoney(depositBalance)}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-1.5">
+      <span className="text-[10px] font-black uppercase text-amber-700">
+        Referral
+      </span>
+      <span className="text-xs font-black text-slate-950">
+        {formatMoney(referralBalance)}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-1.5">
+      <span className="text-[10px] font-black uppercase text-emerald-700">
+        Profit
+      </span>
+      <span className="text-xs font-black text-slate-950">
+        {formatMoney(profitBalance)}
+      </span>
+    </div>
+  </div>
+</td>
+
+<td className="px-3 py-3 align-top">
+  <div className="min-w-[145px] rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+    <div className="flex items-center justify-between">
+      <span className="text-[10px] font-black uppercase text-slate-500">
+        Today
+      </span>
+      <span className="text-sm font-black text-slate-950">
+        {formatMoney(user.today_earnings)}
+      </span>
+    </div>
+
+    <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+      <span className="text-[10px] font-black uppercase text-slate-500">
+        Total
+      </span>
+      <span className="text-sm font-black text-slate-950">
+        {formatMoney(user.total_earnings)}
+      </span>
+    </div>
+  </div>
+</td>
+
+<td className="px-3 py-3 align-top">
+  <div className="min-w-[190px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[10px] font-black uppercase text-slate-500">
+        Campaign
+      </span>
+
+      <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-black text-white">
+        {campaignTotal > 0 ? `${campaignCurrent}/${campaignTotal}` : "No orders"}
+      </span>
+    </div>
+
+    <p className="mt-2 text-lg font-black text-slate-950">
+      Step {user.current_step}
+    </p>
+
+    <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-bold">
+      <span className="rounded-md bg-emerald-100 px-2 py-1 text-emerald-700">
+        Done {orderSummary?.completedOrders || 0}
+      </span>
+
+      <span className="rounded-md bg-amber-100 px-2 py-1 text-amber-700">
+        Left {orderSummary?.pendingOrders || 0}
+      </span>
+    </div>
+
+    <div className="mt-2 border-t border-slate-200 pt-2">
+      <p className="text-[10px] font-black uppercase text-slate-500">
+        Lucky
+      </p>
+
+      {luckySteps.length > 0 ? (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {luckySteps.slice(0, 4).map((step) => (
+            <span
+              key={step}
+              className="rounded-md bg-fuchsia-100 px-2 py-1 text-[10px] font-black text-fuchsia-700"
+            >
+              {step}/{campaignTotal || step}
+            </span>
+          ))}
+
+          {luckySteps.length > 4 && (
+            <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-600">
+              +{luckySteps.length - 4}
+            </span>
+          )}
+        </div>
+      ) : (
+        <p className="mt-1 text-[10px] font-semibold text-slate-400">
+          No lucky bonus
+        </p>
+      )}
+    </div>
+  </div>
+</td>
 
                   <td className="px-3 py-3 align-top">
                     <div className="min-w-[120px]">
@@ -1610,12 +1816,7 @@ async function handleDeleteUser() {
                   <td className="px-3 py-3 align-top">
                     <div className="flex min-w-[310px] flex-wrap justify-end gap-1.5">
                       <button
-                        onClick={() => {
-                          setGenerateUser(user);
-                          setGenerateTaskCount(60);
-                          setGenerateProfitRate(0.08);
-                          setGenerateResetExisting(false);
-                        }}
+                        onClick={() => openGenerateOrdersModal(user)}
                         disabled={!canManageOrders || user.role !== "user"}
                         className="rounded-md bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
                       >
@@ -1772,11 +1973,13 @@ async function handleDeleteUser() {
       luckyProducts,
       luckyAmount
     )}
+    selectedProductId={luckyProductId}
     stepNumber={luckyStepNumber}
     luckyAmount={luckyAmount}
     profitRate={luckyProfitRate}
     actionLoading={actionLoading}
     t={t.luckyModal}
+    onProductChange={setLuckyProductId}
     onStepNumberChange={setLuckyStepNumber}
     onLuckyAmountChange={setLuckyAmount}
     onProfitRateChange={setLuckyProfitRate}
@@ -1797,6 +2000,7 @@ async function handleDeleteUser() {
   loading={viewOrdersLoading}
   t={t.viewOrdersModal}
   onDeleteOrder={handleDeleteGeneratedOrder}
+  onEditLuckyOrder={openEditLuckyOrderModal}
   onClose={() => {
     setViewOrdersUser(null);
     setViewOrders([]);

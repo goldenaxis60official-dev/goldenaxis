@@ -135,13 +135,12 @@ export default function GenerateOrdersModal({
               {t.taskCount}
             </p>
             <input
-              value={taskCount}
-              onChange={(event) => onTaskCountChange(Number(event.target.value))}
-              type="number"
-              min={1}
-              max={80}
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
-            />
+  value={taskCount}
+  onChange={(event) => onTaskCountChange(Number(event.target.value))}
+  type="number"
+  min={1}
+  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
+/>
             <p className="mt-2 text-xs text-white/45">{t.taskCountHelp}</p>
           </div>
 

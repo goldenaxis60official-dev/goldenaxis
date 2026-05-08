@@ -107,7 +107,7 @@ function SequenceBuilderContent({ profile }: { profile: Profile }) {
             <WorkflowCard
               icon={ListChecks}
               title="3. Assign User Tasks"
-              description="Assign each user a custom mission list from minimum 1 task to maximum 80 tasks."
+              description="Assign each user a custom mission list from minimum 1 task to maximum tasks."
               href="/admin/user-tasks"
               button="Open User Tasks"
             />
