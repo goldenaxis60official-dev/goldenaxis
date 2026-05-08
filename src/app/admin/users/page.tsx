@@ -1570,34 +1570,77 @@ const luckySteps = orderSummary?.luckySteps || [];
                   className="border-b border-white/10 bg-black/20 hover:bg-yellow-400/[0.04]"
                 >
                   <td className="px-3 py-3 align-top">
-                    <div className="flex min-w-[220px] items-start gap-2">
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                          isUserAdmin
-                            ? "bg-yellow-400/10 text-yellow-300"
-                            : "bg-blue-400/10 text-blue-300"
-                        }`}
-                      >
-                        {isUserAdmin ? (
-                          <Crown className="h-5 w-5" />
-                        ) : (
-                          <Users className="h-5 w-5" />
-                        )}
-                      </div>
+  <div className="min-w-[260px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 shadow-sm">
+    <div className="flex items-start gap-3">
+      <div
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${
+          isUserAdmin
+            ? "border-amber-200 bg-amber-50 text-amber-700"
+            : "border-blue-100 bg-blue-50 text-blue-700"
+        }`}
+      >
+        {isUserAdmin ? (
+          <Crown className="h-5 w-5" />
+        ) : (
+          <Users className="h-5 w-5" />
+        )}
+      </div>
 
-                      <div>
-                        <p className="font-black text-white">
-                          {user.display_name || t.row.noName}
-                        </p>
-                        <p className="mt-1 text-white/45">
-                          {user.email || t.row.noEmail}
-                        </p>
-                        <p className="mt-1 text-[10px] text-white/25">
-                          ID: {user.member_id || shortId(user.id)}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-black text-slate-950">
+            {user.display_name || t.row.noName}
+          </p>
+
+          <span
+            className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
+              user.status === "active"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {user.status}
+          </span>
+        </div>
+
+        <p className="mt-1 truncate text-xs font-semibold text-slate-600">
+          {user.email || t.row.noEmail}
+        </p>
+
+        <div className="mt-2 grid grid-cols-2 gap-1.5">
+          <div className="rounded-lg border border-slate-200 bg-white px-2 py-1">
+            <p className="text-[9px] font-black uppercase text-slate-400">
+              Member ID
+            </p>
+            <p className="mt-0.5 text-xs font-black text-slate-900">
+              {user.member_id || shortId(user.id)}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white px-2 py-1">
+            <p className="text-[9px] font-black uppercase text-slate-400">
+              Role
+            </p>
+            <p className="mt-0.5 text-xs font-black text-slate-900">
+              {user.role}
+            </p>
+          </div>
+        </div>
+
+        {user.admin_nickname && (
+          <div className="mt-2 rounded-lg border border-yellow-100 bg-yellow-50 px-2 py-1">
+            <p className="text-[9px] font-black uppercase text-yellow-700">
+              Admin Note
+            </p>
+            <p className="truncate text-xs font-bold text-slate-900">
+              {user.admin_nickname}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</td>
 
                   <td className="px-3 py-3 align-top">
                     <div className="min-w-[180px]">
@@ -1717,15 +1760,15 @@ const luckySteps = orderSummary?.luckySteps || [];
 
 <td className="px-3 py-3 align-top">
   <div className="min-w-[190px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-[10px] font-black uppercase text-slate-500">
-        Campaign
-      </span>
+    <div>
+  <span className="text-[10px] font-black uppercase text-slate-500">
+    Campaign
+  </span>
 
-      <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-black text-white">
-        {campaignTotal > 0 ? `${campaignCurrent}/${campaignTotal}` : "No orders"}
-      </span>
-    </div>
+  <p className="mt-1 text-sm font-black text-slate-950">
+    {campaignTotal > 0 ? `${campaignCurrent}/${campaignTotal}` : "No orders"}
+  </p>
+</div>
 
     <p className="mt-2 text-lg font-black text-slate-950">
       Step {user.current_step}
