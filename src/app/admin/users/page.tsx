@@ -1268,113 +1268,100 @@ async function handleDeleteUser() {
             {errorText}
           </div>
         )}
-<style>{`
-  .users-white-card {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #e2e8f0 !important;
-  }
-
-  .users-white-card [class*="bg-[#101010]"],
-  .users-white-card [class*="bg-[#181818]"],
-  .users-white-card [class*="bg-black"],
-  .users-white-card [class*="bg-white/"] {
-    background: #ffffff !important;
-  }
-
-  .users-white-card [class*="border-white"] {
-    border-color: #e2e8f0 !important;
-  }
-
-  .users-white-card [class*="text-white"] {
-    color: #334155 !important;
-  }
-
-  .users-white-card h2,
-  .users-white-card .font-black {
-    color: #0f172a !important;
-  }
-
-  .users-white-card input,
-  .users-white-card select {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #cbd5e1 !important;
-  }
-
-  .users-white-card input::placeholder {
-    color: #94a3b8 !important;
-  }
-
-  .users-white-card thead {
-    background: #f8fafc !important;
-    color: #475569 !important;
-  }
-
-  .users-white-card tbody tr {
-    background: #ffffff !important;
-  }
-
-  .users-white-card tbody tr:hover {
-    background: #fff7ed !important;
-  }
-
-  .users-white-card button[class*="bg-blue"],
-  .users-white-card button[class*="bg-fuchsia"],
-  .users-white-card button[class*="bg-orange"],
-  .users-white-card button[class*="bg-red"] {
-    color: #ffffff !important;
-  }
-
-  .users-white-card button[class*="bg-yellow"] {
-    color: #111827 !important;
-  }
-
-  .users-white-card button[class*="bg-emerald"] {
-    color: #022c22 !important;
-  }
-`}</style>
-
-<section className="users-white-card overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
-  <div className="border-b border-white/10 bg-[#101010] px-4 py-3">
-    <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+<section className="overflow-hidden rounded-[28px] border border-yellow-400/20 bg-white text-slate-950 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+  <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-[#171006] px-5 py-5 text-white">
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
       <div>
-        <p className="text-xs font-bold text-yellow-300">{t.panel.tag}</p>
-        <h2 className="text-xl font-black text-white">{t.panel.title}</h2>
-        <p className="mt-1 text-xs text-white/45">{t.panel.description}</p>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-300">
+          {t.panel.tag}
+        </p>
+
+        <h2 className="mt-1 text-2xl font-black tracking-tight">
+          {t.panel.title}
+        </h2>
+
+        <p className="mt-1 max-w-2xl text-sm font-medium text-white/55">
+          Clean user control, wallet balance, campaign progress, and account tools.
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="rounded-lg border border-yellow-400/25 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-300">
-          {filteredUsers.length} {t.panel.shown} / {users.length} {t.panel.total}
+        <div className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-200">
+          {filteredUsers.length} shown / {users.length} total
         </div>
 
         <button
           type="button"
           onClick={loadUsers}
-          className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.1]"
+          className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-xs font-black text-white/80 transition hover:bg-white/15"
         >
-          {t.panel.refresh}
+          Refresh
         </button>
 
         <button
           type="button"
           onClick={exportUsersToCsv}
-          className="rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-300 hover:bg-emerald-500/15"
+          className="rounded-xl border border-emerald-400/25 bg-emerald-400/15 px-4 py-2 text-xs font-black text-emerald-200 transition hover:bg-emerald-400/20"
         >
-          {t.panel.exportCsv}
+          Export CSV
         </button>
       </div>
     </div>
 
-    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.5fr_0.7fr_0.8fr_0.9fr_0.6fr]">
+    <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+        <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
+          Users
+        </p>
+        <p className="mt-1 text-2xl font-black text-white">
+          {users.length}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+        <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
+          Active
+        </p>
+        <p className="mt-1 text-2xl font-black text-emerald-200">
+          {users.filter((item) => item.status === "active").length}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
+        <p className="text-[11px] font-black uppercase tracking-wide text-yellow-100/70">
+          Visible Balance
+        </p>
+        <p className="mt-1 text-2xl font-black text-yellow-200">
+          {formatMoney(
+            filteredUsers.reduce(
+              (total, item) => total + getDisplayBalance(item),
+              0
+            )
+          )}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-4">
+        <p className="text-[11px] font-black uppercase tracking-wide text-fuchsia-100/70">
+          Lucky Steps
+        </p>
+        <p className="mt-1 text-2xl font-black text-fuchsia-200">
+          {Object.values(orderStatsByUser).reduce(
+            (total, item) => total + item.luckySteps.length,
+            0
+          )}
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-5 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.4fr_0.7fr_0.8fr_0.9fr_0.55fr]">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
         <input
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
           placeholder={t.filters.searchPlaceholder}
-          className="h-10 w-full rounded-lg border border-white/10 bg-black/40 py-2 pl-10 pr-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+          className="h-11 w-full rounded-xl border border-white/10 bg-black/35 py-2 pl-10 pr-3 text-sm font-semibold text-white outline-none placeholder:text-white/30 focus:border-yellow-400/60"
         />
       </div>
 
@@ -1385,21 +1372,21 @@ async function handleDeleteUser() {
             event.target.value as "all" | "user" | "admin" | "super" | "support"
           )
         }
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+        className="h-11 rounded-xl border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-yellow-400/60"
       >
-        <option className="bg-black" value="all">
+        <option className="bg-slate-950" value="all">
           {t.filters.allRoles}
         </option>
-        <option className="bg-black" value="user">
+        <option className="bg-slate-950" value="user">
           {t.filters.users}
         </option>
-        <option className="bg-black" value="admin">
+        <option className="bg-slate-950" value="admin">
           {t.filters.admin}
         </option>
-        <option className="bg-black" value="super">
+        <option className="bg-slate-950" value="super">
           {t.filters.super}
         </option>
-        <option className="bg-black" value="support">
+        <option className="bg-slate-950" value="support">
           {t.filters.support}
         </option>
       </select>
@@ -1407,13 +1394,13 @@ async function handleDeleteUser() {
       <select
         value={statusFilter}
         onChange={(event) => setStatusFilter(event.target.value)}
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+        className="h-11 rounded-xl border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-yellow-400/60"
       >
-        <option className="bg-black" value="all">
+        <option className="bg-slate-950" value="all">
           {t.filters.allStatus}
         </option>
         {userStatuses.map((status) => (
-          <option key={status} className="bg-black" value={status}>
+          <option key={status} className="bg-slate-950" value={status}>
             {status}
           </option>
         ))}
@@ -1431,21 +1418,21 @@ async function handleDeleteUser() {
               | "step_high"
           )
         }
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+        className="h-11 rounded-xl border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-yellow-400/60"
       >
-        <option className="bg-black" value="newest">
+        <option className="bg-slate-950" value="newest">
           {t.filters.newestFirst}
         </option>
-        <option className="bg-black" value="name">
+        <option className="bg-slate-950" value="name">
           {t.filters.nameAz}
         </option>
-        <option className="bg-black" value="balance_high">
+        <option className="bg-slate-950" value="balance_high">
           {t.filters.balanceHigh}
         </option>
-        <option className="bg-black" value="today_high">
+        <option className="bg-slate-950" value="today_high">
           {t.filters.todayHigh}
         </option>
-        <option className="bg-black" value="step_high">
+        <option className="bg-slate-950" value="step_high">
           {t.filters.stepHigh}
         </option>
       </select>
@@ -1453,12 +1440,12 @@ async function handleDeleteUser() {
       <select
         value={pageSize}
         onChange={(event) => setPageSize(Number(event.target.value))}
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+        className="h-11 rounded-xl border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-yellow-400/60"
       >
-        <option className="bg-black" value={10}>10</option>
-        <option className="bg-black" value={25}>25</option>
-        <option className="bg-black" value={50}>50</option>
-        <option className="bg-black" value={100}>100</option>
+        <option className="bg-slate-950" value={10}>10 rows</option>
+        <option className="bg-slate-950" value={25}>25 rows</option>
+        <option className="bg-slate-950" value={50}>50 rows</option>
+        <option className="bg-slate-950" value={100}>100 rows</option>
       </select>
     </div>
 
@@ -1468,7 +1455,7 @@ async function handleDeleteUser() {
         onChange={(event) => setMinBalanceFilter(event.target.value)}
         type="number"
         placeholder={t.filters.minBalance}
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+        className="h-10 rounded-xl border border-white/10 bg-black/25 px-3 text-xs font-bold text-white outline-none placeholder:text-white/30 focus:border-yellow-400/60"
       />
 
       <input
@@ -1476,7 +1463,7 @@ async function handleDeleteUser() {
         onChange={(event) => setMaxBalanceFilter(event.target.value)}
         type="number"
         placeholder={t.filters.maxBalance}
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+        className="h-10 rounded-xl border border-white/10 bg-black/25 px-3 text-xs font-bold text-white outline-none placeholder:text-white/30 focus:border-yellow-400/60"
       />
 
       <input
@@ -1484,7 +1471,7 @@ async function handleDeleteUser() {
         onChange={(event) => setMinStepFilter(event.target.value)}
         type="number"
         placeholder={t.filters.minStep}
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+        className="h-10 rounded-xl border border-white/10 bg-black/25 px-3 text-xs font-bold text-white outline-none placeholder:text-white/30 focus:border-yellow-400/60"
       />
 
       <input
@@ -1492,7 +1479,7 @@ async function handleDeleteUser() {
         onChange={(event) => setMaxStepFilter(event.target.value)}
         type="number"
         placeholder={t.filters.maxStep}
-        className="h-10 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+        className="h-10 rounded-xl border border-white/10 bg-black/25 px-3 text-xs font-bold text-white outline-none placeholder:text-white/30 focus:border-yellow-400/60"
       />
 
       <button
@@ -1507,434 +1494,447 @@ async function handleDeleteUser() {
           setMinStepFilter("");
           setMaxStepFilter("");
         }}
-        className="h-10 rounded-lg border border-red-400/25 bg-red-500/10 px-3 text-xs font-black text-red-300 hover:bg-red-500/15"
+        className="h-10 rounded-xl border border-red-300/25 bg-red-400/10 px-4 text-xs font-black text-red-100 transition hover:bg-red-400/15"
       >
-        {t.filters.clearFilters}
+        Clear
       </button>
     </div>
   </div>
 
   {loading && (
-    <div className="p-8 text-center text-sm text-white/60">
+    <div className="p-10 text-center text-sm font-bold text-slate-500">
       {t.loadingUsers}
     </div>
   )}
 
   {!loading && filteredUsers.length === 0 && (
-    <div className="p-10 text-center">
-      <Users className="mx-auto mb-3 h-10 w-10 text-yellow-300" />
-      <p className="font-black text-white">{t.noUsersFound}</p>
-      <p className="mt-2 text-sm text-white/45">{t.noUsersNote}</p>
+    <div className="p-12 text-center">
+      <Users className="mx-auto mb-3 h-10 w-10 text-yellow-500" />
+      <p className="text-lg font-black text-slate-950">{t.noUsersFound}</p>
+      <p className="mt-2 text-sm font-medium text-slate-500">
+        {t.noUsersNote}
+      </p>
     </div>
   )}
 
   {!loading && filteredUsers.length > 0 && (
     <>
-      <div className="overflow-auto rounded-b-xl">
-        <table className="w-full min-w-[1780px] border-collapse text-left text-[12px]">
-          <thead className="sticky top-0 z-10 bg-[#181818] text-[11px] uppercase tracking-wide text-white/45">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1380px] border-collapse text-left text-xs">
+          <thead className="bg-slate-50 text-[11px] uppercase tracking-[0.12em] text-slate-500">
             <tr>
-              <th className="border-b border-white/10 px-4 py-3">{t.table.userInfo}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.loginId}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.nickname}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.role}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.balance}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.splitBalance}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.earnings}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.campaign}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.referralCode}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.account}</th>
-              <th className="border-b border-white/10 px-3 py-3">{t.table.created}</th>
-              <th className="border-b border-white/10 px-3 py-3 text-right">{t.table.actions}</th>
+              <th className="border-b border-slate-200 px-5 py-4">
+                User
+              </th>
+              <th className="border-b border-slate-200 px-4 py-4">
+                Wallet
+              </th>
+              <th className="border-b border-slate-200 px-4 py-4">
+                Earnings
+              </th>
+              <th className="border-b border-slate-200 px-4 py-4">
+                Campaign
+              </th>
+              <th className="border-b border-slate-200 px-4 py-4">
+                Account
+              </th>
+              <th className="border-b border-slate-200 px-5 py-4 text-right">
+                Controls
+              </th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {paginatedUsers.map((user) => {
               const isUserAdmin = user.role === "admin";
-const displayBalance = getDisplayBalance(user);
-const depositBalance = Number(user.deposited_balance || 0);
-const referralBalance = Number(user.referral_bonus_balance || 0);
-const profitBalance = Number(user.task_profit_balance || 0);
-const orderSummary = orderStatsByUser[user.id];
-const campaignTotal = orderSummary?.maxStep || 0;
-const campaignCurrent =
-  campaignTotal > 0
-    ? Math.min(Number(user.current_step || 1), campaignTotal)
-    : Number(user.current_step || 1);
-const luckySteps = orderSummary?.luckySteps || [];
+              const displayBalance = getDisplayBalance(user);
+              const depositBalance = Number(user.deposited_balance || 0);
+              const referralBalance = Number(user.referral_bonus_balance || 0);
+              const profitBalance = Number(user.task_profit_balance || 0);
+              const orderSummary = orderStatsByUser[user.id];
+
+              const campaignTotal = orderSummary?.maxStep || 0;
+              const completedOrders = orderSummary?.completedOrders || 0;
+              const pendingOrders = orderSummary?.pendingOrders || 0;
+              const luckySteps = orderSummary?.luckySteps || [];
+
+              const progressPercent =
+                campaignTotal > 0
+                  ? Math.min(
+                      100,
+                      Math.round((completedOrders / campaignTotal) * 100)
+                    )
+                  : 0;
 
               return (
                 <tr
                   key={user.id}
-                  className="border-b border-white/10 bg-black/20 hover:bg-yellow-400/[0.04]"
+                  className="bg-white transition hover:bg-yellow-50/45"
                 >
-                  <td className="px-3 py-3 align-top">
-  <div className="min-w-[260px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 shadow-sm">
-    <div className="flex items-start gap-3">
-      <div
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${
-          isUserAdmin
-            ? "border-amber-200 bg-amber-50 text-amber-700"
-            : "border-blue-100 bg-blue-50 text-blue-700"
-        }`}
-      >
-        {isUserAdmin ? (
-          <Crown className="h-5 w-5" />
-        ) : (
-          <Users className="h-5 w-5" />
-        )}
-      </div>
+                  <td className="px-5 py-4 align-top">
+                    <div className="flex min-w-[330px] items-start gap-3">
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
+                          isUserAdmin
+                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                            : "border-blue-100 bg-blue-50 text-blue-700"
+                        }`}
+                      >
+                        {isUserAdmin ? (
+                          <Crown className="h-5 w-5" />
+                        ) : (
+                          <Users className="h-5 w-5" />
+                        )}
+                      </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-black text-slate-950">
-            {user.display_name || t.row.noName}
-          </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="max-w-[150px] truncate text-sm font-black text-slate-950">
+                            {user.display_name || t.row.noName}
+                          </p>
 
-          <span
-            className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-              user.status === "active"
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {user.status}
-          </span>
-        </div>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
+                              user.status === "active"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {user.status}
+                          </span>
 
-        <p className="mt-1 truncate text-xs font-semibold text-slate-600">
-          {user.email || t.row.noEmail}
-        </p>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-600">
+                            {user.role}
+                          </span>
+                        </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-1.5">
-          <div className="rounded-lg border border-slate-200 bg-white px-2 py-1">
-            <p className="text-[9px] font-black uppercase text-slate-400">
-              Member ID
-            </p>
-            <p className="mt-0.5 text-xs font-black text-slate-900">
-              {user.member_id || shortId(user.id)}
-            </p>
-          </div>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">
+                          {user.email || t.row.noEmail}
+                        </p>
 
-          <div className="rounded-lg border border-slate-200 bg-white px-2 py-1">
-            <p className="text-[9px] font-black uppercase text-slate-400">
-              Role
-            </p>
-            <p className="mt-0.5 text-xs font-black text-slate-900">
-              {user.role}
-            </p>
-          </div>
-        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="text-[9px] font-black uppercase text-slate-400">
+                              Member ID
+                            </p>
+                            <p className="mt-0.5 text-xs font-black text-slate-900">
+                              {user.member_id || shortId(user.id)}
+                            </p>
+                          </div>
 
-        {user.admin_nickname && (
-          <div className="mt-2 rounded-lg border border-yellow-100 bg-yellow-50 px-2 py-1">
-            <p className="text-[9px] font-black uppercase text-yellow-700">
-              Admin Note
-            </p>
-            <p className="truncate text-xs font-bold text-slate-900">
-              {user.admin_nickname}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</td>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="text-[9px] font-black uppercase text-slate-400">
+                              Phone
+                            </p>
+                            <p className="mt-0.5 truncate text-xs font-black text-slate-900">
+                              {user.phone || "-"}
+                            </p>
+                          </div>
+                        </div>
 
-                  <td className="px-3 py-3 align-top">
-                    <div className="min-w-[180px]">
-                      <p className="text-white/70">{user.email || "-"}</p>
-                      <p className="mt-1 text-[10px] text-white/35">
-                        {t.row.uid}: {user.member_id || shortId(user.id)}
-                      </p>
-                      <p className="mt-1 text-[10px] text-white/35">
-                        {t.row.phone}: {user.phone || "-"}
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setNicknameUser(user);
+                              setNicknameValue(user.admin_nickname || "");
+                            }}
+                            disabled={!canEditUserInfo}
+                            className="rounded-lg border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-[10px] font-black text-yellow-700 transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-35"
+                          >
+                            Note: {user.admin_nickname || "None"}
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setReferralUser(user);
+                              setReferralValue(user.referral_code || "");
+                            }}
+                            disabled={!canEditUserInfo}
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+                          >
+                            Code: {user.referral_code || "-"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4 align-top">
+                    <div className="min-w-[230px]">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                          Total Balance
+                        </p>
+
+                        <p className="mt-1 text-2xl font-black tracking-tight text-slate-950">
+                          {formatMoney(displayBalance)}
+                        </p>
+
+                        <p className="mt-1 text-[10px] font-bold text-slate-400">
+                          Deposit + Referral + Profit
+                        </p>
+                      </div>
+
+                      <div className="mt-2 grid gap-1.5">
+                        <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-1.5">
+                          <span className="text-[10px] font-black uppercase text-blue-700">
+                            Deposit
+                          </span>
+                          <span className="text-xs font-black text-slate-950">
+                            {formatMoney(depositBalance)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50 px-3 py-1.5">
+                          <span className="text-[10px] font-black uppercase text-amber-700">
+                            Referral
+                          </span>
+                          <span className="text-xs font-black text-slate-950">
+                            {formatMoney(referralBalance)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-1.5">
+                          <span className="text-[10px] font-black uppercase text-emerald-700">
+                            Profit
+                          </span>
+                          <span className="text-xs font-black text-slate-950">
+                            {formatMoney(profitBalance)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4 align-top">
+                    <div className="min-w-[170px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase text-slate-500">
+                          Today
+                        </span>
+                        <span className="text-base font-black text-slate-950">
+                          {formatMoney(user.today_earnings)}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <span className="text-[10px] font-black uppercase text-slate-500">
+                          Total
+                        </span>
+                        <span className="text-base font-black text-slate-950">
+                          {formatMoney(user.total_earnings)}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4 align-top">
+                    <div className="min-w-[250px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                            Campaign Progress
+                          </p>
+
+                          <p className="mt-1 text-xl font-black text-slate-950">
+                            {campaignTotal > 0
+                              ? `${completedOrders}/${campaignTotal}`
+                              : "No orders"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-slate-900 px-3 py-2 text-right text-white">
+                          <p className="text-[9px] font-black uppercase text-white/45">
+                            Step
+                          </p>
+                          <p className="text-lg font-black">
+                            {user.current_step}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-emerald-400"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">
+                          Done {completedOrders}
+                        </span>
+
+                        <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-[10px] font-black text-amber-700">
+                          Left {pendingOrders}
+                        </span>
+
+                        <span className="rounded-lg bg-slate-200 px-2.5 py-1 text-[10px] font-black text-slate-700">
+                          {progressPercent}%
+                        </span>
+                      </div>
+
+                      <div className="mt-3 border-t border-slate-200 pt-3">
+                        <p className="text-[10px] font-black uppercase text-slate-500">
+                          Lucky Bonus Steps
+                        </p>
+
+                        {luckySteps.length > 0 ? (
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {luckySteps.slice(0, 5).map((step) => (
+                              <span
+                                key={step}
+                                className="rounded-lg bg-fuchsia-100 px-2.5 py-1 text-[10px] font-black text-fuchsia-700"
+                              >
+                                {step}/{campaignTotal || step}
+                              </span>
+                            ))}
+
+                            {luckySteps.length > 5 && (
+                              <span className="rounded-lg bg-slate-200 px-2.5 py-1 text-[10px] font-black text-slate-600">
+                                +{luckySteps.length - 5}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-[11px] font-bold text-slate-400">
+                            No lucky bonus
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4 align-top">
+                    <div className="min-w-[150px] space-y-2">
+                      <span
+                        className={`inline-flex rounded-lg px-2.5 py-1 text-[10px] font-black uppercase ${
+                          user.status === "active"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <p className="text-[9px] font-black uppercase text-slate-400">
+                          Role
+                        </p>
+                        <p className="mt-0.5 text-xs font-black text-slate-900">
+                          {user.role}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <p className="text-[9px] font-black uppercase text-slate-400">
+                          Created
+                        </p>
+                        <p className="mt-0.5 text-xs font-black text-slate-900">
+                          {formatDate(user.created_at)}
+                        </p>
+                      </div>
+
+                      <p className="text-[10px] font-bold text-slate-400">
+                        Lang: {user.language || "en"}
                       </p>
                     </div>
                   </td>
 
-                  <td className="px-3 py-3 align-top">
-                    <div className="min-w-[140px]">
-                      <p className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-white/70">
-                        {user.admin_nickname || t.row.noNickname}
-                      </p>
+                  <td className="px-5 py-4 align-top">
+                    <div className="flex min-w-[270px] justify-end">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => openGenerateOrdersModal(user)}
+                          disabled={!canManageOrders || user.role !== "user"}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-yellow-400 px-3 py-2 text-[11px] font-black text-slate-950 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <PackagePlus className="h-3.5 w-3.5" />
+                          Generate
+                        </button>
 
-                      <button
-  onClick={() => {
-    setNicknameUser(user);
-    setNicknameValue(user.admin_nickname || "");
-  }}
-  disabled={!canEditUserInfo}
-  className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200 disabled:cursor-not-allowed disabled:opacity-35"
->
-  {t.row.edit}
-</button>
-                    </div>
-                  </td>
+                        <button
+                          onClick={() => openViewOrdersModal(user)}
+                          disabled={!canManageOrders || user.role !== "user"}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-[11px] font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Orders
+                        </button>
 
-                  <td className="px-3 py-3 align-top">
-                    <span
-                      className={`rounded-md px-2 py-1 text-[11px] font-black ${
-                        isUserAdmin
-                          ? "bg-yellow-300 text-black"
-                          : user.role === "support"
-                            ? "bg-blue-400/15 text-blue-300"
-                            : user.role === "super"
-                              ? "bg-fuchsia-400/15 text-fuchsia-300"
-                              : "bg-white/10 text-white/70"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
+                        <button
+                          onClick={() => openLuckyOrderModal(user)}
+                          disabled={!canManageOrders || user.role !== "user"}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-fuchsia-500 px-3 py-2 text-[11px] font-black text-white transition hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Lucky
+                        </button>
 
-                  <td className="px-3 py-3 align-top">
-  <div className="min-w-[150px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
-    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
-      Total Balance
-    </p>
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setAdjustAmount(100);
+                            setAdjustNote("");
+                          }}
+                          disabled={!canManageMoney}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Balance
+                        </button>
 
-    <p className="mt-1 text-xl font-black text-slate-950">
-      {formatMoney(displayBalance)}
-    </p>
+                        <button
+                          onClick={() => {
+                            setReferralBonusUser(user);
+                            setReferralBonusAmount(
+                              Number(user.referral_bonus_balance || 0)
+                            );
+                          }}
+                          disabled={!canManageMoney || user.role !== "user"}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          Referral
+                        </button>
 
-    <p className="mt-1 text-[10px] font-semibold text-slate-500">
-      Deposit + Referral + Profit
-    </p>
-  </div>
-</td>
+                        <button
+                          onClick={() => openSecurityReset(user)}
+                          disabled={!canManageSecurity}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          Security
+                        </button>
 
-<td className="px-3 py-3 align-top">
-  <div className="min-w-[175px] space-y-1.5">
-    <div className="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5">
-      <span className="text-[10px] font-black uppercase text-blue-700">
-        Deposit
-      </span>
-      <span className="text-xs font-black text-slate-950">
-        {formatMoney(depositBalance)}
-      </span>
-    </div>
+                        <button
+                          onClick={() => {
+                            setResetOrdersUser(user);
+                            setResetOrdersConfirmText("");
+                            setResetOrdersResetStep(true);
+                          }}
+                          disabled={!canManageOrders || user.role !== "user"}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-[11px] font-black text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          Reset
+                        </button>
 
-    <div className="flex items-center justify-between rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-1.5">
-      <span className="text-[10px] font-black uppercase text-amber-700">
-        Referral
-      </span>
-      <span className="text-xs font-black text-slate-950">
-        {formatMoney(referralBalance)}
-      </span>
-    </div>
-
-    <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-1.5">
-      <span className="text-[10px] font-black uppercase text-emerald-700">
-        Profit
-      </span>
-      <span className="text-xs font-black text-slate-950">
-        {formatMoney(profitBalance)}
-      </span>
-    </div>
-  </div>
-</td>
-
-<td className="px-3 py-3 align-top">
-  <div className="min-w-[145px] rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-    <div className="flex items-center justify-between">
-      <span className="text-[10px] font-black uppercase text-slate-500">
-        Today
-      </span>
-      <span className="text-sm font-black text-slate-950">
-        {formatMoney(user.today_earnings)}
-      </span>
-    </div>
-
-    <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
-      <span className="text-[10px] font-black uppercase text-slate-500">
-        Total
-      </span>
-      <span className="text-sm font-black text-slate-950">
-        {formatMoney(user.total_earnings)}
-      </span>
-    </div>
-  </div>
-</td>
-
-<td className="px-3 py-3 align-top">
-  <div className="min-w-[190px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
-    <div>
-  <span className="text-[10px] font-black uppercase text-slate-500">
-    Campaign
-  </span>
-
-  <p className="mt-1 text-sm font-black text-slate-950">
-    {campaignTotal > 0 ? `${campaignCurrent}/${campaignTotal}` : "No orders"}
-  </p>
-</div>
-
-    <p className="mt-2 text-lg font-black text-slate-950">
-      Step {user.current_step}
-    </p>
-
-    <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-bold">
-      <span className="rounded-md bg-emerald-100 px-2 py-1 text-emerald-700">
-        Done {orderSummary?.completedOrders || 0}
-      </span>
-
-      <span className="rounded-md bg-amber-100 px-2 py-1 text-amber-700">
-        Left {orderSummary?.pendingOrders || 0}
-      </span>
-    </div>
-
-    <div className="mt-2 border-t border-slate-200 pt-2">
-      <p className="text-[10px] font-black uppercase text-slate-500">
-        Lucky
-      </p>
-
-      {luckySteps.length > 0 ? (
-        <div className="mt-1 flex flex-wrap gap-1">
-          {luckySteps.slice(0, 4).map((step) => (
-            <span
-              key={step}
-              className="rounded-md bg-fuchsia-100 px-2 py-1 text-[10px] font-black text-fuchsia-700"
-            >
-              {step}/{campaignTotal || step}
-            </span>
-          ))}
-
-          {luckySteps.length > 4 && (
-            <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-600">
-              +{luckySteps.length - 4}
-            </span>
-          )}
-        </div>
-      ) : (
-        <p className="mt-1 text-[10px] font-semibold text-slate-400">
-          No lucky bonus
-        </p>
-      )}
-    </div>
-  </div>
-</td>
-
-                  <td className="px-3 py-3 align-top">
-                    <div className="min-w-[120px]">
-                      <p className="font-black text-yellow-200">
-                        {user.referral_code || "-"}
-                      </p>
-
-                      <button
-  onClick={() => {
-    setReferralUser(user);
-    setReferralValue(user.referral_code || "");
-  }}
-  disabled={!canEditUserInfo}
-  className="mt-2 text-[11px] font-bold text-yellow-300 hover:text-yellow-200 disabled:cursor-not-allowed disabled:opacity-35"
->
-  {t.row.edit}
-</button>
-                    </div>
-                  </td>
-
-                  <td className="px-3 py-3 align-top">
-                    <span
-                      className={`rounded-md px-2 py-1 text-[11px] font-black ${
-                        user.status === "active"
-                          ? "bg-emerald-400/15 text-emerald-300"
-                          : "bg-red-500/15 text-red-300"
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-
-                    <p className="mt-2 text-[10px] text-white/35">
-                      {t.row.lang}: {user.language || "en"}
-                    </p>
-                  </td>
-
-                  <td className="px-3 py-3 align-top">
-                    <p className="min-w-[90px] text-white/45">
-                      {formatDate(user.created_at)}
-                    </p>
-                  </td>
-
-                  <td className="px-3 py-3 align-top">
-                    <div className="flex min-w-[310px] flex-wrap justify-end gap-1.5">
-                      <button
-                        onClick={() => openGenerateOrdersModal(user)}
-                        disabled={!canManageOrders || user.role !== "user"}
-                        className="rounded-md bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {t.actions.generate}
-                      </button>
-
-                      <button
-                        onClick={() => openLuckyOrderModal(user)}
-                        disabled={!canManageOrders || user.role !== "user"}
-                        className="rounded-md bg-fuchsia-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {t.actions.lucky}
-                      </button>
-
-                      <button
-                        onClick={() => openViewOrdersModal(user)}
-                        disabled={!canManageOrders || user.role !== "user"}
-                        className="rounded-md bg-blue-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {t.actions.orders}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setResetOrdersUser(user);
-                          setResetOrdersConfirmText("");
-                          setResetOrdersResetStep(true);
-                        }}
-                        disabled={!canManageOrders || user.role !== "user"}
-                        className="rounded-md bg-orange-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {t.actions.reset}
-                      </button>
-
-                      <button
-  onClick={() => {
-    setSelectedUser(user);
-    setAdjustAmount(100);
-    setAdjustNote("");
-  }}
-  disabled={!canManageMoney}
-  className="rounded-md border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-[11px] font-black text-white/80 hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:opacity-35"
->
-                        {t.actions.balance}
-                      </button>
-
-                      <button
-  onClick={() => {
-    setReferralBonusUser(user);
-    setReferralBonusAmount(Number(user.referral_bonus_balance || 0));
-  }}
-  disabled={!canManageMoney || user.role !== "user"}
-  className="rounded-md border border-yellow-400/25 bg-yellow-400/10 px-2.5 py-1.5 text-[11px] font-black text-yellow-300 hover:bg-yellow-400/15 disabled:cursor-not-allowed disabled:opacity-35"
->
-  {t.actions.referralBonus}
-</button>
-
-                      <button
-                        onClick={() => openSecurityReset(user)}
-                        disabled={!canManageSecurity}
-                        className="rounded-md bg-emerald-500 px-2.5 py-1.5 text-[11px] font-black text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {t.actions.security}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setDeleteUser(user);
-                          setDeleteConfirmText("");
-                        }}
-                        disabled={!canDeleteUsers || user.id === profile.id || user.role !== "user"}
-                        className="rounded-md bg-red-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {t.actions.delete}
-                      </button>
+                        <button
+                          onClick={() => {
+                            setDeleteUser(user);
+                            setDeleteConfirmText("");
+                          }}
+                          disabled={
+                            !canDeleteUsers ||
+                            user.id === profile.id ||
+                            user.role !== "user"
+                          }
+                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-black text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -1944,18 +1944,17 @@ const luckySteps = orderSummary?.luckySteps || [];
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-white/10 bg-[#101010] px-4 py-3 text-xs text-white/50 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold text-slate-500 md:flex-row md:items-center md:justify-between">
         <p>
-          {t.pagination.showing}{" "}
-          <span className="font-black text-white">{firstResult}</span>
+          Showing{" "}
+          <span className="font-black text-slate-950">{firstResult}</span>
           {" - "}
-          <span className="font-black text-white">{lastResult}</span>
-          {" "}
-          {t.pagination.of}{" "}
-          <span className="font-black text-yellow-300">
+          <span className="font-black text-slate-950">{lastResult}</span>
+          {" of "}
+          <span className="font-black text-yellow-700">
             {filteredUsers.length}
           </span>{" "}
-          {t.pagination.users}
+          users
         </p>
 
         <div className="flex items-center gap-2">
@@ -1963,14 +1962,14 @@ const luckySteps = orderSummary?.luckySteps || [];
             type="button"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 text-[11px] font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-black text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
-            {t.pagination.prev}
+            Prev
           </button>
 
-          <div className="rounded-md border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-[11px] font-black text-yellow-300">
-            {t.pagination.page} {currentPage} / {totalPages}
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-[11px] font-black text-yellow-700">
+            Page {currentPage} / {totalPages}
           </div>
 
           <button
@@ -1979,9 +1978,9 @@ const luckySteps = orderSummary?.luckySteps || [];
             onClick={() =>
               setCurrentPage((page) => Math.min(totalPages, page + 1))
             }
-            className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 text-[11px] font-black text-white/70 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-black text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {t.pagination.next}
+            Next
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
