@@ -1580,9 +1580,9 @@ async function handleDeleteUser() {
               }`}
             >
               {isUserAdmin ? (
-                <Crown className="h-4.5 w-4.5" />
+                <Crown className="h-4 w-4" />
               ) : (
-                <Users className="h-4.5 w-4.5" />
+                <Users className="h-4 w-4" />
               )}
             </div>
 
