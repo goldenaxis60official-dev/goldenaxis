@@ -1544,403 +1544,382 @@ async function handleDeleteUser() {
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100">
-            {paginatedUsers.map((user) => {
-              const isUserAdmin = user.role === "admin";
-              const displayBalance = getDisplayBalance(user);
-              const depositBalance = Number(user.deposited_balance || 0);
-              const referralBalance = Number(user.referral_bonus_balance || 0);
-              const profitBalance = Number(user.task_profit_balance || 0);
-              const orderSummary = orderStatsByUser[user.id];
+          <tbody className="divide-y divide-slate-200">
+  {paginatedUsers.map((user) => {
+    const isUserAdmin = user.role === "admin";
+    const displayBalance = getDisplayBalance(user);
+    const depositBalance = Number(user.deposited_balance || 0);
+    const referralBalance = Number(user.referral_bonus_balance || 0);
+    const profitBalance = Number(user.task_profit_balance || 0);
+    const orderSummary = orderStatsByUser[user.id];
 
-              const campaignTotal = orderSummary?.maxStep || 0;
-              const completedOrders = orderSummary?.completedOrders || 0;
-              const pendingOrders = orderSummary?.pendingOrders || 0;
-              const luckySteps = orderSummary?.luckySteps || [];
+    const campaignTotal = orderSummary?.maxStep || 0;
+    const completedOrders = orderSummary?.completedOrders || 0;
+    const pendingOrders = orderSummary?.pendingOrders || 0;
+    const luckySteps = orderSummary?.luckySteps || [];
 
-              const progressPercent =
-                campaignTotal > 0
-                  ? Math.min(
-                      100,
-                      Math.round((completedOrders / campaignTotal) * 100)
-                    )
-                  : 0;
+    const progressPercent =
+      campaignTotal > 0
+        ? Math.min(100, Math.round((completedOrders / campaignTotal) * 100))
+        : 0;
 
-              return (
-                <tr
-                  key={user.id}
-                  className="bg-white transition hover:bg-yellow-50/45"
+    return (
+      <tr
+        key={user.id}
+        className={`bg-white transition hover:bg-yellow-50/50 ${
+          user.status === "active" ? "border-l-4 border-l-emerald-400" : "border-l-4 border-l-red-400"
+        }`}
+      >
+        <td className="px-5 py-3 align-middle">
+          <div className="flex min-w-[340px] items-center gap-3">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+                isUserAdmin
+                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                  : "border-blue-100 bg-blue-50 text-blue-700"
+              }`}
+            >
+              {isUserAdmin ? (
+                <Crown className="h-4.5 w-4.5" />
+              ) : (
+                <Users className="h-4.5 w-4.5" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="max-w-[170px] truncate text-sm font-black text-slate-950">
+                  {user.display_name || t.row.noName}
+                </p>
+
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
+                    user.status === "active"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
                 >
-                  <td className="px-5 py-4 align-top">
-                    <div className="flex min-w-[330px] items-start gap-3">
-                      <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
-                          isUserAdmin
-                            ? "border-amber-200 bg-amber-50 text-amber-700"
-                            : "border-blue-100 bg-blue-50 text-blue-700"
-                        }`}
-                      >
-                        {isUserAdmin ? (
-                          <Crown className="h-5 w-5" />
-                        ) : (
-                          <Users className="h-5 w-5" />
-                        )}
-                      </div>
+                  {user.status}
+                </span>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="max-w-[150px] truncate text-sm font-black text-slate-950">
-                            {user.display_name || t.row.noName}
-                          </p>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-600">
+                  {user.role}
+                </span>
+              </div>
 
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-                              user.status === "active"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {user.status}
-                          </span>
+              <p className="mt-0.5 truncate text-xs font-semibold text-slate-600">
+                {user.email || t.row.noEmail}
+              </p>
 
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-600">
-                            {user.role}
-                          </span>
-                        </div>
+              <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-slate-500">
+                <span>
+                  ID:{" "}
+                  <b className="text-slate-900">
+                    {user.member_id || shortId(user.id)}
+                  </b>
+                </span>
 
-                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">
-                          {user.email || t.row.noEmail}
-                        </p>
+                <span>
+                  Phone:{" "}
+                  <b className="text-slate-900">{user.phone || "-"}</b>
+                </span>
+              </div>
 
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <p className="text-[9px] font-black uppercase text-slate-400">
-                              Member ID
-                            </p>
-                            <p className="mt-0.5 text-xs font-black text-slate-900">
-                              {user.member_id || shortId(user.id)}
-                            </p>
-                          </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => {
+                    setNicknameUser(user);
+                    setNicknameValue(user.admin_nickname || "");
+                  }}
+                  disabled={!canEditUserInfo}
+                  className="rounded-md border border-yellow-200 bg-yellow-50 px-2 py-0.5 text-[10px] font-black text-yellow-700 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  Note: {user.admin_nickname || "None"}
+                </button>
 
-                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <p className="text-[9px] font-black uppercase text-slate-400">
-                              Phone
-                            </p>
-                            <p className="mt-0.5 truncate text-xs font-black text-slate-900">
-                              {user.phone || "-"}
-                            </p>
-                          </div>
-                        </div>
+                <button
+                  onClick={() => {
+                    setReferralUser(user);
+                    setReferralValue(user.referral_code || "");
+                  }}
+                  disabled={!canEditUserInfo}
+                  className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  Code: {user.referral_code || "-"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </td>
 
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setNicknameUser(user);
-                              setNicknameValue(user.admin_nickname || "");
-                            }}
-                            disabled={!canEditUserInfo}
-                            className="rounded-lg border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-[10px] font-black text-yellow-700 transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-35"
-                          >
-                            Note: {user.admin_nickname || "None"}
-                          </button>
+        <td className="px-4 py-3 align-middle">
+          <div className="min-w-[210px]">
+            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+              Total Balance
+            </p>
 
-                          <button
-                            onClick={() => {
-                              setReferralUser(user);
-                              setReferralValue(user.referral_code || "");
-                            }}
-                            disabled={!canEditUserInfo}
-                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
-                          >
-                            Code: {user.referral_code || "-"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
+            <p className="text-2xl font-black leading-tight tracking-tight text-slate-950">
+              {formatMoney(displayBalance)}
+            </p>
 
-                  <td className="px-4 py-4 align-top">
-                    <div className="min-w-[230px]">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
-                          Total Balance
-                        </p>
+            <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-black uppercase text-blue-700">
+                  Deposit
+                </span>
+                <span className="font-black text-slate-950">
+                  {formatMoney(depositBalance)}
+                </span>
+              </div>
 
-                        <p className="mt-1 text-2xl font-black tracking-tight text-slate-950">
-                          {formatMoney(displayBalance)}
-                        </p>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-black uppercase text-amber-700">
+                  Referral
+                </span>
+                <span className="font-black text-slate-950">
+                  {formatMoney(referralBalance)}
+                </span>
+              </div>
 
-                        <p className="mt-1 text-[10px] font-bold text-slate-400">
-                          Deposit + Referral + Profit
-                        </p>
-                      </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-black uppercase text-emerald-700">
+                  Profit
+                </span>
+                <span className="font-black text-slate-950">
+                  {formatMoney(profitBalance)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </td>
 
-                      <div className="mt-2 grid gap-1.5">
-                        <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-1.5">
-                          <span className="text-[10px] font-black uppercase text-blue-700">
-                            Deposit
-                          </span>
-                          <span className="text-xs font-black text-slate-950">
-                            {formatMoney(depositBalance)}
-                          </span>
-                        </div>
+        <td className="px-4 py-3 align-middle">
+          <div className="min-w-[150px] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-slate-400">
+                Today
+              </span>
+              <span className="text-sm font-black text-slate-950">
+                {formatMoney(user.today_earnings)}
+              </span>
+            </div>
 
-                        <div className="flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50 px-3 py-1.5">
-                          <span className="text-[10px] font-black uppercase text-amber-700">
-                            Referral
-                          </span>
-                          <span className="text-xs font-black text-slate-950">
-                            {formatMoney(referralBalance)}
-                          </span>
-                        </div>
+            <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+              <span className="text-[10px] font-black uppercase text-slate-400">
+                Total
+              </span>
+              <span className="text-sm font-black text-slate-950">
+                {formatMoney(user.total_earnings)}
+              </span>
+            </div>
+          </div>
+        </td>
 
-                        <div className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-1.5">
-                          <span className="text-[10px] font-black uppercase text-emerald-700">
-                            Profit
-                          </span>
-                          <span className="text-xs font-black text-slate-950">
-                            {formatMoney(profitBalance)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
+        <td className="px-4 py-3 align-middle">
+          <div className="min-w-[260px]">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                  Campaign
+                </p>
 
-                  <td className="px-4 py-4 align-top">
-                    <div className="min-w-[170px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-slate-500">
-                          Today
-                        </span>
-                        <span className="text-base font-black text-slate-950">
-                          {formatMoney(user.today_earnings)}
-                        </span>
-                      </div>
+                <p className="text-lg font-black text-slate-950">
+                  {campaignTotal > 0
+                    ? `${completedOrders}/${campaignTotal}`
+                    : "No orders"}
+                </p>
+              </div>
 
-                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                        <span className="text-[10px] font-black uppercase text-slate-500">
-                          Total
-                        </span>
-                        <span className="text-base font-black text-slate-950">
-                          {formatMoney(user.total_earnings)}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase text-slate-400">
+                  Step
+                </p>
 
-                  <td className="px-4 py-4 align-top">
-                    <div className="min-w-[250px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
-                            Campaign Progress
-                          </p>
+                <p className="text-xl font-black text-slate-950">
+                  {user.current_step}
+                </p>
+              </div>
+            </div>
 
-                          <p className="mt-1 text-xl font-black text-slate-950">
-                            {campaignTotal > 0
-                              ? `${completedOrders}/${campaignTotal}`
-                              : "No orders"}
-                          </p>
-                        </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-emerald-400"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
 
-                        <div className="rounded-xl bg-slate-900 px-3 py-2 text-right text-white">
-                          <p className="text-[9px] font-black uppercase text-white/45">
-                            Step
-                          </p>
-                          <p className="text-lg font-black">
-                            {user.current_step}
-                          </p>
-                        </div>
-                      </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                Done {completedOrders}
+              </span>
 
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-emerald-400"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
+              <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                Left {pendingOrders}
+              </span>
 
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                          Done {completedOrders}
-                        </span>
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-700">
+                {progressPercent}%
+              </span>
+            </div>
 
-                        <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-[10px] font-black text-amber-700">
-                          Left {pendingOrders}
-                        </span>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2">
+              <span className="text-[10px] font-black uppercase text-slate-400">
+                Lucky:
+              </span>
 
-                        <span className="rounded-lg bg-slate-200 px-2.5 py-1 text-[10px] font-black text-slate-700">
-                          {progressPercent}%
-                        </span>
-                      </div>
+              {luckySteps.length > 0 ? (
+                <>
+                  {luckySteps.slice(0, 5).map((step) => (
+                    <span
+                      key={step}
+                      className="rounded-md bg-fuchsia-100 px-2 py-0.5 text-[10px] font-black text-fuchsia-700"
+                    >
+                      {step}/{campaignTotal || step}
+                    </span>
+                  ))}
 
-                      <div className="mt-3 border-t border-slate-200 pt-3">
-                        <p className="text-[10px] font-black uppercase text-slate-500">
-                          Lucky Bonus Steps
-                        </p>
+                  {luckySteps.length > 5 && (
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600">
+                      +{luckySteps.length - 5}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-[10px] font-bold text-slate-400">
+                  No lucky bonus
+                </span>
+              )}
+            </div>
+          </div>
+        </td>
 
-                        {luckySteps.length > 0 ? (
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {luckySteps.slice(0, 5).map((step) => (
-                              <span
-                                key={step}
-                                className="rounded-lg bg-fuchsia-100 px-2.5 py-1 text-[10px] font-black text-fuchsia-700"
-                              >
-                                {step}/{campaignTotal || step}
-                              </span>
-                            ))}
+        <td className="px-4 py-3 align-middle">
+          <div className="min-w-[145px] space-y-1 text-[11px] font-bold text-slate-500">
+            <div>
+              <span
+                className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-black uppercase ${
+                  user.status === "active"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {user.status}
+              </span>
+            </div>
 
-                            {luckySteps.length > 5 && (
-                              <span className="rounded-lg bg-slate-200 px-2.5 py-1 text-[10px] font-black text-slate-600">
-                                +{luckySteps.length - 5}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="mt-1 text-[11px] font-bold text-slate-400">
-                            No lucky bonus
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
+            <p>
+              Role:{" "}
+              <b className="text-slate-950">{user.role}</b>
+            </p>
 
-                  <td className="px-4 py-4 align-top">
-                    <div className="min-w-[150px] space-y-2">
-                      <span
-                        className={`inline-flex rounded-lg px-2.5 py-1 text-[10px] font-black uppercase ${
-                          user.status === "active"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {user.status}
-                      </span>
+            <p>
+              Created:{" "}
+              <b className="text-slate-950">{formatDate(user.created_at)}</b>
+            </p>
 
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <p className="text-[9px] font-black uppercase text-slate-400">
-                          Role
-                        </p>
-                        <p className="mt-0.5 text-xs font-black text-slate-900">
-                          {user.role}
-                        </p>
-                      </div>
+            <p>
+              Lang:{" "}
+              <b className="text-slate-950">{user.language || "en"}</b>
+            </p>
+          </div>
+        </td>
 
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <p className="text-[9px] font-black uppercase text-slate-400">
-                          Created
-                        </p>
-                        <p className="mt-0.5 text-xs font-black text-slate-900">
-                          {formatDate(user.created_at)}
-                        </p>
-                      </div>
+        <td className="px-5 py-3 align-middle">
+          <div className="flex min-w-[270px] flex-wrap justify-end gap-1.5">
+            <button
+              onClick={() => openGenerateOrdersModal(user)}
+              disabled={!canManageOrders || user.role !== "user"}
+              className="inline-flex items-center justify-center gap-1 rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <PackagePlus className="h-3.5 w-3.5" />
+              Generate
+            </button>
 
-                      <p className="text-[10px] font-bold text-slate-400">
-                        Lang: {user.language || "en"}
-                      </p>
-                    </div>
-                  </td>
+            <button
+              onClick={() => openViewOrdersModal(user)}
+              disabled={!canManageOrders || user.role !== "user"}
+              className="inline-flex items-center justify-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Orders
+            </button>
 
-                  <td className="px-5 py-4 align-top">
-                    <div className="flex min-w-[270px] justify-end">
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => openGenerateOrdersModal(user)}
-                          disabled={!canManageOrders || user.role !== "user"}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-yellow-400 px-3 py-2 text-[11px] font-black text-slate-950 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <PackagePlus className="h-3.5 w-3.5" />
-                          Generate
-                        </button>
+            <button
+              onClick={() => openLuckyOrderModal(user)}
+              disabled={!canManageOrders || user.role !== "user"}
+              className="inline-flex items-center justify-center gap-1 rounded-lg bg-fuchsia-500 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Lucky
+            </button>
 
-                        <button
-                          onClick={() => openViewOrdersModal(user)}
-                          disabled={!canManageOrders || user.role !== "user"}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-[11px] font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Orders
-                        </button>
+            <button
+              onClick={() => {
+                setSelectedUser(user);
+                setAdjustAmount(100);
+                setAdjustNote("");
+              }}
+              disabled={!canManageMoney}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Balance
+            </button>
 
-                        <button
-                          onClick={() => openLuckyOrderModal(user)}
-                          disabled={!canManageOrders || user.role !== "user"}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-fuchsia-500 px-3 py-2 text-[11px] font-black text-white transition hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Lucky
-                        </button>
+            <button
+              onClick={() => {
+                setReferralBonusUser(user);
+                setReferralBonusAmount(Number(user.referral_bonus_balance || 0));
+              }}
+              disabled={!canManageMoney || user.role !== "user"}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-black text-amber-700 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              Referral
+            </button>
 
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setAdjustAmount(100);
-                            setAdjustNote("");
-                          }}
-                          disabled={!canManageMoney}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Balance
-                        </button>
+            <button
+              onClick={() => openSecurityReset(user)}
+              disabled={!canManageSecurity}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Security
+            </button>
 
-                        <button
-                          onClick={() => {
-                            setReferralBonusUser(user);
-                            setReferralBonusAmount(
-                              Number(user.referral_bonus_balance || 0)
-                            );
-                          }}
-                          disabled={!canManageMoney || user.role !== "user"}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          Referral
-                        </button>
+            <button
+              onClick={() => {
+                setResetOrdersUser(user);
+                setResetOrdersConfirmText("");
+                setResetOrdersResetStep(true);
+              }}
+              disabled={!canManageOrders || user.role !== "user"}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-1.5 text-[11px] font-black text-orange-700 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset
+            </button>
 
-                        <button
-                          onClick={() => openSecurityReset(user)}
-                          disabled={!canManageSecurity}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          Security
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setResetOrdersUser(user);
-                            setResetOrdersConfirmText("");
-                            setResetOrdersResetStep(true);
-                          }}
-                          disabled={!canManageOrders || user.role !== "user"}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-[11px] font-black text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          Reset
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setDeleteUser(user);
-                            setDeleteConfirmText("");
-                          }}
-                          disabled={
-                            !canDeleteUsers ||
-                            user.id === profile.id ||
-                            user.role !== "user"
-                          }
-                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-black text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-35"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
+            <button
+              onClick={() => {
+                setDeleteUser(user);
+                setDeleteConfirmText("");
+              }}
+              disabled={
+                !canDeleteUsers ||
+                user.id === profile.id ||
+                user.role !== "user"
+              }
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
         </table>
       </div>
 
