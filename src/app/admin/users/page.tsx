@@ -69,6 +69,10 @@ type GeneratedOrderPreview = {
   order_total: number;
   profit_rate: number;
   profit_amount: number;
+  lucky_profit_rate_percent: number | null;
+  lucky_profit_amount: number;
+  campaign_base_amount: number | null;
+  normal_task_rate: number | null;
   order_type: "normal" | "lucky";
   status: "pending" | "completed" | "cancelled";
   is_lucky_bonus: boolean;
@@ -814,6 +818,10 @@ async function openViewOrdersModal(user: ManagedUser) {
       order_total,
       profit_rate,
       profit_amount,
+      lucky_profit_rate_percent,
+      lucky_profit_amount,
+      campaign_base_amount,
+      normal_task_rate,
       order_type,
       status,
       is_lucky_bonus,
@@ -855,7 +863,9 @@ async function openEditLuckyOrderModal(order: GeneratedOrderPreview) {
   setLuckyUser(viewOrdersUser);
   setLuckyStepNumber(order.step_number);
   setLuckyAmount(Number(order.order_total || 0));
-  setLuckyProfitRate(Number(order.profit_rate || 0));
+  setLuckyProfitRate(
+  Number(order.lucky_profit_rate_percent ?? order.profit_rate ?? 0)
+);
   setLuckyProductId("");
   setSuccessText("");
   setErrorText("");

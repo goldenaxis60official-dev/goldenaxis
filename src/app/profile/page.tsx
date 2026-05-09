@@ -134,10 +134,11 @@ export default function ProfilePage() {
 function ProfileContent({ profile }: { profile: Profile }) {
   const router = useRouter();
 
-  const [language, setLanguage] = useState<Language>(
-    getLanguage(profile.language)
-  );
-  const [savingLanguage, setSavingLanguage] = useState(false);
+ const [language, setLanguage] = useState<Language>(
+  getLanguage(profile.language)
+);
+const [savingLanguage, setSavingLanguage] = useState(false);
+const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const t = messages[language];
 
@@ -373,41 +374,6 @@ function openTelegramSupport() {
           </div>
         </button>
 
-<div className="mb-6 flex items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-2">
-  <div className="flex items-center gap-2 px-3 text-xs font-bold text-white/55">
-    <Languages className="h-4 w-4 text-yellow-300" />
-    {t.profile.language}
-  </div>
-
-  <div className="flex rounded-2xl bg-black/35 p-1">
-    <button
-      type="button"
-      disabled={savingLanguage}
-      onClick={() => handleLanguageChange("en")}
-      className={`rounded-xl px-4 py-2 text-xs font-black transition ${
-        language === "en"
-          ? "bg-yellow-300 text-black shadow-[0_0_18px_rgba(250,204,21,0.25)]"
-          : "text-white/50 hover:text-white"
-      }`}
-    >
-      {t.profile.english}
-    </button>
-
-    <button
-      type="button"
-      disabled={savingLanguage}
-      onClick={() => handleLanguageChange("zh")}
-      className={`rounded-xl px-4 py-2 text-xs font-black transition ${
-        language === "zh"
-          ? "bg-yellow-300 text-black shadow-[0_0_18px_rgba(250,204,21,0.25)]"
-          : "text-white/50 hover:text-white"
-      }`}
-    >
-      {t.profile.chinese}
-    </button>
-  </div>
-</div>
-
 <div className="mb-6 grid grid-cols-2 gap-3">
   <StatCard
     label={t.profile.totalEarnings}
@@ -430,63 +396,154 @@ function openTelegramSupport() {
         </div>
 
         <LuxuryCard className="mb-8 overflow-hidden p-0">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
+  {menuItems.map((item) => {
+    const Icon = item.icon;
+    const isLogout = item.key === "logout";
 
-            return (
-              <button
-  key={item.key}
-  onClick={() => handleMenuClick(item)}
-  className={`flex w-full items-center justify-between border-b border-white/10 px-5 py-4 text-left transition active:scale-[0.99] last:border-b-0 hover:bg-white/[0.035] ${
-    item.featured
-      ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
-      : ""
-  }`}
->
-  <div className="flex items-center gap-3">
-  <div
-  className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
-    item.danger
-      ? "bg-red-500/10 text-red-300"
-      : item.featured
-      ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
-      : "bg-yellow-400/10 text-yellow-300"
-  }`}
->
-                    <Icon className="h-5 w-5" />
-                  </div>
+    return (
+      <div key={item.key}>
+        {isLogout && (
+          <button
+            type="button"
+            onClick={() => setShowLanguageModal(true)}
+            className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
+                <Languages className="h-5 w-5" />
+              </div>
 
-                  <div className="text-left">
-  <span
-    className={`font-medium ${
-      item.danger
-        ? "text-red-200"
-        : item.featured
-        ? "font-black text-yellow-200"
-        : "text-white/80"
-    }`}
-  >
-    {t.profile.menu[item.key]}
-  </span>
+              <div className="text-left">
+                <span className="font-medium text-white/80">
+                  {t.profile.language}
+                </span>
 
-  {item.subtitleKey && (
-  <p
-    className={`mt-0.5 text-xs ${
-      item.featured ? "text-yellow-100/60" : "text-white/40"
-    }`}
-  >
-    {t.profile.menuSubtitles[item.subtitleKey]}
-  </p>
+                <p className="mt-0.5 text-xs text-white/40">
+                  {language === "en" ? t.profile.english : t.profile.chinese}
+                </p>
+              </div>
+            </div>
+
+            <ChevronRight className="h-5 w-5 text-white/35" />
+          </button>
+        )}
+
+        <button
+          onClick={() => handleMenuClick(item)}
+          className={`flex w-full items-center justify-between px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035] ${
+            isLogout ? "" : "border-b border-white/10"
+          } ${
+            item.featured
+              ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
+              : ""
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                item.danger
+                  ? "bg-red-500/10 text-red-300"
+                  : item.featured
+                    ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
+                    : "bg-yellow-400/10 text-yellow-300"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
+
+            <div className="text-left">
+              <span
+                className={`font-medium ${
+                  item.danger
+                    ? "text-red-200"
+                    : item.featured
+                      ? "font-black text-yellow-200"
+                      : "text-white/80"
+                }`}
+              >
+                {t.profile.menu[item.key]}
+              </span>
+
+              {item.subtitleKey && (
+                <p
+                  className={`mt-0.5 text-xs ${
+                    item.featured ? "text-yellow-100/60" : "text-white/40"
+                  }`}
+                >
+                  {t.profile.menuSubtitles[item.subtitleKey]}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <ChevronRight className="h-5 w-5 text-white/35" />
+        </button>
+      </div>
+    );
+  })}
+</LuxuryCard>
+
+{showLanguageModal && (
+  <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/75 px-5 pb-6 backdrop-blur-sm">
+    <div className="w-full max-w-md rounded-[2rem] border border-yellow-400/25 bg-[#0b0b0b] p-5 shadow-[0_0_60px_rgba(250,204,21,0.18)]">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-200/60">
+            {t.profile.language}
+          </p>
+
+          <h2 className="mt-1 text-xl font-black text-white">
+            Select Language
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowLanguageModal(false)}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/60"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <button
+          type="button"
+          disabled={savingLanguage}
+          onClick={async () => {
+            await handleLanguageChange("en");
+            setShowLanguageModal(false);
+          }}
+          className={`flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left transition ${
+            language === "en"
+              ? "border-yellow-400/40 bg-yellow-400/15 text-yellow-200"
+              : "border-white/10 bg-white/[0.04] text-white/75"
+          }`}
+        >
+          <span className="font-black">{t.profile.english}</span>
+          {language === "en" && <CheckCircle className="h-5 w-5" />}
+        </button>
+
+        <button
+          type="button"
+          disabled={savingLanguage}
+          onClick={async () => {
+            await handleLanguageChange("zh");
+            setShowLanguageModal(false);
+          }}
+          className={`flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left transition ${
+            language === "zh"
+              ? "border-yellow-400/40 bg-yellow-400/15 text-yellow-200"
+              : "border-white/10 bg-white/[0.04] text-white/75"
+          }`}
+        >
+          <span className="font-black">{t.profile.chinese}</span>
+          {language === "zh" && <CheckCircle className="h-5 w-5" />}
+        </button>
+      </div>
+    </div>
+  </div>
 )}
-
-</div>
-                </div>
-
-                <ChevronRight className="h-5 w-5 text-white/35" />
-              </button>
-            );
-          })}
-        </LuxuryCard>
       </section>
     </AppShell>
   );

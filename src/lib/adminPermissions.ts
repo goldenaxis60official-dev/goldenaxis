@@ -6,7 +6,11 @@ const ADMIN_ROOT_PATH = "/admin";
 
 const SUPER_BLOCKED_PATHS = ["/admin/wallet-addresses"];
 
-const SUPPORT_ALLOWED_PATHS = ["/admin/users", "/admin/support"];
+const SUPPORT_ALLOWED_PATHS = [
+  "/admin/users",
+  "/admin/support",
+  "/admin/wallet-requests",
+];
 
 export function isAdminRole(role?: string | null): role is AdminRole {
   return role === "admin" || role === "super" || role === "support";

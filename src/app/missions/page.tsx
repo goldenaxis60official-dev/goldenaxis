@@ -713,13 +713,67 @@ const processingProgressPercent = Math.min(
                   }`}
                 >
                   {lucky && (
-                    <>
-                      <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-yellow-300/20 blur-3xl" />
-                      <div className="pointer-events-none absolute -left-16 top-40 h-44 w-44 rounded-full bg-amber-500/10 blur-3xl" />
-                    </>
-                  )}
+  <>
+    <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-yellow-300/20 blur-3xl" />
+    <div className="pointer-events-none absolute -left-16 top-40 h-44 w-44 rounded-full bg-amber-500/10 blur-3xl" />
+  </>
+)}
 
-                  <div className="relative h-72 bg-black/40">
+<div className="relative z-10 border-b border-white/10 bg-black/40 p-3 backdrop-blur-xl">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="min-w-0">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-200/60">
+        {lucky ? t.missions.luckyBonus : t.missions.standard} •{" "}
+        {t.missions.step} {order.step_number}
+      </p>
+
+      <p className="mt-1 truncate text-sm font-black text-white">
+        {productName}
+      </p>
+    </div>
+
+    <div className="shrink-0 rounded-2xl bg-black/45 px-3 py-2 text-right">
+      <p className="text-[10px] uppercase tracking-wide text-white/40">
+        {t.missions.reward}
+      </p>
+      <p className="text-base font-black text-yellow-300">
+        ${reward.toFixed(2)}
+      </p>
+    </div>
+  </div>
+
+  <button
+    disabled={!isCurrent || actionLoading || completed}
+    onClick={() => handleCompleteGeneratedOrder(order)}
+    className={`w-full rounded-2xl px-5 py-3 text-sm font-black shadow-lg active:scale-[0.98] ${
+      completed
+        ? "bg-emerald-400/10 text-emerald-300"
+        : isCurrent && lucky
+          ? "bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-600 text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
+          : isCurrent
+            ? "bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 text-black shadow-[0_0_24px_rgba(250,204,21,0.28)]"
+            : "bg-white/10 text-white/40"
+    }`}
+  >
+    {completed
+      ? t.missions.completed
+      : isCurrent
+        ? actionLoading
+          ? lang === "zh"
+            ? lucky
+              ? "正在处理幸运推广..."
+              : "正在提交推广..."
+            : lucky
+              ? "Processing lucky campaign..."
+              : "Submitting campaign..."
+          : lucky
+            ? t.missions.claimLuckyBonusTask
+            : t.missions.startPromotionTask
+        : t.missions.locked}
+  </button>
+</div>
+
+<div className="relative h-72 bg-black/40">
                     {activeImage ? (
                       <img
                         src={activeImage}
@@ -964,35 +1018,6 @@ const processingProgressPercent = Math.min(
                       </div>
                     </div>
 
-                    <button
-                      disabled={!isCurrent || actionLoading || completed}
-                      onClick={() => handleCompleteGeneratedOrder(order)}
-                      className={`mt-4 w-full rounded-2xl px-5 py-3 text-sm font-black shadow-lg ${
-                        completed
-                          ? "bg-emerald-400/10 text-emerald-300"
-                          : isCurrent && lucky
-                            ? "bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-600 text-black shadow-[0_0_30px_rgba(250,204,21,0.35)]"
-                            : isCurrent
-                              ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black"
-                              : "bg-white/10 text-white/40"
-                      }`}
-                    >
-                      {completed
-                        ? t.missions.completed
-                        : isCurrent
-                          ? actionLoading
-  ? lang === "zh"
-    ? lucky
-      ? "正在处理幸运推广..."
-      : "正在提交推广..."
-    : lucky
-      ? "Processing lucky campaign..."
-      : "Submitting campaign..."
-  : lucky
-    ? t.missions.claimLuckyBonusTask
-    : t.missions.startPromotionTask
-                          : t.missions.locked}
-                    </button>
                   </div>
                 </div>
               );

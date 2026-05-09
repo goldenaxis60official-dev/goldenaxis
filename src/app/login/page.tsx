@@ -4,7 +4,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { guestAuth, type GuestLanguage } from "@/i18n/guestAuth";
+import { guestAuth } from "@/i18n/guestAuth";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -48,30 +48,12 @@ export default function LoginPage() {
   const [errorText, setErrorText] = useState("");
   const [isAdminPortal, setIsAdminPortal] = useState(false);
 
-  const [language, setLanguage] = useState<GuestLanguage>("en");
-const t = guestAuth[language];
-
-function toggleLanguage() {
-  const nextLanguage: GuestLanguage = language === "en" ? "zh" : "en";
-  setLanguage(nextLanguage);
-
-  if (typeof window !== "undefined") {
-    localStorage.setItem("golden-axis-language", nextLanguage);
-    window.dispatchEvent(new Event("golden-axis-language-change"));
-  }
-}
+const t = guestAuth.en;
 
 useEffect(() => {
   setIsAdminPortal(isAdminEntrance());
 }, []);
 
-useEffect(() => {
-  const savedLanguage = localStorage.getItem("golden-axis-language");
-
-  if (savedLanguage === "en" || savedLanguage === "zh") {
-    setLanguage(savedLanguage);
-  }
-}, []);
 
 const PortalIcon = isAdminPortal ? Crown : Gem;
 
@@ -238,18 +220,8 @@ setErrorText(message);
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-  <button
-    type="button"
-    onClick={toggleLanguage}
-    className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200 transition hover:border-yellow-300/50 hover:bg-yellow-400/15"
-  >
-    {t.langButton}
-  </button>
-
-  <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
-    {secureLabel}
-  </div>
+<div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
+  {secureLabel}
 </div>
         </div>
 

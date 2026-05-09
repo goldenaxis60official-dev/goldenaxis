@@ -4,7 +4,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { guestAuth, type GuestLanguage } from "@/i18n/guestAuth";
+import { guestAuth } from "@/i18n/guestAuth";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -37,16 +37,7 @@ const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
-  const [language, setLanguage] = useState<GuestLanguage>("en");
-const t = guestAuth[language];
-
-function toggleLanguage() {
-  const nextLanguage: GuestLanguage = language === "en" ? "zh" : "en";
-
-  setLanguage(nextLanguage);
-  localStorage.setItem("golden-axis-language", nextLanguage);
-  window.dispatchEvent(new Event("golden-axis-language-change"));
-}
+const t = guestAuth.en;
 
   useEffect(() => {
   async function redirectIfLoggedIn() {
@@ -78,14 +69,6 @@ if (profileData.role === "admin" || profileData.role === "super") {
 
   redirectIfLoggedIn();
 }, [router]);
-
-useEffect(() => {
-  const savedLanguage = localStorage.getItem("golden-axis-language");
-
-  if (savedLanguage === "en" || savedLanguage === "zh") {
-    setLanguage(savedLanguage);
-  }
-}, []);
 
  async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
@@ -197,7 +180,7 @@ if (!referrerProfile?.referrer_id) {
       current_step: 1,
       credit_score: 100,
       status: "active",
-      language,
+      language: "en",
     });
 
     if (profileError) throw profileError;
@@ -238,18 +221,8 @@ router.replace("/");
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-  <button
-    type="button"
-    onClick={toggleLanguage}
-    className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-[10px] font-black text-yellow-200 transition hover:border-yellow-300/50 hover:bg-yellow-400/15"
-  >
-    {t.langButton}
-  </button>
-
-  <div className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[10px] font-bold text-yellow-100">
-    {t.register.official}
-  </div>
+          <div className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[10px] font-bold text-yellow-100">
+  {t.register.official}
 </div>
         </div>
 

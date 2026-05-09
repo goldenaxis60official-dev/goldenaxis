@@ -27,6 +27,10 @@ type GeneratedOrderPreview = {
   order_total: number;
   profit_rate: number;
   profit_amount: number;
+  lucky_profit_rate_percent: number | null;
+  lucky_profit_amount: number;
+  campaign_base_amount: number | null;
+  normal_task_rate: number | null;
   order_type: "normal" | "lucky";
   status: "pending" | "completed" | "cancelled";
   is_lucky_bonus: boolean;
@@ -165,7 +169,7 @@ export default function ViewOrdersModal({
 
         {!loading && orders.length > 0 && (
           <div className="max-h-[620px] overflow-auto rounded-2xl border border-white/10">
-            <table className="w-full min-w-[1080px] text-left text-sm">
+            <table className="w-full min-w-[1180px] text-left text-sm">
               <thead className="sticky top-0 z-10 bg-[#151515] text-xs uppercase tracking-wide text-white/45">
                 <tr>
                   <th className="px-4 py-3">{t.step}</th>
@@ -181,9 +185,18 @@ export default function ViewOrdersModal({
 
               <tbody className="divide-y divide-white/10">
                 {orders.map((order) => {
-                  const firstItem = order.user_generated_order_items?.[0];
+  const firstItem = order.user_generated_order_items?.[0];
 
-                  return (
+  const normalProfit = Number(order.profit_amount || 0);
+  const luckyProfit = Number(order.lucky_profit_amount || 0);
+  const totalStepProfit = normalProfit + (order.is_lucky_bonus ? luckyProfit : 0);
+  const campaignRate = Number(order.normal_task_rate || 0);
+  const rateText =
+    campaignRate > 0
+      ? campaignRate.toFixed(3)
+      : `${Number(order.profit_rate || 0).toFixed(2)}%`;
+
+  return (
                     <tr
                       key={order.id}
                       className={
@@ -238,13 +251,58 @@ export default function ViewOrdersModal({
                       </td>
 
                       <td className="px-4 py-4">
-                        <p className="font-black text-emerald-300">
-                          ${Number(order.profit_amount || 0).toFixed(2)}
-                        </p>
-                        <p className="mt-1 text-xs text-white/40">
-                          {Number(order.profit_rate || 0).toFixed(2)}%
-                        </p>
-                      </td>
+  {order.is_lucky_bonus ? (
+    <div className="min-w-[150px] rounded-xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-3">
+      <p className="text-[10px] font-black uppercase tracking-wide text-fuchsia-200/70">
+        Total Profit
+      </p>
+
+      <p className="mt-1 text-lg font-black text-fuchsia-100">
+        ${totalStepProfit.toFixed(2)}
+      </p>
+
+      <div className="mt-2 space-y-1 border-t border-fuchsia-300/15 pt-2 text-[11px]">
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-bold text-white/45">Normal</span>
+          <span className="font-black text-emerald-300">
+            ${normalProfit.toFixed(2)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-bold text-white/45">Lucky Extra</span>
+          <span className="font-black text-fuchsia-200">
+            ${luckyProfit.toFixed(2)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-bold text-white/35">Lucky Rate</span>
+          <span className="font-black text-white/60">
+            {Number(order.lucky_profit_rate_percent || 0).toFixed(2)}%
+          </span>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="min-w-[130px]">
+      <p className="font-black text-emerald-300">
+        ${normalProfit.toFixed(2)}
+      </p>
+
+      <p className="mt-1 text-xs font-bold text-white/40">
+        Rate {rateText}
+      </p>
+
+      {order.campaign_base_amount !== null &&
+        order.campaign_base_amount !== undefined && (
+          <p className="mt-1 text-[11px] text-white/30">
+            Base ${Number(order.campaign_base_amount || 0).toFixed(2)}
+          </p>
+        )}
+    </div>
+  )}
+</td>
 
                       <td className="px-4 py-4">
                         <span
