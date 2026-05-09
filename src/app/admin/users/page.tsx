@@ -136,7 +136,7 @@ const [resetPasscode, setResetPasscode] = useState("");
 const [resetResult, setResetResult] = useState("");
 const [generateUser, setGenerateUser] = useState<ManagedUser | null>(null);
 const [generateTaskCount, setGenerateTaskCount] = useState(60);
-const [generateProfitRate, setGenerateProfitRate] = useState(0.08);
+const [generateProfitRate, setGenerateProfitRate] = useState(0.008);
 const [generateResetExisting, setGenerateResetExisting] = useState(false);
 const [luckyUser, setLuckyUser] = useState<ManagedUser | null>(null);
 const [luckyProducts, setLuckyProducts] = useState<LuckyProductOption[]>([]);
@@ -471,7 +471,7 @@ function getAutoOrderAmount(user: ManagedUser) {
 async function openGenerateOrdersModal(user: ManagedUser) {
   setGenerateUser(user);
   setGenerateTaskCount(60);
-  setGenerateProfitRate(0.08);
+  setGenerateProfitRate(0.008);
   setGenerateResetExisting(false);
   setSuccessText("");
   setErrorText("");
@@ -684,16 +684,16 @@ async function handleGenerateOrders() {
   }
 
   setSuccessText(
-    `${generateResetExisting ? "Reset and generated" : "Added"} ${generateTaskCount} auto orders for ${
-      generateUser.display_name || generateUser.email || "user"
-    } using ${generateProfitRate}% profit rate and auto amount ${formatMoney(
-      autoCapitalAmount
-    )}.`
-  );
+  `${generateResetExisting ? "Reset and generated" : "Added"} ${generateTaskCount} auto orders for ${
+    generateUser.display_name || generateUser.email || "user"
+  } using ${generateProfitRate} campaign rate and base amount ${formatMoney(
+    autoCapitalAmount
+  )}.`
+);
 
   setGenerateUser(null);
   setGenerateTaskCount(60);
-  setGenerateProfitRate(0.08);
+  setGenerateProfitRate(0.008);
   setGenerateResetExisting(false);
   setActionLoading(false);
   loadUsers();

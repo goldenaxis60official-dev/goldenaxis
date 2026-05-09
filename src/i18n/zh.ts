@@ -1373,8 +1373,8 @@ adminWalletRequests: {
   capitalAmount: "本金 / 订单金额",
   capitalAmountHelp:
     "例如：500、3000、8000、20000。系统会自动选择最接近的产品等级。",
-  profitRate: "利润比例 %",
-  profitRateHelp: "例如：0.08 表示每个普通订单利润为 0.08%。",
+  profitRate: "任务收益率",
+profitRateHelp: "默认 0.008，表示每个普通任务收益为 0.8%。",
   resetExisting: "清除旧任务并从第 1 步重新开始",
 resetExistingHelp:
   "关闭时，新任务会添加到用户最后一个任务之后。只有需要删除该用户全部旧任务并重新开始时才开启。",

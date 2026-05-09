@@ -163,16 +163,16 @@ export default function GenerateOrdersModal({
             <p className="mb-2 text-sm font-bold text-white/80">
               {t.profitRate}
             </p>
-            <input
-              value={profitRate}
-              onChange={(event) =>
-                onProfitRateChange(Number(event.target.value))
-              }
-              type="number"
-              min={0}
-              step="0.01"
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
-            />
+<input
+  value={profitRate}
+  onChange={(event) =>
+    onProfitRateChange(Number(event.target.value))
+  }
+  type="number"
+  min={0}
+  step="0.001"
+  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
+/>
             <p className="mt-2 text-xs text-white/45">{t.profitRateHelp}</p>
           </div>
 

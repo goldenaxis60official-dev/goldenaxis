@@ -1325,8 +1325,8 @@ generateModal: {
   capitalAmount: "Capital / Order Amount",
   capitalAmountHelp:
     "Example: 500, 3000, 8000, 20000. System will pick closest product tier.",
-  profitRate: "Profit Rate %",
-  profitRateHelp: "Example: 0.08 means 0.08% per normal order.",
+  profitRate: "Campaign Rate",
+profitRateHelp: "Default 0.008. This means 0.8% profit per normal task.",
   resetExisting: "Clear previous tasks and start from Step 1",
 resetExistingHelp:
   "Keep this off to add new tasks after the user's last task. Turn on only when you want to remove all previous generated tasks.",
