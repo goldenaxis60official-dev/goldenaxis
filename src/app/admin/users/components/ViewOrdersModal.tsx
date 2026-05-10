@@ -187,9 +187,9 @@ export default function ViewOrdersModal({
                 {orders.map((order) => {
   const firstItem = order.user_generated_order_items?.[0];
 
-  const normalProfit = Number(order.profit_amount || 0);
-  const luckyProfit = Number(order.lucky_profit_amount || 0);
-  const totalStepProfit = normalProfit + (order.is_lucky_bonus ? luckyProfit : 0);
+const normalProfit = Number(order.profit_amount || 0);
+const luckyProfit = Number(order.lucky_profit_amount || 0);
+const totalStepProfit = order.is_lucky_bonus ? luckyProfit : normalProfit;
   const campaignRate = Number(order.normal_task_rate || 0);
   const rateText =
     campaignRate > 0
@@ -250,11 +250,11 @@ export default function ViewOrdersModal({
                         ${Number(order.order_total || 0).toFixed(2)}
                       </td>
 
-                      <td className="px-4 py-4">
+<td className="px-4 py-4">
   {order.is_lucky_bonus ? (
     <div className="min-w-[150px] rounded-xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-3">
       <p className="text-[10px] font-black uppercase tracking-wide text-fuchsia-200/70">
-        Total Profit
+        Lucky Profit
       </p>
 
       <p className="mt-1 text-lg font-black text-fuchsia-100">
@@ -263,16 +263,9 @@ export default function ViewOrdersModal({
 
       <div className="mt-2 space-y-1 border-t border-fuchsia-300/15 pt-2 text-[11px]">
         <div className="flex items-center justify-between gap-3">
-          <span className="font-bold text-white/45">Normal</span>
-          <span className="font-black text-emerald-300">
-            ${normalProfit.toFixed(2)}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between gap-3">
-          <span className="font-bold text-white/45">Lucky Extra</span>
+          <span className="font-bold text-white/45">Lucky Amount</span>
           <span className="font-black text-fuchsia-200">
-            ${luckyProfit.toFixed(2)}
+            ${Number(order.order_total || 0).toFixed(2)}
           </span>
         </div>
 
