@@ -58,6 +58,8 @@ type GeneratedHistoryRow = {
   order_total: number;
   profit_rate: number;
   profit_amount: number;
+  lucky_profit_rate_percent: number | null;
+  lucky_profit_amount: number;
   order_type: "normal" | "lucky";
   status: "pending" | "completed" | "cancelled";
   is_lucky_bonus: boolean;
@@ -140,9 +142,11 @@ function HistoryContent({ profile }: { profile: Profile }) {
           id,
           step_number,
           order_total,
-          profit_rate,
-          profit_amount,
-          order_type,
+profit_rate,
+profit_amount,
+lucky_profit_rate_percent,
+lucky_profit_amount,
+order_type,
           status,
           is_lucky_bonus,
           created_at,
@@ -207,16 +211,38 @@ function HistoryContent({ profile }: { profile: Profile }) {
     return getItems(item)[0]?.product_snapshot || {};
   }
 
-  function isLuckyHistory(item: GeneratedHistoryRow) {
-    return item.is_lucky_bonus || item.order_type === "lucky";
+function isLuckyHistory(item: GeneratedHistoryRow) {
+  return item.is_lucky_bonus || item.order_type === "lucky";
+}
+
+function getHistoryProfit(item: GeneratedHistoryRow) {
+  if (isLuckyHistory(item)) {
+    const luckyProfit = Number(item.lucky_profit_amount || 0);
+
+    if (luckyProfit > 0) {
+      return luckyProfit;
+    }
+
+    return Number(item.profit_amount || 0);
   }
+
+  return Number(item.profit_amount || 0);
+}
+
+function getHistoryProfitRate(item: GeneratedHistoryRow) {
+  if (isLuckyHistory(item)) {
+    return Number(item.lucky_profit_rate_percent ?? item.profit_rate ?? 0);
+  }
+
+  return Number(item.profit_rate || 0);
+}
 
   const filteredHistory = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
 
     const result = history.filter((item) => {
       const snapshot = getFirstSnapshot(item);
-      const lucky = isLuckyHistory(item);
+const lucky = isLuckyHistory(item);
 
       const productName =
         snapshot?.name || `${t.history.step} ${item.step_number}`;
@@ -247,9 +273,9 @@ function HistoryContent({ profile }: { profile: Profile }) {
         return aTime - bTime;
       }
 
-      if (sortBy === "commission_high") {
-        return Number(b.profit_amount || 0) - Number(a.profit_amount || 0);
-      }
+if (sortBy === "commission_high") {
+  return getHistoryProfit(b) - getHistoryProfit(a);
+}
 
       if (sortBy === "value_high") {
         return Number(b.order_total || 0) - Number(a.order_total || 0);
@@ -453,9 +479,11 @@ function HistoryContent({ profile }: { profile: Profile }) {
 
         <div className="space-y-4 pb-6">
           {paginatedHistory.map((item) => {
-            const snapshot = getFirstSnapshot(item);
-            const items = getItems(item);
-            const lucky = isLuckyHistory(item);
+const snapshot = getFirstSnapshot(item);
+const items = getItems(item);
+const lucky = isLuckyHistory(item);
+const historyProfit = getHistoryProfit(item);
+const historyProfitRate = getHistoryProfitRate(item);
 
             const productName =
               snapshot?.name || `${t.history.step} ${item.step_number}`;
@@ -538,7 +566,7 @@ function HistoryContent({ profile }: { profile: Profile }) {
                   {items.length > 0 && (
                     <div className="mb-3 rounded-2xl border border-white/10 bg-black/25 p-3">
                       <p className="mb-2 text-xs font-black uppercase tracking-wide text-white/40">
-                        Order Items
+                        {t.history.orderItems}
                       </p>
 
                       <div className="space-y-2">
@@ -552,7 +580,7 @@ function HistoryContent({ profile }: { profile: Profile }) {
                                 {orderItem.product_snapshot?.name || productName}
                               </p>
                               <p className="mt-0.5 text-white/40">
-                                Qty {orderItem.quantity} × $
+                                {t.history.qty} {orderItem.quantity} × $
                                 {Number(orderItem.unit_price || 0).toFixed(2)}
                               </p>
                             </div>
@@ -577,16 +605,19 @@ function HistoryContent({ profile }: { profile: Profile }) {
                     </div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
-                      <p className="text-xs text-white/45">
-                        {t.history.commission}
-                      </p>
-                      <p className="mt-1 font-bold text-yellow-300">
-                        ${Number(item.profit_amount).toFixed(2)}
-                      </p>
-                      <p className="mt-1 text-[10px] text-white/35">
-                        {Number(item.profit_rate || 0).toFixed(2)}%
-                      </p>
-                    </div>
+  <p className="text-xs text-white/45">
+    {lucky ? t.history.luckyProfit : t.history.normalProfit}
+  </p>
+
+  <p className="mt-1 font-bold text-yellow-300">
+    ${historyProfit.toFixed(2)}
+  </p>
+
+  <p className="mt-1 text-[10px] text-white/35">
+    {lucky ? t.history.luckyProfitRate : t.history.profitRate}:{" "}
+    {historyProfitRate.toFixed(2)}%
+  </p>
+</div>
 
                     <div className="rounded-2xl bg-black/30 p-3">
                       <p className="text-xs text-white/45">
@@ -613,14 +644,19 @@ function HistoryContent({ profile }: { profile: Profile }) {
                     </div>
                   </div>
 
-                  {lucky && (
-                    <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/80">
-                      Lucky promotion profit rate{" "}
-                      <span className="font-black text-yellow-300">
-                        {Number(item.profit_rate || 0).toFixed(2)}%
-                      </span>
-                    </div>
-                  )}
+{lucky && (
+  <div className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/80">
+    {t.history.luckyProfit}:{" "}
+    <span className="font-black text-yellow-300">
+      ${historyProfit.toFixed(2)}
+    </span>
+    {" · "}
+    {t.history.luckyProfitRate}:{" "}
+    <span className="font-black text-yellow-300">
+      {historyProfitRate.toFixed(2)}%
+    </span>
+  </div>
+)}
                 </div>
               </LuxuryCard>
             );
