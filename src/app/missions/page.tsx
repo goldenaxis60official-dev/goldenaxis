@@ -259,17 +259,16 @@ const [finalReward, setFinalReward] = useState("0.00");
   async function handleCompleteGeneratedOrder(order: GeneratedOrder) {
   if (order.step_number !== profile.current_step) return;
 
-  const availableBalance =
-    Number(profile.deposited_balance || 0) +
-    Number(profile.referral_bonus_balance || 0) +
-    Number(profile.task_profit_balance || 0);
+ const orderTotal = Number(order.order_total || 0);
 
-  const fallbackBalance =
-    availableBalance > 0 ? availableBalance : Number(profile.balance || 0);
+const isLuckyOrder = order.is_lucky_bonus || order.order_type === "lucky";
 
-  const orderTotal = Number(order.order_total || 0);
+const liveMissionBalance =
+  Number(profile.task_profit_balance || 0) +
+  Number(profile.referral_bonus_balance || 0);
 
-  const isLuckyOrder = order.is_lucky_bonus || order.order_type === "lucky";
+const fallbackBalance =
+  liveMissionBalance > 0 ? liveMissionBalance : Number(profile.balance || 0);
 
 if (isLuckyOrder && fallbackBalance < orderTotal) {
   setErrorText(t.missions.insufficientBalance);
@@ -359,18 +358,30 @@ if (isLuckyOrder && fallbackBalance < orderTotal) {
   }
 }
 
-  const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
-  const earnBalance = Number(profile.task_profit_balance || 0);
+const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
+
+const taskEarnBalance = Number(profile.task_profit_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
+const earnBalance = taskEarnBalance + referralBalance;
 const depositBalance = Number(profile.deposited_balance || 0);
 
-const splitTotalBalance = earnBalance + referralBalance + depositBalance;
+const completedMissionBalance = earnBalance + depositBalance;
 
-const displayTotalBalance =
-  splitTotalBalance > 0 ? splitTotalBalance : Number(profile.balance || 0);
+const liveMissionBalance =
+  earnBalance > 0 ? earnBalance : Number(profile.balance || 0);
+
+const displayTotalBalance = allGeneratedCompleted
+  ? completedMissionBalance
+  : liveMissionBalance;
 
 function calculateDisplayReward(order: GeneratedOrder | null) {
   if (!order) return 0;
+
+  const storedProfit = Number(order.profit_amount || 0);
+
+  if (storedProfit > 0) {
+    return storedProfit;
+  }
 
   const profitRate = Number(order.profit_rate || 0);
 
@@ -378,8 +389,6 @@ function calculateDisplayReward(order: GeneratedOrder | null) {
     return (Number(order.order_total || 0) * profitRate) / 100;
   }
 
-  // Normal task profit uses total balance:
-  // Deposit + Referral + Earn
   return (displayTotalBalance * profitRate) / 100;
 }
 
@@ -388,8 +397,30 @@ const activeReward = calculateDisplayReward(activeOrder);
 const isInsufficientBalanceError =
   errorText === t.missions.insufficientBalance;
 
+const isLuckyActiveOrder = Boolean(
+  activeOrder && (activeOrder.is_lucky_bonus || activeOrder.order_type === "lucky")
+);
+
 const requiredBalance = Number(activeOrder?.order_total || 0);
-const balanceShortage = Math.max(requiredBalance - displayTotalBalance, 0);
+
+const balanceShortage = isLuckyActiveOrder
+  ? Math.max(requiredBalance - displayTotalBalance, 0)
+  : 0;
+
+const requiredDisplayValue =
+  balanceShortage > 0 ? `-$${balanceShortage.toFixed(2)}` : "$0.00";
+
+const missionCardStatus = loading
+  ? t.common.loading
+  : totalOrders === 0
+    ? t.missions.preparing
+    : allGeneratedCompleted
+      ? t.missions.completed
+      : balanceShortage > 0
+        ? t.missions.insufficient
+        : activeOrder
+          ? t.missions.processing
+          : t.missions.locked;
 
 const processingSteps = useMemo(() => {
   const lucky = Boolean(activeOrder?.is_lucky_bonus);
@@ -510,17 +541,17 @@ const processingProgressPercent = Math.min(
           </div>
         </LuxuryCard>
 
-        <div className="mb-4 grid grid-cols-2 gap-3">
+<div className="mb-4 grid grid-cols-2 gap-3">
   <StatCard
-    label="Earn"
-    value={`$${earnBalance.toFixed(2)}`}
-    color="green"
+    label={t.missions.requiredAmount}
+    value={requiredDisplayValue}
+    color="gold"
   />
 
   <StatCard
-    label="Referral"
-    value={`$${referralBalance.toFixed(2)}`}
-    color="blue"
+    label={t.missions.mission}
+    value={missionCardStatus}
+    color={balanceShortage > 0 ? "blue" : "green"}
   />
 
   <StatCard
@@ -530,7 +561,7 @@ const processingProgressPercent = Math.min(
   />
 
   <StatCard
-    label="Balance"
+    label={t.missions.totalBalance}
     value={`$${displayTotalBalance.toFixed(2)}`}
     color="gold"
   />

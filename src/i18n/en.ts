@@ -145,9 +145,15 @@ missions: {
   title: "Missions",
   currentProgress: "Current Progress",
   today: "Today",
-  balance: "Balance",
-  assigned: "Assigned",
-  loadingAssigned: "Loading assigned missions...",
+balance: "Balance",
+totalBalance: "Total Balance",
+assigned: "Assigned",
+requiredAmount: "Required",
+mission: "Mission",
+processing: "Processing",
+insufficient: "Insufficient",
+preparing: "Preparing",
+loadingAssigned: "Loading assigned missions...",
 
   preparingTitle: "Campaign List Preparing",
   preparingNote:
