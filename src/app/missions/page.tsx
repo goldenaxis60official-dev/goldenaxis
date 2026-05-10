@@ -56,6 +56,8 @@ type GeneratedOrder = {
   order_total: number;
   profit_rate: number;
   profit_amount: number;
+  lucky_profit_rate_percent: number | null;
+  lucky_profit_amount: number;
   order_type: "normal" | "lucky";
   status: "pending" | "completed" | "cancelled";
   is_lucky_bonus: boolean;
@@ -141,7 +143,9 @@ const [finalReward, setFinalReward] = useState("0.00");
           order_total,
           profit_rate,
           profit_amount,
-          order_type,
+lucky_profit_rate_percent,
+lucky_profit_amount,
+order_type,
           status,
           is_lucky_bonus,
           created_at,
@@ -198,11 +202,14 @@ const [finalReward, setFinalReward] = useState("0.00");
   const progressBase = totalOrders || 1;
   const progressPercent = Math.min((completedCount / progressBase) * 100, 100);
 
-  const totalProfitAmount = useMemo(() => {
-  return orders.reduce(
-    (sum, order) => sum + Number(order.profit_amount || 0),
-    0
-  );
+const totalProfitAmount = useMemo(() => {
+  return orders.reduce((sum, order) => {
+    if (order.is_lucky_bonus || order.order_type === "lucky") {
+      return sum + Number(order.lucky_profit_amount || 0);
+    }
+
+    return sum + Number(order.profit_amount || 0);
+  }, 0);
 }, [orders]);
 
   const missionStatusLabel = loading
@@ -263,14 +270,13 @@ const [finalReward, setFinalReward] = useState("0.00");
 
 const isLuckyOrder = order.is_lucky_bonus || order.order_type === "lucky";
 
-const liveMissionBalance =
-  Number(profile.task_profit_balance || 0) +
-  Number(profile.referral_bonus_balance || 0);
+const mainBalance = Number(profile.balance || 0);
+const depositReserve = Number(profile.deposited_balance || 0);
+const availableForOrder = isLuckyOrder
+  ? mainBalance + depositReserve
+  : mainBalance;
 
-const fallbackBalance =
-  liveMissionBalance > 0 ? liveMissionBalance : Number(profile.balance || 0);
-
-if (isLuckyOrder && fallbackBalance < orderTotal) {
+if (availableForOrder < orderTotal) {
   setErrorText(t.missions.insufficientBalance);
   setShowInsufficientPopup(true);
   return;
@@ -360,36 +366,31 @@ if (isLuckyOrder && fallbackBalance < orderTotal) {
 
 const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
 
+const mainBalance = Number(profile.balance || 0);
+const depositBalance = Number(profile.deposited_balance || 0);
 const taskEarnBalance = Number(profile.task_profit_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
-const earnBalance = taskEarnBalance + referralBalance;
-const depositBalance = Number(profile.deposited_balance || 0);
 
-const completedMissionBalance = earnBalance + depositBalance;
-
-const liveMissionBalance =
-  earnBalance > 0 ? earnBalance : Number(profile.balance || 0);
-
-const displayTotalBalance = allGeneratedCompleted
-  ? completedMissionBalance
-  : liveMissionBalance;
-
+const displayTotalBalance = mainBalance;
+const availableForLuckyRequirement = mainBalance + depositBalance;
 function calculateDisplayReward(order: GeneratedOrder | null) {
   if (!order) return 0;
 
-  const storedProfit = Number(order.profit_amount || 0);
-
-  if (storedProfit > 0) {
-    return storedProfit;
-  }
-
-  const profitRate = Number(order.profit_rate || 0);
-
   if (order.is_lucky_bonus || order.order_type === "lucky") {
-    return (Number(order.order_total || 0) * profitRate) / 100;
+    const storedLuckyProfit = Number(order.lucky_profit_amount || 0);
+
+    if (storedLuckyProfit > 0) {
+      return storedLuckyProfit;
+    }
+
+    return (
+      (Number(order.order_total || 0) *
+        Number(order.lucky_profit_rate_percent || 0)) /
+      100
+    );
   }
 
-  return (displayTotalBalance * profitRate) / 100;
+  return Number(order.profit_amount || 0);
 }
 
 const activeReward = calculateDisplayReward(activeOrder);
@@ -404,7 +405,7 @@ const isLuckyActiveOrder = Boolean(
 const requiredBalance = Number(activeOrder?.order_total || 0);
 
 const balanceShortage = isLuckyActiveOrder
-  ? Math.max(requiredBalance - displayTotalBalance, 0)
+  ? Math.max(requiredBalance - availableForLuckyRequirement, 0)
   : 0;
 
 const requiredDisplayValue =
@@ -561,10 +562,10 @@ const processingProgressPercent = Math.min(
   />
 
   <StatCard
-    label={t.missions.totalBalance}
-    value={`$${displayTotalBalance.toFixed(2)}`}
-    color="gold"
-  />
+  label={t.missions.totalBalance}
+  value={`$${displayTotalBalance.toFixed(2)}`}
+  color="gold"
+/>
 </div>
       </section>
 
@@ -608,11 +609,11 @@ const processingProgressPercent = Math.min(
       </div>
 
       <div className="rounded-2xl bg-black/35 p-3">
-        <p className="text-[10px] uppercase text-white/35">Balance</p>
-        <p className="mt-1 text-sm font-black text-white">
-          ${displayTotalBalance.toFixed(2)}
-        </p>
-      </div>
+  <p className="text-[10px] uppercase text-white/35">Balance</p>
+  <p className="mt-1 text-sm font-black text-white">
+    ${availableForLuckyRequirement.toFixed(2)}
+  </p>
+</div>
 
       <div className="rounded-2xl bg-black/35 p-3">
         <p className="text-[10px] uppercase text-white/35">Needed</p>
@@ -1207,11 +1208,11 @@ const processingProgressPercent = Math.min(
           </div>
 
           <div className="rounded-2xl bg-black/40 p-3">
-            <p className="text-[10px] uppercase text-white/35">{t.missions.balance}</p>
-            <p className="mt-1 text-sm font-black text-white">
-              ${displayTotalBalance.toFixed(2)}
-            </p>
-          </div>
+  <p className="text-[10px] uppercase text-white/35">{t.missions.balance}</p>
+  <p className="mt-1 text-sm font-black text-white">
+    ${availableForLuckyRequirement.toFixed(2)}
+  </p>
+</div>
 
           <div className="rounded-2xl bg-black/40 p-3">
             <p className="text-[10px] uppercase text-white/35">{t.missions.needed}</p>
