@@ -1097,9 +1097,34 @@ async function handleSaveReferralCode() {
     return;
   }
 
+  if (cleanCode === referralUser.referral_code) {
+    setReferralUser(null);
+    setReferralValue("");
+    return;
+  }
+
   setActionLoading(true);
   setSuccessText("");
   setErrorText("");
+
+  const { data: existingUser, error: checkError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("referral_code", cleanCode)
+    .neq("id", referralUser.id)
+    .maybeSingle();
+
+  if (checkError) {
+    setErrorText(checkError.message);
+    setActionLoading(false);
+    return;
+  }
+
+  if (existingUser) {
+    setErrorText(t.messages.referralCodeDuplicate);
+    setActionLoading(false);
+    return;
+  }
 
   const { error } = await supabase
     .from("profiles")
