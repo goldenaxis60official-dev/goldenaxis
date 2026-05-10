@@ -484,8 +484,15 @@ function openTelegramSupport() {
 </LuxuryCard>
 
 {showLanguageModal && (
-  <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/75 px-5 pb-6 backdrop-blur-sm">
-    <div className="w-full max-w-md rounded-[2rem] border border-yellow-400/25 bg-[#0b0b0b] p-5 shadow-[0_0_60px_rgba(250,204,21,0.18)]">
+  <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/80 px-5 pb-[7.5rem] pt-10 backdrop-blur-sm">
+    <button
+      type="button"
+      aria-label="Close language modal"
+      onClick={() => setShowLanguageModal(false)}
+      className="absolute inset-0"
+    />
+
+    <div className="relative w-full max-w-md rounded-[2rem] border border-yellow-400/25 bg-[#0b0b0b] p-5 shadow-[0_0_60px_rgba(250,204,21,0.18)]">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-200/60">
