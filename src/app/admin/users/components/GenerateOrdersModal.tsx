@@ -1,3 +1,5 @@
+//src>app>admin>users>components>GenerateOrdersModal.tsx
+
 import { PackagePlus, X } from "lucide-react";
 
 type ModalUser = {
@@ -43,20 +45,15 @@ type GenerateOrdersModalProps = {
 };
 
 function getAvailableBalance(user: ModalUser) {
-  const separatedBalance =
-    Number(user.deposited_balance || 0) +
-    Number(user.referral_bonus_balance || 0) +
-    Number(user.task_profit_balance || 0);
-
-  return separatedBalance > 0 ? separatedBalance : Number(user.balance || 0);
+  return Number(user.balance || 0);
 }
 
 function getAutoOrderAmount(user: ModalUser) {
-  const availableBalance = getAvailableBalance(user);
+  const mainBalance = Number(user.balance || 0);
 
-  if (availableBalance <= 0) return 0;
+  if (mainBalance <= 0) return 0;
 
-  return Number(Math.min(availableBalance, 10000).toFixed(2));
+  return Number(Math.min(mainBalance, 10000).toFixed(2));
 }
 
 function MiniBox({
