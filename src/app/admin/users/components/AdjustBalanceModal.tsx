@@ -1,5 +1,6 @@
 //src>app>admin>components>AdjustBalanceModal.tsx
 
+import { useEffect, useState } from "react";
 import { Save, X } from "lucide-react";
 
 type ModalUser = {
@@ -71,6 +72,38 @@ export default function AdjustBalanceModal({
   onClose,
   onSubmit,
 }: AdjustBalanceModalProps) {
+  const [amountText, setAmountText] = useState(String(amount || ""));
+
+  useEffect(() => {
+    setAmountText(String(amount || ""));
+  }, [amount]);
+
+  function handleAmountInput(value: string) {
+    setAmountText(value);
+
+    if (value === "" || value === "-" || value === "." || value === "-.") {
+      return;
+    }
+
+    const parsedAmount = Number(value);
+
+    if (Number.isFinite(parsedAmount)) {
+      onAmountChange(parsedAmount);
+    }
+  }
+
+  function handleAmountBlur() {
+    const parsedAmount = Number(amountText);
+
+    if (!Number.isFinite(parsedAmount)) {
+      setAmountText(String(amount || ""));
+      return;
+    }
+
+    setAmountText(String(parsedAmount));
+    onAmountChange(parsedAmount);
+  }
+
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
       <div className="w-full max-w-xl rounded-[2rem] border border-yellow-400/20 bg-[#090909] p-6 shadow-[0_0_60px_rgba(212,175,55,0.16)]">
@@ -105,12 +138,40 @@ export default function AdjustBalanceModal({
             <p className="mb-2 text-sm font-bold text-white/80">{t.amount}</p>
 
             <input
-              value={amount}
-              onChange={(event) => onAmountChange(Number(event.target.value))}
-              type="number"
-              step="0.01"
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-400/50"
-            />
+  value={amountText}
+  onChange={(event) => handleAmountInput(event.target.value)}
+  onBlur={handleAmountBlur}
+  type="text"
+  inputMode="decimal"
+  placeholder="Example: 100 or -100"
+  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
+/>
+
+<div className="mt-3 grid grid-cols-2 gap-3">
+  <button
+    type="button"
+    onClick={() => {
+      const positiveAmount = Math.abs(Number(amountText || amount || 0));
+      setAmountText(String(positiveAmount));
+      onAmountChange(positiveAmount);
+    }}
+    className="rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-2 text-sm font-black text-emerald-200 active:scale-[0.98]"
+  >
+    Add +
+  </button>
+
+  <button
+    type="button"
+    onClick={() => {
+      const negativeAmount = -Math.abs(Number(amountText || amount || 0));
+      setAmountText(String(negativeAmount));
+      onAmountChange(negativeAmount);
+    }}
+    className="rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-2 text-sm font-black text-red-200 active:scale-[0.98]"
+  >
+    Deduct -
+  </button>
+</div>
 
             <p className="mt-2 text-xs text-white/45">{t.amountHelp}</p>
           </div>
