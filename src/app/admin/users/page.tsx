@@ -454,22 +454,15 @@ function formatDate(value: string | null | undefined) {
 }
 
 function getDisplayBalance(user: ManagedUser) {
-  const separatedBalance =
-    Number(user.deposited_balance || 0) +
-    Number(user.referral_bonus_balance || 0) +
-    Number(user.task_profit_balance || 0);
-
-  return separatedBalance > 0 ? separatedBalance : Number(user.balance || 0);
+  return Number(user.balance || 0);
 }
 
 function getAutoOrderAmount(user: ManagedUser) {
-  const availableBalance = getDisplayBalance(user);
+  const mainBalance = Number(user.balance || 0);
 
-  if (availableBalance <= 0) return 0;
+  if (mainBalance <= 0) return 0;
 
-  // Product pool max is currently $10,000.
-  // If user balance is higher, still keep order amount inside product pool range.
-  return Number(Math.min(availableBalance, 10000).toFixed(2));
+  return Number(Math.min(mainBalance, 10000).toFixed(2));
 }
 
 async function openGenerateOrdersModal(user: ManagedUser) {
