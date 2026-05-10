@@ -757,10 +757,10 @@ const processingProgressPercent = Math.min(
               {lang === "zh" ? "账户收益已确认" : "Campaign Profit Confirmed"}
             </p>
             <p className="mt-1 text-xs leading-5 text-white/50">
-              {lang === "zh"
-                ? "您可以查看任务记录，或前往提现中心提交提现申请。"
-                : "You can review your task records or continue to the withdrawal center."}
-            </p>
+  {lang === "zh"
+    ? "您可以查看任务记录，或前往客服中心获取下一步帮助。"
+    : "You can review your task records or continue to the support center for next-step help."}
+</p>
           </div>
         </div>
       </div>
@@ -773,12 +773,12 @@ const processingProgressPercent = Math.min(
           {lang === "zh" ? "查看记录" : "View Records"}
         </button>
 
-        <button
-          onClick={() => router.push("/withdraw")}
-          className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_32px_rgba(250,204,21,0.35)] active:scale-[0.98]"
-        >
-          {lang === "zh" ? "提现中心" : "Withdraw Center"}
-        </button>
+<button
+  onClick={() => router.push("/support")}
+  className="rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-4 py-3 text-sm font-black text-black shadow-[0_0_32px_rgba(250,204,21,0.35)] active:scale-[0.98]"
+>
+  {lang === "zh" ? "客服中心" : "Support Center"}
+</button>
       </div>
     </div>
   </div>

@@ -1,5 +1,7 @@
 // src/app/admin/users/components/LuckyOrderModal.tsx
 
+// src/app/admin/users/components/LuckyOrderModal.tsx
+
 import { Sparkles, X } from "lucide-react";
 
 type ModalUser = {
@@ -43,16 +45,18 @@ type LuckyOrderModalText = {
 type LuckyOrderModalProps = {
   user: ModalUser;
   fallbackName: string;
+  totalSteps: number;
+  pendingOrders: number;
   luckyProducts: LuckyProductOption[];
   recommendedProduct: LuckyProductOption | null;
   selectedProductId: string;
-  stepNumber: number;
+  stepNumber: number | "";
   luckyAmount: number;
   profitRate: number;
   actionLoading: boolean;
   t: LuckyOrderModalText;
   onProductChange: (value: string) => void;
-  onStepNumberChange: (value: number) => void;
+  onStepNumberChange: (value: number | "") => void;
   onLuckyAmountChange: (value: number) => void;
   onProfitRateChange: (value: number) => void;
   onClose: () => void;
@@ -85,6 +89,8 @@ function MiniBox({
 export default function LuckyOrderModal({
   user,
   fallbackName,
+  totalSteps,
+  pendingOrders,
   luckyProducts,
   recommendedProduct,
   stepNumber,
@@ -101,6 +107,12 @@ export default function LuckyOrderModal({
   const estimatedLuckyProfit = Number(
     ((Number(luckyAmount || 0) * Number(profitRate || 0)) / 100).toFixed(2)
   );
+
+  const currentStep = Number(user.current_step || 1);
+  const stepHelp =
+    totalSteps > 0
+      ? `Choose pending step ${currentStep} - ${totalSteps}. Completed steps cannot be replaced.`
+      : "No generated steps found for this user.";
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm">
@@ -120,7 +132,7 @@ export default function LuckyOrderModal({
           </button>
         </div>
 
-        <div className="mb-5 grid grid-cols-3 gap-3">
+        <div className="mb-5 grid grid-cols-2 gap-3">
           <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
           <MiniBox
@@ -129,7 +141,15 @@ export default function LuckyOrderModal({
             color="gold"
           />
 
-          <MiniBox label={t.currentStep} value={String(user.current_step)} />
+          <MiniBox label={t.currentStep} value={String(currentStep)} />
+
+          <MiniBox
+            label="Total Steps"
+            value={totalSteps > 0 ? String(totalSteps) : "No orders"}
+            color="gold"
+          />
+
+          <MiniBox label="Pending" value={String(pendingOrders)} />
         </div>
 
         <div className="space-y-4">
@@ -140,17 +160,22 @@ export default function LuckyOrderModal({
 
             <input
               value={stepNumber}
-              onChange={(event) =>
-                onStepNumberChange(Number(event.target.value))
-              }
+              onChange={(event) => {
+                const value = event.target.value;
+                onStepNumberChange(value === "" ? "" : Number(value));
+              }}
               type="number"
               min={1}
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-fuchsia-400/50"
+              max={totalSteps > 0 ? totalSteps : undefined}
+              placeholder={
+                totalSteps > 0
+                  ? `Enter step ${currentStep} - ${totalSteps}`
+                  : "No generated steps"
+              }
+              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/30 focus:border-fuchsia-400/50"
             />
 
-            <p className="mt-2 text-xs text-white/45">
-              Choose a pending generated step. Completed steps cannot be replaced.
-            </p>
+            <p className="mt-2 text-xs text-white/45">{stepHelp}</p>
           </div>
 
           <div>
@@ -170,7 +195,7 @@ export default function LuckyOrderModal({
             />
 
             <p className="mt-2 text-xs text-white/45">
-              Enter the lucky order amount. The system will auto-match the closest suitable product.
+              {t.customLuckyAmountHelp}
             </p>
           </div>
 
@@ -191,18 +216,18 @@ export default function LuckyOrderModal({
             />
 
             <p className="mt-2 text-xs text-white/45">
-              Lucky profit is separate. Example: 5 means 5% lucky profit.
+              {t.luckyProfitRateHelp}
             </p>
           </div>
 
           <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-black text-fuchsia-100">
-                Auto Matched Product
+                {t.recommendedProduct}
               </p>
 
               <span className="rounded-full bg-yellow-400 px-3 py-1 text-[10px] font-black text-black">
-                AUTO
+                {t.autoBadge}
               </span>
             </div>
 
@@ -226,7 +251,7 @@ export default function LuckyOrderModal({
                   </p>
 
                   <p className="mt-1 text-xs text-white/45">
-                    {recommendedProduct.category || "Product"} · Product value{" "}
+                    {recommendedProduct.category || "Product"} · {t.productValue}{" "}
                     <span className="font-bold text-yellow-300">
                       ${Number(recommendedProduct.price || 0).toFixed(2)}
                     </span>
@@ -234,7 +259,7 @@ export default function LuckyOrderModal({
 
                   <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                     <div className="rounded-xl bg-black/25 p-2">
-                      <p className="text-white/40">Lucky Amount</p>
+                      <p className="text-white/40">{t.luckyOrderAmount}</p>
                       <p className="font-black text-fuchsia-200">
                         ${Number(luckyAmount || 0).toFixed(2)}
                       </p>
@@ -260,7 +285,7 @@ export default function LuckyOrderModal({
 
           <button
             onClick={onSubmit}
-            disabled={actionLoading || !recommendedProduct}
+            disabled={actionLoading || !recommendedProduct || !stepNumber}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-300 to-yellow-500 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Sparkles className="h-5 w-5" />

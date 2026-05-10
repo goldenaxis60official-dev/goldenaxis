@@ -144,7 +144,7 @@ const [generateProfitRate, setGenerateProfitRate] = useState(0.008);
 const [generateResetExisting, setGenerateResetExisting] = useState(false);
 const [luckyUser, setLuckyUser] = useState<ManagedUser | null>(null);
 const [luckyProducts, setLuckyProducts] = useState<LuckyProductOption[]>([]);
-const [luckyStepNumber, setLuckyStepNumber] = useState(25);
+const [luckyStepNumber, setLuckyStepNumber] = useState<number | "">("");
 const [luckyProductId, setLuckyProductId] = useState("");
 const [luckyAmount, setLuckyAmount] = useState(2800);
 const [luckyProfitRate, setLuckyProfitRate] = useState(5);
@@ -703,7 +703,7 @@ async function openLuckyOrderModal(user: ManagedUser) {
   );
 
   setLuckyUser(user);
-  setLuckyStepNumber(25);
+  setLuckyStepNumber("");
   setLuckyAmount(defaultLuckyAmount);
   setLuckyProfitRate(5);
   setLuckyProductId("");
@@ -744,10 +744,27 @@ if (!selectedLuckyProduct) {
   return;
 }
 
-  if (luckyStepNumber < 1) {
-  setErrorText("Lucky step must be at least 1.");
-  return;
-}
+  const numericLuckyStep = Number(luckyStepNumber);
+  const luckyStats = orderStatsByUser[luckyUser.id];
+
+  if (!numericLuckyStep || numericLuckyStep < 1) {
+    setErrorText("Enter a valid lucky step number.");
+    return;
+  }
+
+  if (luckyStats?.maxStep && numericLuckyStep > luckyStats.maxStep) {
+    setErrorText(
+      `Step ${numericLuckyStep} does not exist. This user has ${luckyStats.maxStep} generated steps.`
+    );
+    return;
+  }
+
+  if (numericLuckyStep < Number(luckyUser.current_step || 1)) {
+    setErrorText(
+      `Step ${numericLuckyStep} is already passed. Choose Step ${luckyUser.current_step} or a future pending step.`
+    );
+    return;
+  }
 
   if (luckyAmount <= 0) {
     setErrorText("Lucky amount must be greater than 0.");
@@ -765,7 +782,7 @@ if (!selectedLuckyProduct) {
 
   const { error } = await supabase.rpc("inject_lucky_order", {
     p_user_id: luckyUser.id,
-    p_step_number: luckyStepNumber,
+        p_step_number: numericLuckyStep,
     p_lucky_product_id: selectedLuckyProduct.id,
     p_lucky_amount: luckyAmount,
     p_profit_rate_percent: luckyProfitRate,
@@ -778,7 +795,7 @@ if (!selectedLuckyProduct) {
   }
 
   setSuccessText(
-    `Lucky order injected at step ${luckyStepNumber} using ${selectedLuckyProduct.name} for ${
+        `Lucky order injected at step ${numericLuckyStep} using ${selectedLuckyProduct.name} for ${
       luckyUser.display_name || luckyUser.email || "user"
     }.`
   );
@@ -786,7 +803,7 @@ if (!selectedLuckyProduct) {
   setLuckyUser(null);
   setLuckyProducts([]);
   setLuckyProductId("");
-  setLuckyStepNumber(25);
+    setLuckyStepNumber("");
   setLuckyAmount(100);
   setLuckyProfitRate(5);
   setActionLoading(false);
@@ -1984,6 +2001,12 @@ async function handleDeleteUser() {
   <LuckyOrderModal
     user={luckyUser}
     fallbackName={t.list.fallbackName}
+    totalSteps={
+      orderStatsByUser[luckyUser.id]?.maxStep ||
+      orderStatsByUser[luckyUser.id]?.totalOrders ||
+      0
+    }
+    pendingOrders={orderStatsByUser[luckyUser.id]?.pendingOrders || 0}
     luckyProducts={luckyProducts}
     recommendedProduct={pickRecommendedLuckyProduct(
       luckyProducts,
@@ -2003,6 +2026,7 @@ async function handleDeleteUser() {
       setLuckyUser(null);
       setLuckyProducts([]);
       setLuckyProductId("");
+      setLuckyStepNumber("");
     }}
     onSubmit={handleInjectLuckyOrder}
   />
