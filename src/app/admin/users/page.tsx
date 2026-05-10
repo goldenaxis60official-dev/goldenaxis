@@ -1336,51 +1336,25 @@ async function handleDeleteUser() {
       </div>
     </div>
 
-    <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-        <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
-          Users
-        </p>
-        <p className="mt-1 text-2xl font-black text-white">
-          {users.length}
-        </p>
-      </div>
+    <div className="mt-5 grid grid-cols-2 gap-3 lg:max-w-xl">
+  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+    <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
+      Users
+    </p>
+    <p className="mt-1 text-2xl font-black text-white">
+      {users.length}
+    </p>
+  </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-        <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
-          Active
-        </p>
-        <p className="mt-1 text-2xl font-black text-emerald-200">
-          {users.filter((item) => item.status === "active").length}
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-        <p className="text-[11px] font-black uppercase tracking-wide text-yellow-100/70">
-          Visible Balance
-        </p>
-        <p className="mt-1 text-2xl font-black text-yellow-200">
-          {formatMoney(
-            filteredUsers.reduce(
-              (total, item) => total + getDisplayBalance(item),
-              0
-            )
-          )}
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-4">
-        <p className="text-[11px] font-black uppercase tracking-wide text-fuchsia-100/70">
-          Lucky Steps
-        </p>
-        <p className="mt-1 text-2xl font-black text-fuchsia-200">
-          {Object.values(orderStatsByUser).reduce(
-            (total, item) => total + item.luckySteps.length,
-            0
-          )}
-        </p>
-      </div>
-    </div>
+  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+    <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
+      Active
+    </p>
+    <p className="mt-1 text-2xl font-black text-emerald-200">
+      {users.filter((item) => item.status === "active").length}
+    </p>
+  </div>
+</div>
 
     <div className="mt-5 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.4fr_0.7fr_0.8fr_0.9fr_0.55fr]">
       <div className="relative">
