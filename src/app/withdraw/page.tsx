@@ -120,15 +120,12 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
   const hasNoGeneratedOrders = !loadingProgress && generatedTotal === 0;
 
-  const separatedWithdrawableBalance =
-    Number(profile.deposited_balance || 0) +
-    Number(profile.referral_bonus_balance || 0) +
-    Number(profile.task_profit_balance || 0);
+const mainBalance = Number(profile.balance || 0);
+const depositReserve = Number(profile.deposited_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-  const availableBalance =
-    separatedWithdrawableBalance > 0
-      ? separatedWithdrawableBalance
-      : Number(profile.balance || 0);
+const availableBalance = mainBalance;
 
   const withdrawAmount = Number(amount || 0);
 
@@ -185,13 +182,10 @@ function WithdrawContent({ profile }: { profile: Profile }) {
       `Network: ${network}`,
       `Receiving Address: ${receivingAddress.trim()}`,
       `Generated Orders Completed: ${completedGeneratedCount}/${generatedTotal}`,
-      `Deposited Balance: ${Number(profile.deposited_balance || 0).toFixed(2)}`,
-      `Referral Bonus Balance: ${Number(
-        profile.referral_bonus_balance || 0
-      ).toFixed(2)}`,
-      `Task Profit Balance: ${Number(profile.task_profit_balance || 0).toFixed(
-        2
-      )}`,
+`Main Balance: ${mainBalance.toFixed(2)}`,
+`Deposit Reserve: ${depositReserve.toFixed(2)}`,
+`Referral Bonus Tracker: ${referralBalance.toFixed(2)}`,
+`Task Profit Tracker: ${taskProfitBalance.toFixed(2)}`,
       note.trim() ? `User Note: ${note.trim()}` : null,
     ]
       .filter(Boolean)
@@ -266,28 +260,35 @@ function WithdrawContent({ profile }: { profile: Profile }) {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-[10px] text-white/40">Deposited</p>
-              <p className="mt-1 text-sm font-black text-white">
-                ${Number(profile.deposited_balance || 0).toFixed(2)}
-              </p>
-            </div>
+<div className="mt-4 grid grid-cols-2 gap-2">
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Main Balance</p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      ${mainBalance.toFixed(2)}
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-[10px] text-white/40">Referral</p>
-              <p className="mt-1 text-sm font-black text-yellow-300">
-                ${Number(profile.referral_bonus_balance || 0).toFixed(2)}
-              </p>
-            </div>
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Deposit Reserve</p>
+    <p className="mt-1 text-sm font-black text-white">
+      ${depositReserve.toFixed(2)}
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-black/30 p-3">
-              <p className="text-[10px] text-white/40">Profit</p>
-              <p className="mt-1 text-sm font-black text-emerald-300">
-                ${Number(profile.task_profit_balance || 0).toFixed(2)}
-              </p>
-            </div>
-          </div>
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Referral Tracker</p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      ${referralBalance.toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Profit Tracker</p>
+    <p className="mt-1 text-sm font-black text-emerald-300">
+      ${taskProfitBalance.toFixed(2)}
+    </p>
+  </div>
+</div>
 
           {hasNoGeneratedOrders && (
             <div className="mt-4 flex gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">

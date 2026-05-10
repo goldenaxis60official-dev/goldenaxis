@@ -232,13 +232,13 @@ useEffect(() => {
     .filter((item) => item.type === "withdrawal")
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
-  const separatedBalance =
-  Number(profile.deposited_balance || 0) +
-  Number(profile.referral_bonus_balance || 0) +
-  Number(profile.task_profit_balance || 0);
+const mainBalance = Number(profile.balance || 0);
+const depositReserve = Number(profile.deposited_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const displayBalance =
-  separatedBalance > 0 ? separatedBalance : Number(profile.balance || 0);
+const displayBalance = mainBalance;
+const luckyAvailableBalance = mainBalance + depositReserve;
 
   return (
     <AppShell>
@@ -260,25 +260,39 @@ const displayBalance =
             ${displayBalance.toFixed(2)}
           </h2>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+<div className="mt-4 grid grid-cols-2 gap-2">
   <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Deposited</p>
-    <p className="mt-1 text-sm font-black text-white">
-      ${Number(profile.deposited_balance || 0).toFixed(2)}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Referral</p>
+    <p className="text-[10px] text-white/40">Main Balance</p>
     <p className="mt-1 text-sm font-black text-yellow-300">
-      ${Number(profile.referral_bonus_balance || 0).toFixed(2)}
+      ${mainBalance.toFixed(2)}
     </p>
   </div>
 
   <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Profit</p>
+    <p className="text-[10px] text-white/40">Deposit Reserve</p>
+    <p className="mt-1 text-sm font-black text-white">
+      ${depositReserve.toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Lucky Available</p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      ${luckyAvailableBalance.toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-[10px] text-white/40">Profit Tracker</p>
     <p className="mt-1 text-sm font-black text-emerald-300">
-      ${Number(profile.task_profit_balance || 0).toFixed(2)}
+      ${taskProfitBalance.toFixed(2)}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/30 p-3 md:col-span-2">
+    <p className="text-[10px] text-white/40">Referral Tracker</p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      ${referralBalance.toFixed(2)}
     </p>
   </div>
 </div>
