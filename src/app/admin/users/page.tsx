@@ -733,12 +733,10 @@ async function openLuckyOrderModal(user: ManagedUser) {
   const products = (data || []) as LuckyProductOption[];
   setLuckyProducts(products);
 
-  const recommendedProduct = pickRecommendedLuckyProduct(
-    products,
-    defaultLuckyAmount
-  );
-
-  setLuckyProductId(recommendedProduct?.id || "");
+// Keep empty for Auto mode.
+// The modal still previews the recommended product,
+// and handleInjectLuckyOrder will use the closest product automatically.
+setLuckyProductId("");
 }
 
 async function handleInjectLuckyOrder() {
@@ -895,12 +893,7 @@ async function openEditLuckyOrderModal(order: GeneratedOrderPreview) {
     return;
   }
 
-  const recommendedProduct = pickRecommendedLuckyProduct(
-    products,
-    Number(order.order_total || 0)
-  );
-
-  setLuckyProductId(recommendedProduct?.id || "");
+setLuckyProductId("");
 }
 
 async function handleDeleteGeneratedOrder(order: GeneratedOrderPreview) {
