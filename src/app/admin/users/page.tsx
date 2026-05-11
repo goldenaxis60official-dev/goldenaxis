@@ -167,6 +167,7 @@ const [orderStatsByUser, setOrderStatsByUser] = useState<
 const [resetOrdersUser, setResetOrdersUser] = useState<ManagedUser | null>(null);
 const [resetOrdersConfirmText, setResetOrdersConfirmText] = useState("");
 const [resetOrdersResetStep, setResetOrdersResetStep] = useState(true);
+const [resetOrdersResetBalance, setResetOrdersResetBalance] = useState(true);
 
   const [adjustAmount, setAdjustAmount] = useState(100);
   const [adjustNote, setAdjustNote] = useState("");
@@ -1054,10 +1055,11 @@ async function handleResetGeneratedOrders() {
   setSuccessText("");
   setErrorText("");
 
-  const { error } = await supabase.rpc("reset_user_generated_orders", {
-    p_user_id: resetOrdersUser.id,
-    p_reset_step: resetOrdersResetStep,
-  });
+const { error } = await supabase.rpc("reset_user_generated_orders", {
+  p_user_id: resetOrdersUser.id,
+  p_reset_step: resetOrdersResetStep,
+  p_reset_balance: resetOrdersResetBalance,
+});
 
   if (error) {
     setErrorText(error.message);
@@ -1074,6 +1076,7 @@ async function handleResetGeneratedOrders() {
   setResetOrdersUser(null);
   setResetOrdersConfirmText("");
   setResetOrdersResetStep(true);
+  setResetOrdersResetBalance(true);
   setViewOrdersUser(null);
   setViewOrders([]);
   setActionLoading(false);
@@ -2000,10 +2003,11 @@ async function handleDeleteUser() {
 
             <button
               onClick={() => {
-                setResetOrdersUser(user);
-                setResetOrdersConfirmText("");
-                setResetOrdersResetStep(true);
-              }}
+  setResetOrdersUser(user);
+  setResetOrdersConfirmText("");
+  setResetOrdersResetStep(true);
+  setResetOrdersResetBalance(true);
+}}
               disabled={!canManageOrders || user.role !== "user"}
               className="inline-flex items-center justify-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-1.5 text-[11px] font-black text-orange-700 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-35"
             >
@@ -2150,19 +2154,22 @@ async function handleDeleteUser() {
 
 {resetOrdersUser && (
   <ResetOrdersModal
-    user={resetOrdersUser}
-    fallbackName={t.list.fallbackName}
-    confirmText={resetOrdersConfirmText}
-    resetStep={resetOrdersResetStep}
-    actionLoading={actionLoading}
+  user={resetOrdersUser}
+  fallbackName={t.list.fallbackName}
+  confirmText={resetOrdersConfirmText}
+  resetStep={resetOrdersResetStep}
+  resetBalance={resetOrdersResetBalance}
+  actionLoading={actionLoading}
       t={t.resetOrdersModal}
     onConfirmTextChange={setResetOrdersConfirmText}
     onResetStepChange={setResetOrdersResetStep}
+    onResetBalanceChange={setResetOrdersResetBalance}
     onClose={() => {
-      setResetOrdersUser(null);
-      setResetOrdersConfirmText("");
-      setResetOrdersResetStep(true);
-    }}
+  setResetOrdersUser(null);
+  setResetOrdersConfirmText("");
+  setResetOrdersResetStep(true);
+  setResetOrdersResetBalance(true);
+}}
     onSubmit={handleResetGeneratedOrders}
   />
 )}
