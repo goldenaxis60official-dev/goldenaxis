@@ -459,10 +459,12 @@ function formatCreditRange(profile: ReturnType<typeof getCraftProfile>) {
 }
 
 function formatWorkValueRange(profile: ReturnType<typeof getCraftProfile>) {
-  return `$${profile.workMin.toFixed(0)} - $${profile.workMax.toFixed(0)}`;
+  return `${profile.workMin.toFixed(0)} - ${profile.workMax.toFixed(0)} pts`;
 }
 
 const activeCraftProfile = getCraftProfile(activeOrder);
+const activeOrderCurrency =
+  activeOrder ? getMainSnapshot(activeOrder).currency || "USD" : "USD";
 
 const isInsufficientBalanceError =
   errorText === t.missions.insufficientBalance;
@@ -895,10 +897,13 @@ const processingProgressPercent = Math.min(
 
               const productPrice = Number(order.order_total || 0);
               const reward = calculateDisplayReward(order);
-              const profitRate = Number(order.profit_rate || 0);
-              const craftProfile = getCraftProfile(order);
+const profitRate = Number(order.profit_rate || 0);
+const craftProfile = getCraftProfile(order);
 const expectedCreditText = formatCreditRange(craftProfile);
-const workValueText = formatWorkValueRange(craftProfile);
+const qualityIndexText = formatWorkValueRange(craftProfile);
+
+const luckyBoostRate = Number(order.lucky_profit_rate_percent ?? profitRate ?? 0);
+const requiredCampaignBalance = Number(order.order_total || 0);
 
               const completed = order.status === "completed";
               const isCurrent = order.step_number === profile.current_step;
@@ -935,7 +940,9 @@ const workValueText = formatWorkValueRange(craftProfile);
 <div className="shrink-0 rounded-2xl bg-black/45 px-3 py-2 text-right">
   <p className="text-[10px] uppercase tracking-wide text-white/40">
     {lucky
-      ? t.missions.reward
+      ? lang === "zh"
+        ? "奖励收益"
+        : "Bonus Credit"
       : lang === "zh"
         ? "预计收益"
         : "Expected Credit"}
@@ -1051,48 +1058,100 @@ const workValueText = formatWorkValueRange(craftProfile);
                   </div>
 
                   <div className="p-4">
-<div className="mb-4 rounded-[1.6rem] border border-yellow-300/25 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.14),rgba(0,0,0,0.34)_55%)] p-4 shadow-[inset_0_0_26px_rgba(250,204,21,0.06)]">
-  <div className="mb-3 flex items-center justify-between gap-3">
-    <div>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-100/50">
-        {lang === "zh" ? "工艺评估" : "Craftsmanship Review"}
-      </p>
+{lucky ? (
+  <div className="mb-4 rounded-[1.8rem] border border-yellow-300/45 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.24),rgba(34,20,0,0.58)_48%,rgba(0,0,0,0.42)_100%)] p-4 shadow-[0_0_36px_rgba(250,204,21,0.16)]">
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-100/60">
+          {lang === "zh" ? "高级奖励事件" : "Premium Bonus Event"}
+        </p>
 
-      <h3 className="mt-1 text-xl font-black text-white">
-        {lang === "zh" ? "工艺等级" : "Craft Grade"} {craftProfile.grade}
-      </h3>
+        <h3 className="mt-1 flex items-center gap-2 text-xl font-black text-white">
+          <Sparkles className="h-5 w-5 text-yellow-300" />
+          {lang === "zh" ? "特殊推广通道" : "Special Campaign Access"}
+        </h3>
+      </div>
+
+      <div className="rounded-2xl bg-yellow-300 px-3 py-2 text-right text-black shadow-[0_0_22px_rgba(250,204,21,0.35)]">
+        <p className="text-[10px] font-black uppercase">
+          {lang === "zh" ? "加成倍率" : "Boost Rate"}
+        </p>
+        <p className="text-lg font-black">
+          {luckyBoostRate.toFixed(2)}%
+        </p>
+      </div>
     </div>
 
-    <div className="rounded-2xl bg-black/45 px-3 py-2 text-right">
-      <p className="text-[10px] uppercase text-white/35">
-        {lang === "zh" ? "质量评分" : "Quality Score"}
-      </p>
-      <p className="text-lg font-black text-yellow-300">
-        {craftProfile.score}
-      </p>
+    <p className="mb-4 text-sm leading-6 text-yellow-100/65">
+      {lang === "zh"
+        ? "此任务为限时高级奖励任务，需要满足对应推广余额后才能完成。"
+        : "This is a premium bonus mission. The required campaign balance must be available before completion."}
+    </p>
+
+    <div className="grid grid-cols-2 gap-3">
+      <div className="rounded-2xl bg-black/40 p-3">
+        <p className="text-[10px] uppercase text-white/35">
+          {lang === "zh" ? "所需推广余额" : "Required Campaign Balance"}
+        </p>
+        <p className="mt-1 text-sm font-black text-white">
+          {productCurrency} {requiredCampaignBalance.toFixed(2)}
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-yellow-300/10 p-3">
+        <p className="text-[10px] uppercase text-yellow-100/45">
+          {lang === "zh" ? "奖励收益" : "Bonus Credit"}
+        </p>
+        <p className="mt-1 text-sm font-black text-yellow-300">
+          ${reward.toFixed(2)}
+        </p>
+      </div>
     </div>
   </div>
+) : (
+  <div className="mb-4 rounded-[1.6rem] border border-yellow-300/25 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.14),rgba(0,0,0,0.34)_55%)] p-4 shadow-[inset_0_0_26px_rgba(250,204,21,0.06)]">
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-100/50">
+          {lang === "zh" ? "工艺评估" : "Craftsmanship Review"}
+        </p>
 
-  <div className="grid grid-cols-2 gap-3">
-    <div className="rounded-2xl bg-black/35 p-3">
-      <p className="text-[10px] uppercase text-white/35">
-        {lang === "zh" ? "推广工艺价值" : "Campaign Work Value"}
-      </p>
-      <p className="mt-1 text-sm font-black text-white">
-        {workValueText}
-      </p>
+        <h3 className="mt-1 text-xl font-black text-white">
+          {lang === "zh" ? "工艺等级" : "Craft Grade"} {craftProfile.grade}
+        </h3>
+      </div>
+
+      <div className="rounded-2xl bg-black/45 px-3 py-2 text-right">
+        <p className="text-[10px] uppercase text-white/35">
+          {lang === "zh" ? "质量评分" : "Quality Score"}
+        </p>
+        <p className="text-lg font-black text-yellow-300">
+          {craftProfile.score}
+        </p>
+      </div>
     </div>
 
-    <div className="rounded-2xl bg-yellow-300/10 p-3">
-      <p className="text-[10px] uppercase text-yellow-100/45">
-        {lang === "zh" ? "预计收益" : "Expected Credit"}
-      </p>
-      <p className="mt-1 text-sm font-black text-yellow-300">
-        {lucky ? `$${reward.toFixed(2)}` : expectedCreditText}
-      </p>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="rounded-2xl bg-black/35 p-3">
+        <p className="text-[10px] uppercase text-white/35">
+          {lang === "zh" ? "质量指数" : "Quality Index"}
+        </p>
+        <p className="mt-1 text-sm font-black text-white">
+          {qualityIndexText}
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-yellow-300/10 p-3">
+        <p className="text-[10px] uppercase text-yellow-100/45">
+          {lang === "zh" ? "预计收益" : "Expected Credit"}
+        </p>
+        <p className="mt-1 text-sm font-black text-yellow-300">
+          {expectedCreditText}
+        </p>
+      </div>
     </div>
   </div>
-</div>
+)}
 
 <div className="mb-3 flex items-start justify-between gap-3">
   <div>
@@ -1117,36 +1176,6 @@ const workValueText = formatWorkValueRange(craftProfile);
   </div>
 </div>
 
-                    {lucky && (
-  <div className="mb-4 rounded-[1.4rem] border border-yellow-300/25 bg-yellow-300/10 p-3 shadow-[inset_0_0_22px_rgba(250,204,21,0.08)]">
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-black shadow-[0_0_18px_rgba(250,204,21,0.35)]">
-          <Sparkles className="h-4 w-4" />
-        </div>
-
-        <div>
-          <p className="text-sm font-black text-yellow-100">
-            {t.missions.specialBonusUnlocked}
-          </p>
-          <p className="mt-0.5 text-xs text-yellow-100/55">
-            {t.missions.premiumJewelOpportunity}
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-black/40 px-3 py-2 text-right">
-        <p className="text-[10px] font-black uppercase text-yellow-100/50">
-          {t.missions.boost}
-        </p>
-        <p className="text-sm font-black text-yellow-300">
-          {profitRate.toFixed(2)}%
-        </p>
-      </div>
-    </div>
-  </div>
-)}
-
                     <div className="mb-3 flex items-center gap-2">
                       <div className="flex items-center gap-2">
                         <RatingStars rating={productRating} />
@@ -1169,54 +1198,6 @@ const workValueText = formatWorkValueRange(craftProfile);
                       <p className="line-clamp-3 text-sm leading-6 text-white/60">
                         {productDescription}
                       </p>
-                    )}
-
-                    {lucky && (
-                      <div className="mt-4 rounded-[1.5rem] border border-yellow-300/30 bg-gradient-to-r from-yellow-400/15 to-amber-600/10 p-4 shadow-[inset_0_0_25px_rgba(250,204,21,0.08)]">
-                        <div className="mb-2 flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-black">
-                            <Sparkles className="h-4 w-4" />
-                          </div>
-
-                          <div>
-                            <p className="text-sm font-black text-yellow-100">
-                              {t.missions.luckyBonusCampaign}
-                            </p>
-                            <p className="text-xs text-yellow-100/55">
-                              {t.missions.luckyBonusNote}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                          <div className="rounded-2xl bg-black/35 p-2">
-                            <p className="text-[10px] text-white/40">
-                              {t.missions.type}
-                            </p>
-                            <p className="font-black text-yellow-300">
-                              {t.missions.special}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-black/35 p-2">
-                            <p className="text-[10px] text-white/40">
-                              {t.missions.boost}
-                            </p>
-                            <p className="font-black text-yellow-300">
-                              {profitRate.toFixed(2)}%
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-black/35 p-2">
-                            <p className="text-[10px] text-white/40">
-                              {t.missions.reward}
-                            </p>
-                            <p className="font-black text-yellow-300">
-                              ${reward.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
                     )}
 
                     {activeItems.length > 0 && (
@@ -1253,17 +1234,27 @@ const workValueText = formatWorkValueRange(craftProfile);
 <div className="mt-4 grid grid-cols-2 gap-3">
   <div className="rounded-2xl bg-black/30 p-3">
     <p className="text-xs text-white/45">
-      {lang === "zh" ? "推广工艺价值" : "Campaign Work Value"}
+      {lucky
+        ? lang === "zh"
+          ? "所需推广余额"
+          : "Required Balance"
+        : lang === "zh"
+          ? "质量指数"
+          : "Quality Index"}
     </p>
     <p className="mt-1 font-bold text-white">
-      {workValueText}
+      {lucky
+        ? `${productCurrency} ${requiredCampaignBalance.toFixed(2)}`
+        : qualityIndexText}
     </p>
   </div>
 
   <div className="rounded-2xl bg-black/30 p-3">
     <p className="text-xs text-white/45">
       {lucky
-        ? t.missions.reward
+        ? lang === "zh"
+          ? "奖励收益"
+          : "Bonus Credit"
         : lang === "zh"
           ? "预计收益"
           : "Expected Credit"}
@@ -1329,19 +1320,33 @@ const workValueText = formatWorkValueRange(craftProfile);
 <div className="relative mt-5 grid grid-cols-2 gap-3">
   <div className="rounded-2xl bg-black/35 p-3 text-center">
     <p className="text-[10px] uppercase text-white/35">
-      {lang === "zh" ? "推广工艺价值" : "Campaign Work Value"}
+      {isLuckyActiveOrder
+        ? lang === "zh"
+          ? "所需推广余额"
+          : "Required Balance"
+        : lang === "zh"
+          ? "质量指数"
+          : "Quality Index"}
     </p>
     <p className="mt-1 text-sm font-black text-yellow-300">
-      {formatWorkValueRange(getCraftProfile(activeOrder))}
+      {isLuckyActiveOrder
+        ? `${activeOrderCurrency} ${Number(activeOrder?.order_total || 0).toFixed(2)}`
+        : formatWorkValueRange(getCraftProfile(activeOrder))}
     </p>
   </div>
 
   <div className="rounded-2xl bg-black/35 p-3 text-center">
     <p className="text-[10px] uppercase text-white/35">
-      {lang === "zh" ? "预估收益" : "Expected Credit"}
+      {isLuckyActiveOrder
+        ? lang === "zh"
+          ? "奖励收益"
+          : "Bonus Credit"
+        : lang === "zh"
+          ? "预估收益"
+          : "Expected Credit"}
     </p>
     <p className="mt-1 text-sm font-black text-emerald-300">
-      {activeOrder?.is_lucky_bonus || activeOrder?.order_type === "lucky"
+      {isLuckyActiveOrder
         ? `$${calculateDisplayReward(activeOrder).toFixed(2)}`
         : formatCreditRange(getCraftProfile(activeOrder))}
     </p>
