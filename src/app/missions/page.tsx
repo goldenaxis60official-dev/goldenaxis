@@ -417,9 +417,15 @@ function getCraftProfile(order: GeneratedOrder | null) {
     };
   }
 
-  const reward = calculateDisplayReward(order);
-  const rate = Number(order.profit_rate || 0.008) || 0.008;
-  const seed = `${order.id}-${order.step_number}`;
+const reward = calculateDisplayReward(order);
+
+const storedRate = Number(order.profit_rate || 0.8);
+const rate =
+  storedRate > 0.05
+    ? storedRate / 100
+    : storedRate || 0.008;
+
+const seed = `${order.id}-${order.step_number}`;
 
   const score = Math.round(stableNumber(`${seed}-score`, 88, 99));
 
