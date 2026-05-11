@@ -81,9 +81,13 @@ const [sortBy, setSortBy] = useState<"newest" | "oldest" | "amount_high" | "amou
 const [currentPage, setCurrentPage] = useState(1);
 const [pageSize, setPageSize] = useState(10);
 const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
+const [liveStatus, setLiveStatus] = useState<
+  "connecting" | "live" | "error"
+>("connecting");
+const [lastLiveUpdate, setLastLiveUpdate] = useState("");
 
-  const [loading, setLoading] = useState(true);
-  const [actionId, setActionId] = useState<string | null>(null);
+const [loading, setLoading] = useState(true);
+const [actionId, setActionId] = useState<string | null>(null);
 
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
@@ -93,8 +97,11 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   return t.filters[value];
 }
 
- async function loadRecords() {
-  setLoading(true);
+async function loadRecords(options?: { silent?: boolean }) {
+  if (!options?.silent) {
+    setLoading(true);
+  }
+
   setErrorText("");
 
   const { data, error } = await supabase
@@ -178,12 +185,66 @@ const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   setLoading(false);
 }
 
-  useEffect(() => {
-  if (hasPageAccess) {
-    loadRecords();
-  } else {
+useEffect(() => {
+  if (!hasPageAccess) {
     setLoading(false);
+    return;
   }
+
+  let isMounted = true;
+
+  loadRecords();
+
+  const channel = supabase
+    .channel("admin-wallet-requests-live")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "wallet_requests",
+      },
+      () => {
+        if (!isMounted) return;
+
+        setLastLiveUpdate(new Date().toLocaleTimeString());
+        loadRecords({ silent: true });
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "profiles",
+      },
+      () => {
+        if (!isMounted) return;
+
+        setLastLiveUpdate(new Date().toLocaleTimeString());
+        loadRecords({ silent: true });
+      }
+    )
+    .subscribe((status) => {
+      if (!isMounted) return;
+
+      if (status === "SUBSCRIBED") {
+        setLiveStatus("live");
+      }
+
+      if (
+        status === "CHANNEL_ERROR" ||
+        status === "TIMED_OUT" ||
+        status === "CLOSED"
+      ) {
+        setLiveStatus("error");
+      }
+    });
+
+  return () => {
+    isMounted = false;
+    supabase.removeChannel(channel);
+  };
 }, [hasPageAccess]);
 
   async function handleApprove(id: string) {
@@ -320,6 +381,46 @@ useEffect(() => {
 <p className="mt-2 max-w-2xl text-sm text-white/50">
   {t.description}
 </p>
+
+<div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-black">
+  <span
+    className={`h-2.5 w-2.5 rounded-full ${
+      liveStatus === "live"
+        ? "bg-emerald-400"
+        : liveStatus === "error"
+        ? "bg-red-400"
+        : "bg-yellow-300"
+    }`}
+  />
+
+  <span
+    className={
+      liveStatus === "live"
+        ? "text-emerald-300"
+        : liveStatus === "error"
+        ? "text-red-300"
+        : "text-yellow-300"
+    }
+  >
+    {liveStatus === "live"
+      ? currentLanguage === "zh"
+        ? "实时更新已连接"
+        : "Live updates active"
+      : liveStatus === "error"
+      ? currentLanguage === "zh"
+        ? "实时连接异常"
+        : "Live connection issue"
+      : currentLanguage === "zh"
+      ? "正在连接实时更新"
+      : "Connecting live updates"}
+  </span>
+
+  {lastLiveUpdate && (
+    <span className="text-white/35">
+      {currentLanguage === "zh" ? "最后更新" : "Last update"} {lastLiveUpdate}
+    </span>
+  )}
+</div>
           </div>
 
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4">

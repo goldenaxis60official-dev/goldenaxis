@@ -183,16 +183,16 @@ export default function LuckyOrderModal({
               {t.customLuckyAmount}
             </p>
 
-            <input
-              value={luckyAmount}
-              onChange={(event) =>
-                onLuckyAmountChange(Number(event.target.value))
-              }
-              type="number"
-              min={1}
-              step="0.01"
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-fuchsia-400/50"
-            />
+<input
+  value={luckyAmount}
+  onChange={(event) =>
+    onLuckyAmountChange(Number(event.target.value))
+  }
+  type="number"
+  min={0}
+  step="0.01"
+  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-fuchsia-400/50"
+/>
 
             <p className="mt-2 text-xs text-white/45">
               {t.customLuckyAmountHelp}
@@ -285,7 +285,11 @@ export default function LuckyOrderModal({
 
           <button
             onClick={onSubmit}
-            disabled={actionLoading || !recommendedProduct || !stepNumber}
+            disabled={
+  actionLoading ||
+  !stepNumber ||
+  (Number(luckyAmount || 0) > 0 && !recommendedProduct)
+}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-300 to-yellow-500 px-5 py-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Sparkles className="h-5 w-5" />

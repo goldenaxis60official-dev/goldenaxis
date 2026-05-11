@@ -735,11 +735,13 @@ setLuckyProductId("");
 async function handleInjectLuckyOrder() {
   if (!luckyUser) return;
 
-  const selectedLuckyProduct =
+const isSilentBoost = Number(luckyAmount || 0) === 0;
+
+const selectedLuckyProduct =
   luckyProducts.find((product) => product.id === luckyProductId) ||
   pickRecommendedLuckyProduct(luckyProducts, luckyAmount);
 
-if (!selectedLuckyProduct) {
+if (!isSilentBoost && !selectedLuckyProduct) {
   setErrorText("No available product found for this lucky amount.");
   return;
 }
@@ -766,10 +768,10 @@ if (!selectedLuckyProduct) {
     return;
   }
 
-  if (luckyAmount <= 0) {
-    setErrorText("Lucky amount must be greater than 0.");
-    return;
-  }
+if (luckyAmount < 0) {
+  setErrorText("Lucky amount cannot be negative.");
+  return;
+}
 
   if (luckyProfitRate < 0) {
     setErrorText("Lucky profit rate cannot be negative.");
@@ -783,7 +785,7 @@ if (!selectedLuckyProduct) {
   const { error } = await supabase.rpc("inject_lucky_order", {
     p_user_id: luckyUser.id,
         p_step_number: numericLuckyStep,
-    p_lucky_product_id: selectedLuckyProduct.id,
+    p_lucky_product_id: selectedLuckyProduct?.id || null,
     p_lucky_amount: luckyAmount,
     p_profit_rate_percent: luckyProfitRate,
   });
@@ -794,12 +796,15 @@ if (!selectedLuckyProduct) {
     return;
   }
 
-  setSuccessText(
-        `Lucky order injected at step ${numericLuckyStep} using ${selectedLuckyProduct.name} for ${
-      luckyUser.display_name || luckyUser.email || "user"
-    }.`
-  );
-
+setSuccessText(
+  isSilentBoost
+    ? `Step ${numericLuckyStep} boosted with ${luckyProfitRate}% profit rate for ${
+        luckyUser.display_name || luckyUser.email || "user"
+      }. User will still see a normal mission.`
+    : `Lucky order injected at step ${numericLuckyStep} using ${selectedLuckyProduct?.name} for ${
+        luckyUser.display_name || luckyUser.email || "user"
+      }.`
+);
   setLuckyUser(null);
   setLuckyProducts([]);
   setLuckyProductId("");
