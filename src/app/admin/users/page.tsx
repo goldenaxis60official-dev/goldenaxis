@@ -345,9 +345,9 @@ return (
       return (a.display_name || "").localeCompare(b.display_name || "");
     }
 
-    if (sortBy === "balance_high") {
-      return Number(b.balance || 0) - Number(a.balance || 0);
-    }
+if (sortBy === "balance_high") {
+  return getDisplayBalance(b) - getDisplayBalance(a);
+}
 
     if (sortBy === "today_high") {
       return Number(b.today_earnings || 0) - Number(a.today_earnings || 0);
@@ -454,7 +454,13 @@ function formatDate(value: string | null | undefined) {
 }
 
 function getDisplayBalance(user: ManagedUser) {
-  return Number(user.balance || 0);
+  const mainBalance = Number(user.balance || 0);
+  const depositReserve = Number(user.deposited_balance || 0);
+
+  // Admin display only.
+  // Matches user Home/Profile/Missions visible total.
+  // Does not change generation, lucky, or completion calculation.
+  return mainBalance + depositReserve;
 }
 
 function getAutoOrderAmount(user: ManagedUser) {
