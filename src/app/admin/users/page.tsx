@@ -1707,6 +1707,17 @@ async function handleDeleteUser() {
                   Note: {user.admin_nickname || "None"}
                 </button>
 
+                <button
+  onClick={() => {
+    setReferralUser(user);
+    setReferralValue(user.referral_code || "");
+  }}
+  disabled={!canEditUserInfo}
+  className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
+>
+  Own Code: {user.referral_code || "-"}
+</button>
+
 {user.role === "user" && (
   <div className="w-full rounded-lg border border-indigo-100 bg-indigo-50 px-2 py-1.5 text-[10px] font-bold text-indigo-700">
     <p className="font-black uppercase tracking-wide text-indigo-500">
