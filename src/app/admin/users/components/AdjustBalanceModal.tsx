@@ -7,6 +7,9 @@ type ModalUser = {
   display_name: string | null;
   email: string | null;
   balance: number;
+  deposited_balance?: number | null;
+  referral_bonus_balance?: number | null;
+  task_profit_balance?: number | null;
   current_step: number;
 };
 
@@ -36,6 +39,13 @@ type AdjustBalanceModalProps = {
   onClose: () => void;
   onSubmit: () => void;
 };
+
+function getDisplayBalance(user: ModalUser) {
+  const mainBalance = Number(user.balance || 0);
+  const depositBalance = Number(user.deposited_balance || 0);
+
+  return mainBalance + depositBalance;
+}
 
 function MiniBox({
   label,
@@ -124,11 +134,11 @@ export default function AdjustBalanceModal({
         <div className="mb-5 grid grid-cols-3 gap-3">
           <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
-          <MiniBox
-            label={t.balance}
-            value={`$${Number(user.balance).toFixed(2)}`}
-            color="gold"
-          />
+<MiniBox
+  label={t.balance}
+  value={`$${getDisplayBalance(user).toFixed(2)}`}
+  color="gold"
+/>
 
           <MiniBox label={t.step} value={String(user.current_step)} />
         </div>
