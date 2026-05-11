@@ -219,14 +219,11 @@ const nextTaskCategory =
         ? liveText.pending
         : liveText.completed;
 
-        const depositedBalance = Number(profile.deposited_balance || 0);
+const depositedBalance = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const homepageTotalBalance =
-  depositedBalance + referralBalance + taskProfitBalance > 0
-    ? depositedBalance + referralBalance + taskProfitBalance
-    : Number(profile.balance || 0);
+const homepageTotalBalance = Number(profile.balance || 0);
 
     const actionStatus = {
     startMission: missionStatusLabel,

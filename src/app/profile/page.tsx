@@ -238,14 +238,11 @@ function openTelegramSupport() {
   const missionTotalText =
     assignedTotal === null ? "..." : assignedTotal > 0 ? assignedTotal : "-";
 
-    const depositedBalance = Number(profile.deposited_balance || 0);
+const depositedBalance = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const profileTotalBalance =
-  depositedBalance + referralBalance + taskProfitBalance > 0
-    ? depositedBalance + referralBalance + taskProfitBalance
-    : Number(profile.balance || 0);
+const profileTotalBalance = Number(profile.balance || 0);
 
   return (
     <AppShell>

@@ -116,6 +116,12 @@ const [showCompletedPopup, setShowCompletedPopup] = useState(false);
 const [showInsufficientPopup, setShowInsufficientPopup] = useState(false);
 const [showProcessingPopup, setShowProcessingPopup] = useState(false);
 
+const [insufficientInfo, setInsufficientInfo] = useState({
+  required: 0,
+  balance: 0,
+  needed: 0,
+});
+
 const [processingStep, setProcessingStep] = useState(0);
 const [completedReward, setCompletedReward] = useState("0.00");
 const [completedStep, setCompletedStep] = useState<number | null>(null);
@@ -276,12 +282,19 @@ const availableForOrder = isLuckyOrder
   ? mainBalance + depositReserve
   : mainBalance;
 
-if (availableForOrder < orderTotal) {
+const neededForOrder = Math.max(orderTotal - availableForOrder, 0);
+
+if (neededForOrder > 0) {
+  setInsufficientInfo({
+    required: orderTotal,
+    balance: availableForOrder,
+    needed: neededForOrder,
+  });
+
   setErrorText(t.missions.insufficientBalance);
   setShowInsufficientPopup(true);
   return;
 }
-
   setActionLoading(true);
   setShowProcessingPopup(true);
   setProcessingStep(0);
@@ -309,10 +322,18 @@ if (availableForOrder < orderTotal) {
         setErrorText(t.missions.stepNotAssignedTitle);
       } else if (error.message.includes("account_not_active")) {
         setErrorText(t.missions.assignedTaskNotFound);
-      } else if (error.message.includes("insufficient_balance")) {
-        setErrorText(t.missions.insufficientBalance);
-        setShowInsufficientPopup(true);
-      } else {
+} else if (error.message.includes("insufficient_balance")) {
+  const neededForOrder = Math.max(orderTotal - availableForOrder, 0);
+
+  setInsufficientInfo({
+    required: orderTotal,
+    balance: availableForOrder,
+    needed: neededForOrder,
+  });
+
+  setErrorText(t.missions.insufficientBalance);
+  setShowInsufficientPopup(true);
+} else {
         setErrorText(error.message);
       }
 
@@ -368,11 +389,15 @@ const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
 
 const mainBalance = Number(profile.balance || 0);
 const depositBalance = Number(profile.deposited_balance || 0);
+const todayEarnings = Number(profile.today_earnings || 0);
 // Reserved for future stat display if needed.
 // const taskEarnBalance = Number(profile.task_profit_balance || 0);
 // const referralBalance = Number(profile.referral_bonus_balance || 0);
 
-const displayTotalBalance = mainBalance;
+// Frontend display only.
+// This does not change task generation, task completion, or lucky calculation.
+const displayTotalBalance = mainBalance + depositBalance;
+
 const availableForLuckyRequirement = mainBalance + depositBalance;
 function calculateDisplayReward(order: GeneratedOrder | null) {
   if (!order) return 0;
@@ -629,11 +654,11 @@ const processingProgressPercent = Math.min(
     color={balanceShortage > 0 ? "blue" : "green"}
   />
 
-  <StatCard
-    label="Deposit"
-    value={`$${depositBalance.toFixed(2)}`}
-    color="gold"
-  />
+<StatCard
+  label={t.missions.today}
+  value={`$${todayEarnings.toFixed(2)}`}
+  color="green"
+/>
 
   <StatCard
   label={t.missions.totalBalance}
@@ -678,21 +703,21 @@ const processingProgressPercent = Math.min(
       <div className="rounded-2xl bg-black/35 p-3">
         <p className="text-[10px] uppercase text-white/35">Required</p>
         <p className="mt-1 text-sm font-black text-yellow-300">
-          ${requiredBalance.toFixed(2)}
+          ${insufficientInfo.required.toFixed(2)}
         </p>
       </div>
 
       <div className="rounded-2xl bg-black/35 p-3">
   <p className="text-[10px] uppercase text-white/35">Balance</p>
   <p className="mt-1 text-sm font-black text-white">
-    ${availableForLuckyRequirement.toFixed(2)}
+    ${insufficientInfo.balance.toFixed(2)}
   </p>
 </div>
 
       <div className="rounded-2xl bg-black/35 p-3">
         <p className="text-[10px] uppercase text-white/35">Needed</p>
         <p className="mt-1 text-sm font-black text-rose-200">
-          ${balanceShortage.toFixed(2)}
+          ${insufficientInfo.needed.toFixed(2)}
         </p>
       </div>
     </div>
