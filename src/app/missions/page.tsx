@@ -1459,21 +1459,21 @@ const requiredCampaignBalance = Number(order.order_total || 0);
           <div className="rounded-2xl bg-black/40 p-3">
             <p className="text-[10px] uppercase text-white/35">{t.missions.required}</p>
             <p className="mt-1 text-sm font-black text-yellow-300">
-              ${requiredBalance.toFixed(2)}
+              ${insufficientInfo.required.toFixed(2)}
             </p>
           </div>
 
           <div className="rounded-2xl bg-black/40 p-3">
   <p className="text-[10px] uppercase text-white/35">{t.missions.balance}</p>
   <p className="mt-1 text-sm font-black text-white">
-    ${availableForLuckyRequirement.toFixed(2)}
+    ${insufficientInfo.balance.toFixed(2)}
   </p>
 </div>
 
           <div className="rounded-2xl bg-black/40 p-3">
             <p className="text-[10px] uppercase text-white/35">{t.missions.needed}</p>
             <p className="mt-1 text-sm font-black text-rose-200">
-              ${balanceShortage.toFixed(2)}
+              ${insufficientInfo.needed.toFixed(2)}
             </p>
           </div>
         </div>

@@ -239,11 +239,11 @@ function openTelegramSupport() {
     assignedTotal === null ? "..." : assignedTotal > 0 ? assignedTotal : "-";
 
 const depositedBalance = Number(profile.deposited_balance || 0);
-const referralBalance = Number(profile.referral_bonus_balance || 0);
-const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const profileTotalBalance = Number(profile.balance || 0);
-
+// Frontend display only.
+// This matches Home and Missions page display.
+// It does not change task/lucky calculation.
+const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
   return (
     <AppShell>
       <section className="px-5 pb-32 pt-8">

@@ -220,10 +220,10 @@ const nextTaskCategory =
         : liveText.completed;
 
 const depositedBalance = Number(profile.deposited_balance || 0);
-const referralBalance = Number(profile.referral_bonus_balance || 0);
-const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const homepageTotalBalance = Number(profile.balance || 0);
+// Frontend display only.
+// This matches Missions page display and does not change task/lucky calculation.
+const homepageTotalBalance = Number(profile.balance || 0) + depositedBalance;
 
     const actionStatus = {
     startMission: missionStatusLabel,
