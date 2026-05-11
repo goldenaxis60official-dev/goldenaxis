@@ -1,5 +1,3 @@
-//src>app>admin>users>components>ResetOrdersModal.tsx
-
 import { RotateCcw, X } from "lucide-react";
 
 type ModalUser = {
@@ -33,10 +31,12 @@ type ResetOrdersModalProps = {
   fallbackName: string;
   confirmText: string;
   resetStep: boolean;
+  resetBalance: boolean;
   actionLoading: boolean;
   t: ResetOrdersModalText;
   onConfirmTextChange: (value: string) => void;
   onResetStepChange: (value: boolean) => void;
+  onResetBalanceChange: (value: boolean) => void;
   onClose: () => void;
   onSubmit: () => void;
 };
@@ -45,7 +45,6 @@ function getDisplayBalance(user: ModalUser) {
   const mainBalance = Number(user.balance || 0);
   const depositBalance = Number(user.deposited_balance || 0);
 
-  // Match admin table visible Total Balance.
   return mainBalance + depositBalance;
 }
 
@@ -77,10 +76,12 @@ export default function ResetOrdersModal({
   fallbackName,
   confirmText,
   resetStep,
+  resetBalance,
   actionLoading,
   t,
   onConfirmTextChange,
   onResetStepChange,
+  onResetBalanceChange,
   onClose,
   onSubmit,
 }: ResetOrdersModalProps) {
@@ -105,11 +106,11 @@ export default function ResetOrdersModal({
         <div className="mb-5 grid grid-cols-3 gap-3">
           <MiniBox label={t.user} value={user.display_name || fallbackName} />
 
-<MiniBox
-  label={t.balance}
-  value={`$${getDisplayBalance(user).toFixed(2)}`}
-  color="gold"
-/>
+          <MiniBox
+            label={t.balance}
+            value={`$${getDisplayBalance(user).toFixed(2)}`}
+            color="gold"
+          />
 
           <MiniBox label={t.step} value={String(user.current_step)} />
         </div>
@@ -129,6 +130,25 @@ export default function ResetOrdersModal({
             checked={resetStep}
             onChange={(event) => onResetStepChange(event.target.checked)}
             className="h-5 w-5 accent-orange-400"
+          />
+        </label>
+
+        <label className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-red-400/25 bg-red-500/[0.08] px-4 py-3">
+          <div>
+            <p className="text-sm font-black text-red-100">
+              Also reset user wallet balance
+            </p>
+            <p className="mt-1 text-xs text-white/45">
+              This will reset total balance, deposit, referral, profit, today
+              earnings, and total earnings to $0.
+            </p>
+          </div>
+
+          <input
+            type="checkbox"
+            checked={resetBalance}
+            onChange={(event) => onResetBalanceChange(event.target.checked)}
+            className="h-5 w-5 accent-red-400"
           />
         </label>
 
