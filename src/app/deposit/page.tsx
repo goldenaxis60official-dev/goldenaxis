@@ -82,7 +82,10 @@ const depositReserve = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const displayBalance = mainBalance;
+// Frontend display only.
+// Shows the same visible total as Home/Profile/Missions/Admin.
+const displayBalance = mainBalance + depositReserve;
+
 const luckyAvailableBalance = mainBalance + depositReserve;
 
   async function loadWalletAddresses() {

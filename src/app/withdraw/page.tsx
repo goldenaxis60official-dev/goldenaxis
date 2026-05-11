@@ -125,7 +125,10 @@ const depositReserve = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const availableBalance = mainBalance;
+// Frontend display + withdraw form limit.
+// Matches Home/Profile/Missions/Admin visible balance.
+// Backend withdrawal approval already deducts from profit/referral/deposit/main safely.
+const availableBalance = mainBalance + depositReserve;
 
   const withdrawAmount = Number(amount || 0);
 
