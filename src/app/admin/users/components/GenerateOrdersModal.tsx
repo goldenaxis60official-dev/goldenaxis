@@ -45,15 +45,24 @@ type GenerateOrdersModalProps = {
 };
 
 function getAvailableBalance(user: ModalUser) {
-  return Number(user.balance || 0);
+  const mainBalance = Number(user.balance || 0);
+  const depositBalance = Number(user.deposited_balance || 0);
+  const referralBalance = Number(user.referral_bonus_balance || 0);
+  const profitBalance = Number(user.task_profit_balance || 0);
+
+  // Use main balance if backend already synced it.
+  // Otherwise fallback to separated wallet balances.
+  const separatedTotal = depositBalance + referralBalance + profitBalance;
+
+  return mainBalance > 0 ? mainBalance : separatedTotal;
 }
 
 function getAutoOrderAmount(user: ModalUser) {
-  const mainBalance = Number(user.balance || 0);
+  const availableBalance = getAvailableBalance(user);
 
-  if (mainBalance <= 0) return 0;
+  if (availableBalance <= 0) return 0;
 
-  return Number(Math.min(mainBalance, 10000).toFixed(2));
+  return Number(Math.min(availableBalance, 10000).toFixed(2));
 }
 
 function MiniBox({

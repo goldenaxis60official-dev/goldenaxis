@@ -512,10 +512,18 @@ function getDisplayBalance(user: ManagedUser) {
 
 function getAutoOrderAmount(user: ManagedUser) {
   const mainBalance = Number(user.balance || 0);
+  const depositBalance = Number(user.deposited_balance || 0);
+  const referralBalance = Number(user.referral_bonus_balance || 0);
+  const profitBalance = Number(user.task_profit_balance || 0);
 
-  if (mainBalance <= 0) return 0;
+  const availableBalance =
+    mainBalance > 0
+      ? mainBalance
+      : depositBalance + referralBalance + profitBalance;
 
-  return Number(Math.min(mainBalance, 10000).toFixed(2));
+  if (availableBalance <= 0) return 0;
+
+  return Number(Math.min(availableBalance, 10000).toFixed(2));
 }
 
 async function openGenerateOrdersModal(user: ManagedUser) {
