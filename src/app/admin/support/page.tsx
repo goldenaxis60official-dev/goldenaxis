@@ -34,9 +34,10 @@ type AdminTicket = {
   created_at: string;
   replied_at: string | null;
   profiles: {
-    display_name: string | null;
-    email: string | null;
-  } | null;
+  member_id: string | null;
+  display_name: string | null;
+  email: string | null;
+} | null;
 };
 
 type ChatMessage = {
@@ -106,16 +107,20 @@ useEffect(() => {
   const keyword = searchText.trim().toLowerCase();
 
   const result = tickets.filter((ticket) => {
-    const name = ticket.profiles?.display_name || "";
-    const email = ticket.profiles?.email || "";
+const name = ticket.profiles?.display_name || "";
+const email = ticket.profiles?.email || "";
+const memberId = ticket.profiles?.member_id || "";
+const userId = ticket.user_id || "";
 
     const matchesSearch =
       !keyword ||
       ticket.subject.toLowerCase().includes(keyword) ||
       ticket.message.toLowerCase().includes(keyword) ||
       name.toLowerCase().includes(keyword) ||
-      email.toLowerCase().includes(keyword) ||
-      ticket.id.toLowerCase().includes(keyword);
+email.toLowerCase().includes(keyword) ||
+memberId.toLowerCase().includes(keyword) ||
+userId.toLowerCase().includes(keyword) ||
+ticket.id.toLowerCase().includes(keyword);
 
     return matchesSearch;
   });
@@ -178,9 +183,10 @@ useEffect(() => {
     `
     *,
     profiles (
-      display_name,
-      email
-    )
+  member_id,
+  display_name,
+  email
+)
   `
   )
   .order("created_at", { ascending: false });
@@ -502,9 +508,18 @@ useEffect(() => {
   {ticket.message}
 </p>
 
-                      <p className="mt-3 text-[11px] text-white/30">
-                        {new Date(ticket.created_at).toLocaleString()}
-                      </p>
+                      <div className="mt-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/30">
+    ID
+  </p>
+  <p className="mt-1 text-xs font-black text-yellow-300">
+    {ticket.profiles?.member_id || ticket.user_id.slice(0, 8)}
+  </p>
+</div>
+
+<p className="mt-3 text-[11px] text-white/30">
+  {new Date(ticket.created_at).toLocaleString()}
+</p>
                     </button>
                   );
                 })}
@@ -592,9 +607,15 @@ useEffect(() => {
       />
     </div>
 
-    <p className="mt-1 text-sm text-white/45">
-      {selectedTicket.profiles?.email || t.chat.noEmail}
-    </p>
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+  <p className="text-sm text-white/45">
+    {selectedTicket.profiles?.email || t.chat.noEmail}
+  </p>
+
+  <span className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">
+    ID: {selectedTicket.profiles?.member_id || selectedTicket.user_id.slice(0, 8)}
+  </span>
+</div>
   </div>
 
   <select
