@@ -537,7 +537,6 @@ function exportUsersToCsv() {
     "Name",
     "Email",
     "ID",
-    "Phone",
     "Nickname",
     "Role",
     "Status",
@@ -558,7 +557,6 @@ function exportUsersToCsv() {
     user.display_name || "",
     user.email || "",
     user.member_id || user.id,
-    user.phone || "",
     user.admin_nickname || "",
     user.role,
     user.status,
@@ -1681,19 +1679,14 @@ async function handleDeleteUser() {
                 {user.email || t.row.noEmail}
               </p>
 
-              <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-slate-500">
-                <span>
-                  ID:{" "}
-                  <b className="text-slate-900">
-                    {user.member_id || shortId(user.id)}
-                  </b>
-                </span>
-
-                <span>
-                  Phone:{" "}
-                  <b className="text-slate-900">{user.phone || "-"}</b>
-                </span>
-              </div>
+<div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-slate-500">
+  <span>
+    ID:{" "}
+    <b className="text-slate-900">
+      {user.member_id || shortId(user.id)}
+    </b>
+  </span>
+</div>
 
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <button
