@@ -191,6 +191,9 @@ const canManageSecurity = isStaffControlRole;
 const canDeleteUsers = isFullControlRole;
 const canEditUserInfo = isFullControlRole;
 
+// Support can edit normal users' own referral code only
+const canEditReferralCode = isStaffControlRole;
+
  async function loadUsers() {
   setLoading(true);
   setErrorText("");
@@ -1152,6 +1155,11 @@ async function handleResetGeneratedOrders() {
 
 async function handleSaveReferralCode() {
   if (!referralUser) return;
+  
+  if (isSupportRole && referralUser.role !== "user") {
+  setErrorText("Support can only edit normal user referral codes.");
+  return;
+}
 
   const cleanCode = referralValue
     .trim()
@@ -1708,12 +1716,12 @@ async function handleDeleteUser() {
                   Note: {user.admin_nickname || "None"}
                 </button>
 
-                <button
+<button
   onClick={() => {
     setReferralUser(user);
     setReferralValue(user.referral_code || "");
   }}
-  disabled={!canEditUserInfo}
+  disabled={!canEditReferralCode || (isSupportRole && user.role !== "user")}
   className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
 >
   Own Code: {user.referral_code || "-"}
