@@ -37,8 +37,17 @@ import {
   Users,
 } from "lucide-react";
 
+type ReferralParentInfo = {
+  id: string;
+  display_name: string | null;
+  email: string | null;
+  member_id: string | null;
+  referral_code: string | null;
+};
+
 type ManagedUser = Profile & {
   admin_nickname: string | null;
+  referral_parent: ReferralParentInfo | null;
 };
 
 type LuckyProductOption = {
@@ -214,13 +223,47 @@ const canEditUserInfo = isFullControlRole;
     )
   );
 
-  const mergedUsers = ((profilesResult.data || []) as Profile[]).map((user) => ({
-    ...user,
-    admin_nickname: noteMap.get(user.id) || null,
-  }));
+const profileRows = (profilesResult.data || []) as Profile[];
 
-  const userIds = mergedUsers.map((user) => user.id);
+const parentIds = Array.from(
+  new Set(
+    profileRows
+      .map((user) => user.referred_by)
+      .filter((id): id is string => Boolean(id))
+  )
+);
 
+let parentMap = new Map<string, ReferralParentInfo>();
+
+if (parentIds.length > 0) {
+  const { data: parentRows, error: parentError } = await supabase
+    .from("profiles")
+    .select("id, display_name, email, member_id, referral_code")
+    .in("id", parentIds);
+
+  if (parentError) {
+    setErrorText(parentError.message);
+    setLoading(false);
+    return;
+  }
+
+  parentMap = new Map(
+    ((parentRows || []) as ReferralParentInfo[]).map((parent) => [
+      parent.id,
+      parent,
+    ])
+  );
+}
+
+const mergedUsers = profileRows.map((user) => ({
+  ...user,
+  admin_nickname: noteMap.get(user.id) || null,
+  referral_parent: user.referred_by
+    ? parentMap.get(user.referred_by) || null
+    : null,
+}));
+
+const userIds = mergedUsers.map((user) => user.id);
   const summaryMap: Record<string, UserOrderSummary> = {};
 
   if (userIds.length > 0) {
@@ -305,7 +348,11 @@ const filteredUsers = useMemo(() => {
       user.display_name?.toLowerCase().includes(keyword) ||
       user.email?.toLowerCase().includes(keyword) ||
       user.admin_nickname?.toLowerCase().includes(keyword) ||
-      user.referral_code?.toLowerCase().includes(keyword) ||
+user.referral_code?.toLowerCase().includes(keyword) ||
+user.referral_parent?.display_name?.toLowerCase().includes(keyword) ||
+user.referral_parent?.email?.toLowerCase().includes(keyword) ||
+user.referral_parent?.member_id?.toLowerCase().includes(keyword) ||
+user.referral_parent?.referral_code?.toLowerCase().includes(keyword) ||
 user.member_id?.toLowerCase().includes(keyword) ||
 user.id.toLowerCase().includes(keyword);
 
@@ -1660,16 +1707,40 @@ async function handleDeleteUser() {
                   Note: {user.admin_nickname || "None"}
                 </button>
 
-                <button
-                  onClick={() => {
-                    setReferralUser(user);
-                    setReferralValue(user.referral_code || "");
-                  }}
-                  disabled={!canEditUserInfo}
-                  className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
-                >
-                  Code: {user.referral_code || "-"}
-                </button>
+{user.role === "user" && (
+  <div className="w-full rounded-lg border border-indigo-100 bg-indigo-50 px-2 py-1.5 text-[10px] font-bold text-indigo-700">
+    <p className="font-black uppercase tracking-wide text-indigo-500">
+      Joined By
+    </p>
+
+    {user.referral_parent ? (
+      <>
+        <p className="mt-0.5 truncate text-[11px] font-black text-slate-950">
+          {user.referral_parent.display_name ||
+            user.referral_parent.email ||
+            "Unknown"}
+        </p>
+
+        <p className="mt-0.5 text-[10px] text-indigo-700">
+          Code:{" "}
+          <b className="text-slate-950">
+            {user.referral_parent.referral_code || "-"}
+          </b>
+          {" · "}
+          ID:{" "}
+          <b className="text-slate-950">
+            {user.referral_parent.member_id ||
+              shortId(user.referral_parent.id)}
+          </b>
+        </p>
+      </>
+    ) : (
+      <p className="mt-0.5 text-[10px] font-black text-slate-500">
+        Direct signup / No referral
+      </p>
+    )}
+  </div>
+)}
               </div>
             </div>
           </div>
