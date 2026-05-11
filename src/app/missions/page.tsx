@@ -368,8 +368,9 @@ const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
 
 const mainBalance = Number(profile.balance || 0);
 const depositBalance = Number(profile.deposited_balance || 0);
-const taskEarnBalance = Number(profile.task_profit_balance || 0);
-const referralBalance = Number(profile.referral_bonus_balance || 0);
+// Reserved for future stat display if needed.
+// const taskEarnBalance = Number(profile.task_profit_balance || 0);
+// const referralBalance = Number(profile.referral_bonus_balance || 0);
 
 const displayTotalBalance = mainBalance;
 const availableForLuckyRequirement = mainBalance + depositBalance;
@@ -393,7 +394,69 @@ function calculateDisplayReward(order: GeneratedOrder | null) {
   return Number(order.profit_amount || 0);
 }
 
-const activeReward = calculateDisplayReward(activeOrder);
+function stableNumber(seed: string, min: number, max: number) {
+  let hash = 0;
+
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) % 100000;
+  }
+
+  const percent = hash / 100000;
+  return min + percent * (max - min);
+}
+
+function getCraftProfile(order: GeneratedOrder | null) {
+  if (!order) {
+    return {
+      grade: "-",
+      score: 0,
+      minCredit: 0,
+      maxCredit: 0,
+      workMin: 0,
+      workMax: 0,
+    };
+  }
+
+  const reward = calculateDisplayReward(order);
+  const rate = Number(order.profit_rate || 0.008) || 0.008;
+  const seed = `${order.id}-${order.step_number}`;
+
+  const score = Math.round(stableNumber(`${seed}-score`, 88, 99));
+
+  const grade =
+    score >= 97
+      ? "S"
+      : score >= 94
+        ? "A+"
+        : score >= 91
+          ? "A"
+          : "B+";
+
+  const lowFactor = stableNumber(`${seed}-low`, 0.78, 0.92);
+  const highFactor = stableNumber(`${seed}-high`, 1.14, 1.38);
+
+  const minCredit = Math.max(0.01, reward * lowFactor);
+  const maxCredit = Math.max(minCredit + 0.1, reward * highFactor);
+
+  return {
+    grade,
+    score,
+    minCredit,
+    maxCredit,
+    workMin: minCredit / rate,
+    workMax: maxCredit / rate,
+  };
+}
+
+function formatCreditRange(profile: ReturnType<typeof getCraftProfile>) {
+  return `$${profile.minCredit.toFixed(2)} - $${profile.maxCredit.toFixed(2)}`;
+}
+
+function formatWorkValueRange(profile: ReturnType<typeof getCraftProfile>) {
+  return `$${profile.workMin.toFixed(0)} - $${profile.workMax.toFixed(0)}`;
+}
+
+const activeCraftProfile = getCraftProfile(activeOrder);
 
 const isInsufficientBalanceError =
   errorText === t.missions.insufficientBalance;
@@ -437,13 +500,13 @@ const processingSteps = useMemo(() => {
           "正在准备下一项推广任务",
         ]
       : [
-          "正在提交产品推广任务",
-          "正在上传评分与活动记录",
-          "正在验证推广价值",
-          "正在计算任务收益",
-          "正在更新账户余额",
-          "正在准备下一项推广任务",
-        ];
+  "正在提交产品推广任务",
+  "正在上传评分与活动记录",
+  "正在验证工艺评分",
+  "正在计算推广收益",
+  "正在更新账户余额",
+  "正在准备下一项推广任务",
+];
   }
 
   return lucky
@@ -456,13 +519,13 @@ const processingSteps = useMemo(() => {
         "Preparing next promotion task",
       ]
     : [
-        "Submitting product promotion task",
-        "Uploading rating and campaign activity",
-        "Verifying promotion value",
-        "Calculating task profit",
-        "Updating account balance",
-        "Preparing next promotion task",
-      ];
+  "Submitting product promotion task",
+  "Uploading rating and campaign activity",
+  "Verifying craftsmanship score",
+  "Calculating campaign credit",
+  "Updating account balance",
+  "Preparing next promotion task",
+];
 }, [lang, activeOrder?.is_lucky_bonus]);
 
 const activeProcessingText =
@@ -514,14 +577,17 @@ const processingProgressPercent = Math.min(
               </p>
             </div>
 
-            <div className="rounded-2xl bg-black/35 px-3 py-2 text-right">
-              <p className="text-[10px] uppercase tracking-wide text-white/40">
-                {t.missions.reward}
-              </p>
-              <p className="font-black text-yellow-300">
-                ${activeReward.toFixed(2)}
-              </p>
-            </div>
+<div className="rounded-2xl bg-black/35 px-3 py-2 text-right">
+  <p className="text-[10px] uppercase tracking-wide text-white/40">
+    {lang === "zh" ? "工艺评级" : "Craft Grade"}
+  </p>
+  <p className="font-black text-yellow-300">
+    {activeCraftProfile.grade}
+  </p>
+  <p className="mt-0.5 text-[10px] font-bold text-white/40">
+    {lang === "zh" ? "评分" : "Score"} {activeCraftProfile.score || "-"}
+  </p>
+</div>
           </div>
 
           <div className="h-3 overflow-hidden rounded-full bg-black/40">
@@ -824,6 +890,9 @@ const processingProgressPercent = Math.min(
               const productPrice = Number(order.order_total || 0);
               const reward = calculateDisplayReward(order);
               const profitRate = Number(order.profit_rate || 0);
+              const craftProfile = getCraftProfile(order);
+const expectedCreditText = formatCreditRange(craftProfile);
+const workValueText = formatWorkValueRange(craftProfile);
 
               const completed = order.status === "completed";
               const isCurrent = order.step_number === profile.current_step;
@@ -857,14 +926,19 @@ const processingProgressPercent = Math.min(
       </p>
     </div>
 
-    <div className="shrink-0 rounded-2xl bg-black/45 px-3 py-2 text-right">
-      <p className="text-[10px] uppercase tracking-wide text-white/40">
-        {t.missions.reward}
-      </p>
-      <p className="text-base font-black text-yellow-300">
-        ${reward.toFixed(2)}
-      </p>
-    </div>
+<div className="shrink-0 rounded-2xl bg-black/45 px-3 py-2 text-right">
+  <p className="text-[10px] uppercase tracking-wide text-white/40">
+    {lucky
+      ? t.missions.reward
+      : lang === "zh"
+        ? "预计收益"
+        : "Expected Credit"}
+  </p>
+
+  <p className="text-sm font-black text-yellow-300">
+    {lucky ? `$${reward.toFixed(2)}` : expectedCreditText}
+  </p>
+</div>
   </div>
 
   <button
@@ -971,24 +1045,71 @@ const processingProgressPercent = Math.min(
                   </div>
 
                   <div className="p-4">
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-xl font-black">{productName}</h3>
+<div className="mb-4 rounded-[1.6rem] border border-yellow-300/25 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.14),rgba(0,0,0,0.34)_55%)] p-4 shadow-[inset_0_0_26px_rgba(250,204,21,0.06)]">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-100/50">
+        {lang === "zh" ? "工艺评估" : "Craftsmanship Review"}
+      </p>
 
-                        <p className="mt-1 text-sm text-white/45">
-                          {productCategory} {t.missions.campaign}
-                        </p>
-                      </div>
+      <h3 className="mt-1 text-xl font-black text-white">
+        {lang === "zh" ? "工艺等级" : "Craft Grade"} {craftProfile.grade}
+      </h3>
+    </div>
 
-                      <div className="rounded-2xl bg-black/35 px-3 py-2 text-right">
-                        <p className="text-[10px] uppercase tracking-wide text-white/40">
-                          {t.missions.value}
-                        </p>
-                        <p className="font-black text-yellow-300">
-                          {productCurrency} {productPrice.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
+    <div className="rounded-2xl bg-black/45 px-3 py-2 text-right">
+      <p className="text-[10px] uppercase text-white/35">
+        {lang === "zh" ? "质量评分" : "Quality Score"}
+      </p>
+      <p className="text-lg font-black text-yellow-300">
+        {craftProfile.score}
+      </p>
+    </div>
+  </div>
+
+  <div className="grid grid-cols-2 gap-3">
+    <div className="rounded-2xl bg-black/35 p-3">
+      <p className="text-[10px] uppercase text-white/35">
+        {lang === "zh" ? "推广工艺价值" : "Campaign Work Value"}
+      </p>
+      <p className="mt-1 text-sm font-black text-white">
+        {workValueText}
+      </p>
+    </div>
+
+    <div className="rounded-2xl bg-yellow-300/10 p-3">
+      <p className="text-[10px] uppercase text-yellow-100/45">
+        {lang === "zh" ? "预计收益" : "Expected Credit"}
+      </p>
+      <p className="mt-1 text-sm font-black text-yellow-300">
+        {lucky ? `$${reward.toFixed(2)}` : expectedCreditText}
+      </p>
+    </div>
+  </div>
+</div>
+
+<div className="mb-3 flex items-start justify-between gap-3">
+  <div>
+    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
+      {lang === "zh" ? "产品参考" : "Product Reference"}
+    </p>
+
+    <h3 className="mt-1 text-lg font-black text-white">{productName}</h3>
+
+    <p className="mt-1 text-sm text-white/45">
+      {productCategory} {t.missions.campaign}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-black/25 px-3 py-2 text-right">
+    <p className="text-[10px] uppercase tracking-wide text-white/35">
+      {lang === "zh" ? "产品价值" : "Product Value"}
+    </p>
+    <p className="font-black text-white/75">
+      {productCurrency} {productPrice.toFixed(2)}
+    </p>
+  </div>
+</div>
 
                     {lucky && (
   <div className="mb-4 rounded-[1.4rem] border border-yellow-300/25 bg-yellow-300/10 p-3 shadow-[inset_0_0_22px_rgba(250,204,21,0.08)]">
@@ -1123,25 +1244,29 @@ const processingProgressPercent = Math.min(
                       </div>
                     )}
 
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl bg-black/30 p-3">
-                        <p className="text-xs text-white/45">
-                          {t.missions.campaignValue}
-                        </p>
-                        <p className="mt-1 font-bold text-white">
-                          ${Number(order.order_total).toFixed(2)}
-                        </p>
-                      </div>
+<div className="mt-4 grid grid-cols-2 gap-3">
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-xs text-white/45">
+      {lang === "zh" ? "推广工艺价值" : "Campaign Work Value"}
+    </p>
+    <p className="mt-1 font-bold text-white">
+      {workValueText}
+    </p>
+  </div>
 
-                      <div className="rounded-2xl bg-black/30 p-3">
-                        <p className="text-xs text-white/45">
-                          {t.missions.reward}
-                        </p>
-                        <p className="mt-1 font-bold text-yellow-300">
-                          ${reward.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
+  <div className="rounded-2xl bg-black/30 p-3">
+    <p className="text-xs text-white/45">
+      {lucky
+        ? t.missions.reward
+        : lang === "zh"
+          ? "预计收益"
+          : "Expected Credit"}
+    </p>
+    <p className="mt-1 font-bold text-yellow-300">
+      {lucky ? `$${reward.toFixed(2)}` : expectedCreditText}
+    </p>
+  </div>
+</div>
 
                   </div>
                 </div>
@@ -1195,25 +1320,27 @@ const processingProgressPercent = Math.min(
           </div>
         </div>
 
-        <div className="relative mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-black/35 p-3 text-center">
-            <p className="text-[10px] uppercase text-white/35">
-              {lang === "zh" ? "活动价值" : "Campaign Value"}
-            </p>
-            <p className="mt-1 text-sm font-black text-yellow-300">
-              ${Number(activeOrder?.order_total || 0).toFixed(2)}
-            </p>
-          </div>
+<div className="relative mt-5 grid grid-cols-2 gap-3">
+  <div className="rounded-2xl bg-black/35 p-3 text-center">
+    <p className="text-[10px] uppercase text-white/35">
+      {lang === "zh" ? "推广工艺价值" : "Campaign Work Value"}
+    </p>
+    <p className="mt-1 text-sm font-black text-yellow-300">
+      {formatWorkValueRange(getCraftProfile(activeOrder))}
+    </p>
+  </div>
 
-          <div className="rounded-2xl bg-black/35 p-3 text-center">
-            <p className="text-[10px] uppercase text-white/35">
-              {lang === "zh" ? "预计收益" : "Expected Profit"}
-            </p>
-            <p className="mt-1 text-sm font-black text-emerald-300">
-              ${calculateDisplayReward(activeOrder).toFixed(2)}
-            </p>
-          </div>
-        </div>
+  <div className="rounded-2xl bg-black/35 p-3 text-center">
+    <p className="text-[10px] uppercase text-white/35">
+      {lang === "zh" ? "预估收益" : "Expected Credit"}
+    </p>
+    <p className="mt-1 text-sm font-black text-emerald-300">
+      {activeOrder?.is_lucky_bonus || activeOrder?.order_type === "lucky"
+        ? `$${calculateDisplayReward(activeOrder).toFixed(2)}`
+        : formatCreditRange(getCraftProfile(activeOrder))}
+    </p>
+  </div>
+</div>
 
         <div className="relative mt-5 space-y-2">
           {processingSteps.map((step, index) => {
@@ -1357,8 +1484,8 @@ const processingProgressPercent = Math.min(
           {completedAllOrders
             ? t.missions.congratulations
             : lang === "zh"
-              ? "奖励已到账"
-              : "Reward Updated"}
+  ? "推广收益已到账"
+  : "Campaign Credit Added"}
         </h2>
 
         <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-yellow-100/65">
@@ -1370,7 +1497,7 @@ const processingProgressPercent = Math.min(
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-[1.5rem] border border-emerald-300/25 bg-emerald-400/10 p-4">
             <p className="text-xs text-white/45">
-              {lang === "zh" ? "本次收益" : "Profit Earned"}
+              {lang === "zh" ? "本次推广收益" : "Campaign Credit"}
             </p>
             <p className="mt-1 text-2xl font-black text-emerald-300">
               ${completedReward}
