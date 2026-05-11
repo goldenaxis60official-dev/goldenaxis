@@ -1,4 +1,4 @@
-//src>app>login>page.tsx
+// src/app/login/page.tsx
 
 "use client";
 
@@ -15,6 +15,7 @@ import {
   Loader2,
   Lock,
   Mail,
+  Phone,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -37,6 +38,22 @@ function getRoleRedirectPath(role?: string | null) {
   return "/";
 }
 
+const DEFAULT_COUNTRY_CODE = "+1";
+
+function buildPhoneNumber(rawPhone: string) {
+  const localDigits = rawPhone.replace(/\D/g, "").replace(/^0+/, "").slice(0, 10);
+  return `${DEFAULT_COUNTRY_CODE}${localDigits}`;
+}
+
+function isValidPhoneNumber(phone: string) {
+  return /^\+[1-9]\d{7,14}$/.test(phone);
+}
+
+function phoneToHiddenEmail(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  return `${digits}@goldenaxis60.member`;
+}
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -48,76 +65,71 @@ export default function LoginPage() {
   const [errorText, setErrorText] = useState("");
   const [isAdminPortal, setIsAdminPortal] = useState(false);
 
-const t = guestAuth.en;
-
-useEffect(() => {
-  setIsAdminPortal(isAdminEntrance());
-}, []);
-
-
-const PortalIcon = isAdminPortal ? Crown : Gem;
-
-const portalLabel = isAdminPortal
-  ? t.login.controlCenter
-  : t.login.memberPortal;
-
-const secureLabel = isAdminPortal
-  ? t.common.restricted
-  : t.common.secure;
-
-const accessLabel = isAdminPortal
-  ? t.login.controlAccess
-  : t.login.officialAccess;
-
-const titleText = isAdminPortal
-  ? t.login.titleAdmin
-  : t.login.titleMember;
-
-const descriptionText = isAdminPortal
-  ? t.login.descAdmin
-  : t.login.descMember;
-
-const securityTitle = isAdminPortal
-  ? t.login.securityTitleAdmin
-  : t.login.securityTitleMember;
-
-const securityDescription = isAdminPortal
-  ? t.login.securityDescAdmin
-  : t.login.securityDescMember;
-
-const footerText = isAdminPortal
-  ? t.common.footerAdmin
-  : t.common.footerMember;
+  const t = guestAuth.en;
 
   useEffect(() => {
-  async function redirectIfLoggedIn() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    setIsAdminPortal(isAdminEntrance());
+  }, []);
 
-    if (!user) return;
+  const PortalIcon = isAdminPortal ? Crown : Gem;
 
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
+  const portalLabel = isAdminPortal
+    ? t.login.controlCenter
+    : t.login.memberPortal;
 
-    const role = profileData?.role;
+  const secureLabel = isAdminPortal ? t.common.restricted : t.common.secure;
 
-    if (isAdminEntrance() && !isControlRole(role)) {
-      await supabase.auth.signOut();
-      setErrorText(
-        "This control link is only for authorized control accounts. Please use the member website for normal access."
-      );
-      return;
+  const accessLabel = isAdminPortal
+    ? t.login.controlAccess
+    : t.login.officialAccess;
+
+  const titleText = isAdminPortal ? t.login.titleAdmin : t.login.titleMember;
+
+  const descriptionText = isAdminPortal
+    ? t.login.descAdmin
+    : t.login.descMember;
+
+  const securityTitle = isAdminPortal
+    ? t.login.securityTitleAdmin
+    : t.login.securityTitleMember;
+
+  const securityDescription = isAdminPortal
+    ? t.login.securityDescAdmin
+    : t.login.securityDescMember;
+
+  const footerText = isAdminPortal
+    ? t.common.footerAdmin
+    : t.common.footerMember;
+
+  useEffect(() => {
+    async function redirectIfLoggedIn() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const role = profileData?.role;
+
+      if (isAdminEntrance() && !isControlRole(role)) {
+        await supabase.auth.signOut();
+        setErrorText(
+          "This control link is only for authorized control accounts. Please use the member website for normal access."
+        );
+        return;
+      }
+
+      router.replace(getRoleRedirectPath(role));
     }
 
-    router.replace(getRoleRedirectPath(role));
-  }
-
-  redirectIfLoggedIn();
-}, [router]);
+    redirectIfLoggedIn();
+  }, [router]);
 
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -125,37 +137,35 @@ const footerText = isAdminPortal
     setLoading(true);
 
     const cleanLoginId = loginId.trim();
+    const adminEntrance = isAdminEntrance();
 
-if (!cleanLoginId || !password) {
-  setErrorText(t.login.errors.missingFields);
-  setLoading(false);
-  return;
-}
-
-let loginEmail = cleanLoginId.toLowerCase();
-
-if (!cleanLoginId.includes("@")) {
-  const { data: foundEmail, error: nameError } = await supabase.rpc(
-    "get_email_by_display_name",
-    {
-      input_display_name: cleanLoginId,
+    if (!cleanLoginId || !password) {
+      setErrorText(
+        adminEntrance
+          ? "Please enter your email and password."
+          : "Please enter your phone number and password."
+      );
+      setLoading(false);
+      return;
     }
-  );
 
-  if (nameError || !foundEmail) {
-    setErrorText(t.login.errors.cannotVerify);
-    setLoading(false);
-    return;
-  }
+    const cleanPhone = buildPhoneNumber(cleanLoginId);
 
-  loginEmail = foundEmail.toLowerCase();
-}
+    if (!adminEntrance && !isValidPhoneNumber(cleanPhone)) {
+      setErrorText("Please enter a valid phone number.");
+      setLoading(false);
+      return;
+    }
 
     try {
+      const loginEmail = adminEntrance
+        ? cleanLoginId.toLowerCase()
+        : phoneToHiddenEmail(cleanPhone);
+
       const { error } = await supabase.auth.signInWithPassword({
-  email: loginEmail,
-  password,
-});
+        email: loginEmail,
+        password,
+      });
 
       if (error) throw error;
 
@@ -177,26 +187,26 @@ if (!cleanLoginId.includes("@")) {
         throw new Error(t.login.errors.profileNotFound);
       }
 
-if (isAdminEntrance() && !isControlRole(profileData.role)) {
-  await supabase.auth.signOut();
-    setErrorText(t.login.errors.controlOnly);
-  return;
-}
+      if (adminEntrance && !isControlRole(profileData.role)) {
+        await supabase.auth.signOut();
+        setErrorText(t.login.errors.controlOnly);
+        return;
+      }
 
-router.replace(getRoleRedirectPath(profileData.role));
+      router.replace(getRoleRedirectPath(profileData.role));
     } catch (err) {
       const message =
-  err instanceof Error ? err.message : t.login.errors.unknown;
+        err instanceof Error ? err.message : t.login.errors.unknown;
 
-if (
-  message.toLowerCase().includes("email not confirmed") ||
-  message.toLowerCase().includes("not confirmed")
-) {
-  setErrorText(t.login.errors.notActivated);
-  return;
-}
+      if (
+        message.toLowerCase().includes("email not confirmed") ||
+        message.toLowerCase().includes("not confirmed")
+      ) {
+        setErrorText(t.login.errors.notActivated);
+        return;
+      }
 
-setErrorText(message);
+      setErrorText(message);
     } finally {
       setLoading(false);
     }
@@ -205,7 +215,6 @@ setErrorText(message);
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto flex min-h-screen max-w-md flex-col overflow-hidden border-x border-white/10 bg-[radial-gradient(circle_at_top,#3a2a08_0%,#0b0903_34%,#050505_72%,#000_100%)]">
-        {/* Top brand bar */}
         <div className="flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 shadow-[0_0_30px_rgba(234,179,8,0.22)]">
@@ -220,12 +229,11 @@ setErrorText(message);
             </div>
           </div>
 
-<div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
-  {secureLabel}
-</div>
+          <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
+            {secureLabel}
+          </div>
         </div>
 
-        {/* Main content */}
         <div className="flex flex-1 flex-col justify-center px-5 pb-10">
           <div className="relative">
             <div className="absolute -top-24 left-1/2 h-52 w-52 -translate-x-1/2 rounded-full bg-yellow-400/10 blur-3xl" />
@@ -256,23 +264,40 @@ setErrorText(message);
               <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-yellow-300/70 to-transparent" />
 
               <div className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-xs font-bold text-white/45">
-                    {t.login.emailLabel}
-                  </span>
+<label className="block">
+  <span className="mb-2 block text-xs font-bold text-white/45">
+    {isAdminPortal ? "Email Address" : "Phone Number"}
+  </span>
 
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
-                    <Mail className="h-5 w-5 text-yellow-300/80" />
-                    <input
-  value={loginId}
-  onChange={(e) => setLoginId(e.target.value)}
-  placeholder={t.login.emailPlaceholder}
-  type="text"
-  autoComplete="username"
-  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
-/>
-                  </div>
-                </label>
+  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
+    {isAdminPortal ? (
+      <Mail className="h-5 w-5 text-yellow-300/80" />
+    ) : (
+      <>
+        <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-1.5 text-sm font-black text-yellow-200">
+          +1
+        </div>
+        <Phone className="h-5 w-5 text-yellow-300/80" />
+      </>
+    )}
+
+    <input
+      value={loginId}
+      onChange={(e) =>
+        setLoginId(
+          isAdminPortal
+            ? e.target.value
+            : e.target.value.replace(/\D/g, "").slice(0, 10)
+        )
+      }
+      placeholder={isAdminPortal ? "admin@example.com" : "5551234567"}
+      type={isAdminPortal ? "email" : "tel"}
+      inputMode={isAdminPortal ? "email" : "numeric"}
+      autoComplete={isAdminPortal ? "email" : "tel"}
+      className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
+    />
+  </div>
+</label>
 
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-white/45">
@@ -341,46 +366,45 @@ setErrorText(message);
                     {securityTitle}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-white/45">
-                   {securityDescription}
+                    {securityDescription}
                   </p>
                 </div>
               </div>
             </div>
 
             {!isAdminPortal && (
-  <p className="mt-6 text-center text-sm text-white/50">
-    {t.login.newHere}{" "}
-    <Link
-      href="/register"
-      className="font-black text-yellow-300 transition hover:text-yellow-200"
-    >
-      {t.login.createAccount}
-    </Link>
-  </p>
-)}
+              <p className="mt-6 text-center text-sm text-white/50">
+                {t.login.newHere}{" "}
+                <Link
+                  href="/register"
+                  className="font-black text-yellow-300 transition hover:text-yellow-200"
+                >
+                  {t.login.createAccount}
+                </Link>
+              </p>
+            )}
 
-{isAdminPortal && (
-  <p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.24em] text-yellow-200/55">
-    {t.login.authorizedOnly}
-  </p>
-)}
+            {isAdminPortal && (
+              <p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.24em] text-yellow-200/55">
+                {t.login.authorizedOnly}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-5 pb-5 text-center text-[11px] text-white/35">
-  <p>{footerText}</p>
+          <p>{footerText}</p>
 
-  <div className="mt-2 flex items-center justify-center gap-3">
-    <Link href="/terms" className="hover:text-yellow-300">
-      {t.common.terms}
-    </Link>
-    <span className="text-white/20">•</span>
-    <Link href="/support" className="hover:text-yellow-300">
-      {t.common.support}
-    </Link>
-  </div>
-</div>
+          <div className="mt-2 flex items-center justify-center gap-3">
+            <Link href="/terms" className="hover:text-yellow-300">
+              {t.common.terms}
+            </Link>
+            <span className="text-white/20">•</span>
+            <Link href="/support" className="hover:text-yellow-300">
+              {t.common.support}
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );

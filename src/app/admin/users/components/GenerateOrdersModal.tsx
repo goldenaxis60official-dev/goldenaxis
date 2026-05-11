@@ -47,14 +47,10 @@ type GenerateOrdersModalProps = {
 function getAvailableBalance(user: ModalUser) {
   const mainBalance = Number(user.balance || 0);
   const depositBalance = Number(user.deposited_balance || 0);
-  const referralBalance = Number(user.referral_bonus_balance || 0);
-  const profitBalance = Number(user.task_profit_balance || 0);
 
-  // Use main balance if backend already synced it.
-  // Otherwise fallback to separated wallet balances.
-  const separatedTotal = depositBalance + referralBalance + profitBalance;
-
-  return mainBalance > 0 ? mainBalance : separatedTotal;
+  // Match admin visible Total Balance.
+  // This fixes reset/generate modal showing only old balance.
+  return mainBalance + depositBalance;
 }
 
 function getAutoOrderAmount(user: ModalUser) {

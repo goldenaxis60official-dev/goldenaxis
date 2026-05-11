@@ -41,6 +41,7 @@ type ReferralParentInfo = {
   id: string;
   display_name: string | null;
   email: string | null;
+  phone: string | null;
   member_id: string | null;
   referral_code: string | null;
 };
@@ -241,7 +242,7 @@ let parentMap = new Map<string, ReferralParentInfo>();
 if (parentIds.length > 0) {
   const { data: parentRows, error: parentError } = await supabase
     .from("profiles")
-    .select("id, display_name, email, member_id, referral_code")
+    .select("id, display_name, email, phone, member_id, referral_code")
     .in("id", parentIds);
 
   if (parentError) {
@@ -349,11 +350,13 @@ const filteredUsers = useMemo(() => {
     const matchesSearch =
       !keyword ||
       user.display_name?.toLowerCase().includes(keyword) ||
-      user.email?.toLowerCase().includes(keyword) ||
-      user.admin_nickname?.toLowerCase().includes(keyword) ||
+user.email?.toLowerCase().includes(keyword) ||
+user.phone?.toLowerCase().includes(keyword) ||
+user.admin_nickname?.toLowerCase().includes(keyword) ||
 user.referral_code?.toLowerCase().includes(keyword) ||
 user.referral_parent?.display_name?.toLowerCase().includes(keyword) ||
 user.referral_parent?.email?.toLowerCase().includes(keyword) ||
+user.referral_parent?.phone?.toLowerCase().includes(keyword) ||
 user.referral_parent?.member_id?.toLowerCase().includes(keyword) ||
 user.referral_parent?.referral_code?.toLowerCase().includes(keyword) ||
 user.member_id?.toLowerCase().includes(keyword) ||
@@ -514,15 +517,7 @@ function getDisplayBalance(user: ManagedUser) {
 }
 
 function getAutoOrderAmount(user: ManagedUser) {
-  const mainBalance = Number(user.balance || 0);
-  const depositBalance = Number(user.deposited_balance || 0);
-  const referralBalance = Number(user.referral_bonus_balance || 0);
-  const profitBalance = Number(user.task_profit_balance || 0);
-
-  const availableBalance =
-    mainBalance > 0
-      ? mainBalance
-      : depositBalance + referralBalance + profitBalance;
+  const availableBalance = getDisplayBalance(user);
 
   if (availableBalance <= 0) return 0;
 
@@ -544,10 +539,10 @@ function escapeCsv(value: string | number | null | undefined) {
 }
 
 function exportUsersToCsv() {
-  const headers = [
-    "Name",
-    "Email",
-    "ID",
+const headers = [
+  "Name",
+  "Phone",
+  "ID",
     "Nickname",
     "Role",
     "Status",
@@ -564,10 +559,10 @@ function exportUsersToCsv() {
     "Created At",
   ];
 
-  const rows = filteredUsers.map((user) => [
-    user.display_name || "",
-    user.email || "",
-    user.member_id || user.id,
+const rows = filteredUsers.map((user) => [
+  user.display_name || "",
+  user.phone || "",
+  user.member_id || user.id,
     user.admin_nickname || "",
     user.role,
     user.status,
@@ -744,7 +739,7 @@ async function handleGenerateOrders() {
 
   setSuccessText(
   `${generateResetExisting ? "Reset and generated" : "Added"} ${generateTaskCount} auto orders for ${
-    generateUser.display_name || generateUser.email || "user"
+    generateUser.display_name || generateUser.phone || "user"
   } using ${generateProfitRate} campaign rate and base amount ${formatMoney(
     autoCapitalAmount
   )}.`
@@ -861,10 +856,10 @@ if (luckyAmount < 0) {
 setSuccessText(
   isSilentBoost
     ? `Step ${numericLuckyStep} boosted with ${luckyProfitRate}% profit rate for ${
-        luckyUser.display_name || luckyUser.email || "user"
+        luckyUser.display_name || luckyUser.phone || "user"
       }. User will still see a normal mission.`
     : `Lucky order injected at step ${numericLuckyStep} using ${selectedLuckyProduct?.name} for ${
-        luckyUser.display_name || luckyUser.email || "user"
+        luckyUser.display_name || luckyUser.phone || "user"
       }.`
 );
   setLuckyUser(null);
@@ -1072,7 +1067,7 @@ async function handleResetGeneratedOrders() {
 
   setSuccessText(
     `Generated orders reset for ${
-      resetOrdersUser.display_name || resetOrdersUser.email || "user"
+      resetOrdersUser.display_name || resetOrdersUser.phone || "user"
     }.`
   );
 
@@ -1155,7 +1150,7 @@ async function handleResetGeneratedOrders() {
 
 async function handleSaveReferralCode() {
   if (!referralUser) return;
-  
+
   if (isSupportRole && referralUser.role !== "user") {
   setErrorText("Support can only edit normal user referral codes.");
   return;
@@ -1691,9 +1686,12 @@ async function handleDeleteUser() {
                 </span>
               </div>
 
-              <p className="mt-0.5 truncate text-xs font-semibold text-slate-600">
-                {user.email || t.row.noEmail}
-              </p>
+<p className="mt-0.5 truncate text-xs font-semibold text-slate-600">
+  Phone:{" "}
+  <b className="font-black text-slate-900">
+    {user.phone || "-"}
+  </b>
+</p>
 
 <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-slate-500">
   <span>
@@ -1735,11 +1733,11 @@ async function handleDeleteUser() {
 
     {user.referral_parent ? (
       <>
-        <p className="mt-0.5 truncate text-[11px] font-black text-slate-950">
-          {user.referral_parent.display_name ||
-            user.referral_parent.email ||
-            "Unknown"}
-        </p>
+<p className="mt-0.5 truncate text-[11px] font-black text-slate-950">
+  {user.referral_parent.display_name ||
+    user.referral_parent.phone ||
+    "Unknown"}
+</p>
 
         <p className="mt-0.5 text-[10px] text-indigo-700">
           Code:{" "}
