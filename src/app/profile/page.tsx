@@ -238,6 +238,15 @@ function openTelegramSupport() {
   const missionTotalText =
     assignedTotal === null ? "..." : assignedTotal > 0 ? assignedTotal : "-";
 
+    const depositedBalance = Number(profile.deposited_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const taskProfitBalance = Number(profile.task_profit_balance || 0);
+
+const profileTotalBalance =
+  depositedBalance + referralBalance + taskProfitBalance > 0
+    ? depositedBalance + referralBalance + taskProfitBalance
+    : Number(profile.balance || 0);
+
   return (
     <AppShell>
       <section className="px-5 pb-32 pt-8">
@@ -283,8 +292,8 @@ function openTelegramSupport() {
     <div>
       <p className="text-sm text-white/50">{t.profile.campaignBalance}</p>
       <h2 className="mt-1 text-3xl font-black">
-        ${Number(profile.balance).toFixed(2)}
-      </h2>
+  ${profileTotalBalance.toFixed(2)}
+</h2>
     </div>
 
     <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">

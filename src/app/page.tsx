@@ -219,6 +219,15 @@ const nextTaskCategory =
         ? liveText.pending
         : liveText.completed;
 
+        const depositedBalance = Number(profile.deposited_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const taskProfitBalance = Number(profile.task_profit_balance || 0);
+
+const homepageTotalBalance =
+  depositedBalance + referralBalance + taskProfitBalance > 0
+    ? depositedBalance + referralBalance + taskProfitBalance
+    : Number(profile.balance || 0);
+
     const actionStatus = {
     startMission: missionStatusLabel,
     deposit: actionText.wallet,
@@ -319,8 +328,8 @@ const nextTaskCategory =
               </div>
 
               <h2 className="mt-1 text-4xl font-black tracking-tight">
-                ${Number(profile.balance).toFixed(2)}
-              </h2>
+  ${homepageTotalBalance.toFixed(2)}
+</h2>
             </div>
 
             <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black shadow-[0_12px_30px_rgba(234,179,8,0.28)]">
@@ -329,11 +338,11 @@ const nextTaskCategory =
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <StatCard
-              label={t.home.today}
-              value={`$${Number(profile.today_earnings).toFixed(2)}`}
-              color="green"
-            />
+<StatCard
+  label={t.home.quickActions.deposit}
+  value={`$${depositedBalance.toFixed(2)}`}
+  color="green"
+/>
 
             <StatCard
               label={t.home.mission}
