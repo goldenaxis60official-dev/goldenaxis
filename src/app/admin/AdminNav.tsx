@@ -12,6 +12,7 @@ import type { Profile } from "@/types/profile";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
 import {
   AlertCircle,
+  Gem,
   Headphones,
   KeyRound,
   Landmark,
@@ -38,6 +39,11 @@ function getAdminLinks(t: AdminNavText) {
       label: t.users,
       href: "/admin/users",
       icon: Users,
+    },
+    {
+      label: "Products",
+      href: "/admin/products",
+      icon: Gem,
     },
     {
       label: t.wallet,

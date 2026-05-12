@@ -67,7 +67,7 @@ const productTierPlan = [
     id: "tier0" as ProductTier,
     label: "Tier 0",
     range: "$1–$100",
-    target: 20,
+    target: 50,
     min: 1,
     max: 100,
     helper: "Starter gold accessories, jewel care items, small gift pieces",
@@ -91,14 +91,14 @@ const productTierPlan = [
     helper: "Premium rings, bracelets, necklaces, polished gems",
   },
   {
-    id: "tier3" as ProductTier,
-    label: "Tier 3",
-    range: "$5,001–$10,000",
-    target: 20,
-    min: 5001,
-    max: 10000,
-    helper: "Luxury diamond, rare gem, high-value jewel sets",
-  },
+  id: "tier3" as ProductTier,
+  label: "Tier 3",
+  range: "$5,001–$10,000",
+  target: 21,
+  min: 5001,
+  max: 10000,
+  helper: "Luxury diamond, rare gem, high-value jewel sets",
+},
 ];
 
 const quickCategories = [
@@ -633,7 +633,7 @@ loadProducts();
 </div>
 
 <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-  <StatCard label="Normal Products" value={`${productTypeCounts.normal} / 140`} />
+  <StatCard label="Normal Products" value={`${productTypeCounts.normal} / 171`} />
   <StatCard label="Lucky Products" value={`${productTypeCounts.lucky} / 10`} />
   <StatCard label="Total Products" value={String(products.length)} />
   <StatCard label="Gallery Status" value={t.stats.galleryReady} />
