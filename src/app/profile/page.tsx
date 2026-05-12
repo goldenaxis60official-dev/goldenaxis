@@ -278,6 +278,17 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
           </div>
         </LuxuryCard>
 
+        <div className="mb-5 flex justify-end">
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/[0.08] px-4 py-2 text-xs font-bold text-red-100 transition active:scale-95"
+  >
+    <LogOut className="h-4 w-4" />
+    Logout
+  </button>
+</div>
+
         <LuxuryCard goldGlow className="mb-6 p-5">
   <div className="mb-5 flex items-center justify-between">
     <div>
@@ -337,38 +348,6 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
     </p>
   )}
 </LuxuryCard>
-
-<div className="mb-6 grid grid-cols-2 gap-3">
-  <button
-    type="button"
-    onClick={() => setShowLanguageModal(true)}
-    className="rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.08] p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,0.25)] transition active:scale-[0.98]"
-  >
-    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
-      <Languages className="h-5 w-5" />
-    </div>
-
-    <p className="font-black text-white">{t.profile.language}</p>
-    <p className="mt-1 text-xs text-white/45">
-      {language === "en" ? t.profile.english : t.profile.chinese}
-    </p>
-  </button>
-
-  <button
-    type="button"
-    onClick={handleLogout}
-    className="rounded-[1.5rem] border border-red-400/20 bg-red-500/[0.08] p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,0.25)] transition active:scale-[0.98]"
-  >
-    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/10 text-red-300">
-      <LogOut className="h-5 w-5" />
-    </div>
-
-    <p className="font-black text-red-100">{t.profile.menu.logout}</p>
-    <p className="mt-1 text-xs text-red-100/45">
-      Sign out safely
-    </p>
-  </button>
-</div>
 
         <button
           type="button"
@@ -433,17 +412,14 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
         </div>
 
 <LuxuryCard className="mb-8 overflow-hidden p-0">
-  {menuItems.map((item, index) => {
+  {menuItems.map((item) => {
     const Icon = item.icon;
-    const isLast = index === menuItems.length - 1;
 
     return (
       <button
         key={item.key}
         onClick={() => handleMenuClick(item)}
-        className={`flex w-full items-center justify-between px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035] ${
-          isLast ? "" : "border-b border-white/10"
-        } ${
+        className={`flex w-full items-center justify-between border-b border-white/10 px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035] ${
           item.featured
             ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
             : ""
@@ -487,6 +463,30 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
       </button>
     );
   })}
+
+  <button
+    type="button"
+    onClick={() => setShowLanguageModal(true)}
+    className="flex w-full items-center justify-between px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035]"
+  >
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
+        <Languages className="h-5 w-5" />
+      </div>
+
+      <div className="text-left">
+        <span className="font-medium text-white/80">
+          {t.profile.language}
+        </span>
+
+        <p className="mt-0.5 text-xs text-white/40">
+          {language === "en" ? t.profile.english : t.profile.chinese}
+        </p>
+      </div>
+    </div>
+
+    <ChevronRight className="h-5 w-5 text-white/35" />
+  </button>
 </LuxuryCard>
 
 {showLanguageModal && (
