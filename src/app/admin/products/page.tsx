@@ -772,7 +772,7 @@ loadProducts();
 )}
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
-          <section className="rounded-[2rem] border border-yellow-400/20 bg-white/[0.045] p-5 shadow-[0_0_45px_rgba(212,175,55,0.08)] xl:sticky xl:top-8 xl:self-start">
+          <section className="max-h-[calc(100vh-4rem)] overflow-y-auto rounded-[2rem] border border-yellow-400/20 bg-white/[0.045] p-5 shadow-[0_0_45px_rgba(212,175,55,0.08)] xl:sticky xl:top-8 xl:self-start">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-sm text-yellow-200/80">
