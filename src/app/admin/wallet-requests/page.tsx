@@ -105,17 +105,36 @@ async function loadRecords(options?: { silent?: boolean }) {
 
   setErrorText("");
 
+  const { data: visibleProfiles, error: visibleProfilesError } =
+    await supabase.rpc("get_staff_visible_profiles");
+
+  if (visibleProfilesError) {
+    setErrorText(visibleProfilesError.message);
+    setLoading(false);
+    return;
+  }
+
+  const visibleUserIds = ((visibleProfiles || []) as Profile[])
+    .filter((user) => user.status !== "deleted")
+    .map((user) => user.id);
+
+  if (visibleUserIds.length === 0) {
+    setRecords([]);
+    setLoading(false);
+    return;
+  }
+
   const { data, error } = await supabase
     .from("wallet_requests")
     .select(
       `
       *,
       profiles (
-  member_id,
-  display_name,
-  email,
-  phone,
-  referral_code,
+        member_id,
+        display_name,
+        email,
+        phone,
+        referral_code,
         referred_by,
         balance,
         deposited_balance,
@@ -125,6 +144,7 @@ async function loadRecords(options?: { silent?: boolean }) {
       )
     `
     )
+    .in("user_id", visibleUserIds)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -249,47 +269,87 @@ useEffect(() => {
   };
 }, [hasPageAccess]);
 
-  async function handleApprove(id: string) {
-    setActionId(id);
-    setSuccessText("");
-    setErrorText("");
+async function handleApprove(id: string) {
+  const request = records.find((item) => item.id === id);
 
-    const { error } = await supabase.rpc("approve_wallet_request", {
-      input_request_id: id,
-      input_admin_note: adminNotes[id] || null,
-    });
-
-    if (error) {
-      setErrorText(error.message);
-      setActionId(null);
-      return;
-    }
-
-    setSuccessText(t.messages.approved);
-    setActionId(null);
-    loadRecords();
+  if (!request) {
+    setErrorText("Request not found or no access.");
+    return;
   }
 
-  async function handleReject(id: string) {
-    setActionId(id);
-    setSuccessText("");
-    setErrorText("");
+  setActionId(id);
+  setSuccessText("");
+  setErrorText("");
 
-    const { error } = await supabase.rpc("reject_wallet_request", {
-      input_request_id: id,
-      input_admin_note: adminNotes[id] || null,
-    });
-
-    if (error) {
-      setErrorText(error.message);
-      setActionId(null);
-      return;
+  const { data: canAccess, error: accessError } = await supabase.rpc(
+    "staff_can_access_user",
+    {
+      p_target_user_id: request.user_id,
     }
+  );
 
-    setSuccessText(t.messages.rejected);
+  if (accessError || !canAccess) {
+    setErrorText("You cannot approve this user's wallet request.");
     setActionId(null);
-    loadRecords();
+    return;
   }
+
+  const { error } = await supabase.rpc("approve_wallet_request", {
+    input_request_id: id,
+    input_admin_note: adminNotes[id] || null,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionId(null);
+    return;
+  }
+
+  setSuccessText(t.messages.approved);
+  setActionId(null);
+  loadRecords();
+}
+
+async function handleReject(id: string) {
+  const request = records.find((item) => item.id === id);
+
+  if (!request) {
+    setErrorText("Request not found or no access.");
+    return;
+  }
+
+  setActionId(id);
+  setSuccessText("");
+  setErrorText("");
+
+  const { data: canAccess, error: accessError } = await supabase.rpc(
+    "staff_can_access_user",
+    {
+      p_target_user_id: request.user_id,
+    }
+  );
+
+  if (accessError || !canAccess) {
+    setErrorText("You cannot reject this user's wallet request.");
+    setActionId(null);
+    return;
+  }
+
+  const { error } = await supabase.rpc("reject_wallet_request", {
+    input_request_id: id,
+    input_admin_note: adminNotes[id] || null,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionId(null);
+    return;
+  }
+
+  setSuccessText(t.messages.rejected);
+  setActionId(null);
+  loadRecords();
+}
 
   const filteredRecords = useMemo(() => {
   const keyword = searchText.toLowerCase().trim();

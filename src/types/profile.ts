@@ -1,7 +1,7 @@
 //types>profile.ts
 
 export type Profile = {
-    id: string;
+  id: string;
   member_id: string | null;
   email: string | null;
   phone: string | null;
@@ -27,7 +27,7 @@ export type Profile = {
   status: string;
   terms_accepted: boolean;
 
-  role: "user" | "admin" | "super" | "support";
+  role: "user" | "admin" | "leader" | "support";
   language: "en" | "zh";
 
   created_at: string;

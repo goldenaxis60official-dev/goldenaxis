@@ -77,13 +77,15 @@ export default function RegisterPage() {
         return;
       }
 
-      if (profileData.role === "admin" || profileData.role === "super") {
-        router.replace("/admin");
-      } else if (profileData.role === "support") {
-        router.replace("/admin/support");
-      } else {
-        router.replace("/");
-      }
+if (
+  profileData.role === "admin" ||
+  profileData.role === "leader" ||
+  profileData.role === "support"
+) {
+  router.replace("/admin/users");
+} else {
+  router.replace("/");
+}
     }
 
     redirectIfLoggedIn();

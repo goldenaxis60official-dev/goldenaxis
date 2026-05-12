@@ -29,12 +29,14 @@ function isAdminEntrance() {
 }
 
 function isControlRole(role?: string | null) {
-  return role === "admin" || role === "super" || role === "support";
+  return role === "admin" || role === "leader" || role === "support";
 }
 
 function getRoleRedirectPath(role?: string | null) {
-  if (role === "support") return "/admin/support";
-  if (role === "admin" || role === "super") return "/admin";
+  if (role === "admin" || role === "leader" || role === "support") {
+    return "/admin/users";
+  }
+
   return "/";
 }
 

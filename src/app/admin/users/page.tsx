@@ -119,8 +119,8 @@ function AdminUsersContent({ profile }: { profile: Profile }) {
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState<
-  "all" | "user" | "admin" | "super" | "support"
+const [roleFilter, setRoleFilter] = useState<
+  "all" | "user" | "admin" | "leader" | "support"
 >("all");
 const [statusFilter, setStatusFilter] = useState("all");
 const [sortBy, setSortBy] = useState<
@@ -180,95 +180,94 @@ const [resetOrdersResetBalance, setResetOrdersResetBalance] = useState(true);
 
 const hasPageAccess = canAccessAdminPath(profile.role, "/admin/users");
 
-const isFullControlRole = profile.role === "admin" || profile.role === "super";
-const isSupportRole = profile.role === "support";
-const isStaffControlRole = isFullControlRole || isSupportRole;
+const isAdmin = profile.role === "admin";
+const isScopedStaffRole = profile.role === "leader" || profile.role === "support";
+const isStaffControlRole = isAdmin || isScopedStaffRole;
 
-// Support can control orders, balance, referral bonus, and security reset
+// Admin sees all users.
+// Leader/support see only referral-tree users from database RPC.
 const canManageOrders = isStaffControlRole;
 const canManageMoney = isStaffControlRole;
 const canManageSecurity = isStaffControlRole;
-
-// Keep these locked for support
-const canDeleteUsers = isFullControlRole;
-const canEditUserInfo = isFullControlRole;
-
-// Support can edit normal users' own referral code only
+const canDeleteUsers = isStaffControlRole;
+const canEditUserInfo = isStaffControlRole;
 const canEditReferralCode = isStaffControlRole;
 
- async function loadUsers() {
+async function loadUsers() {
   setLoading(true);
   setErrorText("");
 
-  const [profilesResult, notesResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("*")
-      .neq("status", "deleted")
-      .order("created_at", { ascending: false }),
+  const { data: profileData, error: profileError } = await supabase.rpc(
+    "get_staff_visible_profiles"
+  );
 
-    supabase.from("admin_user_notes").select("user_id, nickname"),
-  ]);
-
-  if (profilesResult.error) {
-    setErrorText(profilesResult.error.message);
+  if (profileError) {
+    setErrorText(profileError.message);
     setLoading(false);
     return;
   }
 
-  if (notesResult.error) {
-    setErrorText(notesResult.error.message);
-    setLoading(false);
-    return;
+  const profileRows = ((profileData || []) as Profile[]).filter(
+    (user) => user.status !== "deleted"
+  );
+
+  const userIds = profileRows.map((user) => user.id);
+
+  let noteMap = new Map<string, string | null>();
+
+  if (userIds.length > 0) {
+    const { data: noteRows, error: noteError } = await supabase
+      .from("admin_user_notes")
+      .select("user_id, nickname")
+      .in("user_id", userIds);
+
+    if (noteError) {
+      setErrorText(noteError.message);
+      setLoading(false);
+      return;
+    }
+
+    noteMap = new Map(
+      ((noteRows || []) as { user_id: string; nickname: string | null }[]).map(
+        (note) => [note.user_id, note.nickname]
+      )
+    );
   }
 
-  const noteMap = new Map(
-    ((notesResult.data || []) as { user_id: string; nickname: string | null }[]).map(
-      (note) => [note.user_id, note.nickname]
+  const parentIds = Array.from(
+    new Set(
+      profileRows
+        .map((user) => user.referred_by)
+        .filter((id): id is string => Boolean(id))
     )
   );
 
-const profileRows = (profilesResult.data || []) as Profile[];
+  let parentMap = new Map<string, ReferralParentInfo>();
 
-const parentIds = Array.from(
-  new Set(
-    profileRows
-      .map((user) => user.referred_by)
-      .filter((id): id is string => Boolean(id))
-  )
-);
+  if (parentIds.length > 0) {
+    const { data: parentRows, error: parentError } = await supabase
+      .from("profiles")
+      .select("id, display_name, email, phone, member_id, referral_code")
+      .in("id", parentIds);
 
-let parentMap = new Map<string, ReferralParentInfo>();
-
-if (parentIds.length > 0) {
-  const { data: parentRows, error: parentError } = await supabase
-    .from("profiles")
-    .select("id, display_name, email, phone, member_id, referral_code")
-    .in("id", parentIds);
-
-  if (parentError) {
-    setErrorText(parentError.message);
-    setLoading(false);
-    return;
+    if (!parentError) {
+      parentMap = new Map(
+        ((parentRows || []) as ReferralParentInfo[]).map((parent) => [
+          parent.id,
+          parent,
+        ])
+      );
+    }
   }
 
-  parentMap = new Map(
-    ((parentRows || []) as ReferralParentInfo[]).map((parent) => [
-      parent.id,
-      parent,
-    ])
-  );
-}
+  const mergedUsers = profileRows.map((user) => ({
+    ...user,
+    admin_nickname: noteMap.get(user.id) || null,
+    referral_parent: user.referred_by
+      ? parentMap.get(user.referred_by) || null
+      : null,
+  }));
 
-const mergedUsers = profileRows.map((user) => ({
-  ...user,
-  admin_nickname: noteMap.get(user.id) || null,
-  referral_parent: user.referred_by
-    ? parentMap.get(user.referred_by) || null
-    : null,
-}));
-
-const userIds = mergedUsers.map((user) => user.id);
   const summaryMap: Record<string, UserOrderSummary> = {};
 
   if (userIds.length > 0) {
@@ -305,7 +304,10 @@ const userIds = mergedUsers.map((user) => user.id);
       }
 
       summaryMap[userId].totalOrders += 1;
-      summaryMap[userId].maxStep = Math.max(summaryMap[userId].maxStep, stepNumber);
+      summaryMap[userId].maxStep = Math.max(
+        summaryMap[userId].maxStep,
+        stepNumber
+      );
 
       if (order.status === "completed") {
         summaryMap[userId].completedOrders += 1;
@@ -1154,8 +1156,8 @@ const { error } = await supabase.rpc("reset_user_generated_orders", {
 async function handleSaveReferralCode() {
   if (!referralUser) return;
 
-  if (isSupportRole && referralUser.role !== "user") {
-  setErrorText("Support can only edit normal user referral codes.");
+if (!isAdmin && referralUser.role !== "user") {
+  setErrorText("Leader/support can only edit normal user referral codes.");
   return;
 }
 
@@ -1451,7 +1453,7 @@ async function handleDeleteUser() {
         value={roleFilter}
         onChange={(event) =>
           setRoleFilter(
-            event.target.value as "all" | "user" | "admin" | "super" | "support"
+            event.target.value as "all" | "user" | "admin" | "leader" | "support"
           )
         }
         className="h-11 rounded-xl border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-yellow-400/60"
@@ -1465,9 +1467,9 @@ async function handleDeleteUser() {
         <option className="bg-slate-950" value="admin">
           {t.filters.admin}
         </option>
-        <option className="bg-slate-950" value="super">
-          {t.filters.super}
-        </option>
+<option className="bg-slate-950" value="leader">
+  Leader
+</option>
         <option className="bg-slate-950" value="support">
           {t.filters.support}
         </option>
@@ -1722,7 +1724,7 @@ async function handleDeleteUser() {
     setReferralUser(user);
     setReferralValue(user.referral_code || "");
   }}
-  disabled={!canEditReferralCode || (isSupportRole && user.role !== "user")}
+  disabled={!canEditReferralCode || (!isAdmin && user.role !== "user")}
   className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
 >
   Own Code: {user.referral_code || "-"}

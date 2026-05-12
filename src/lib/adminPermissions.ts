@@ -1,19 +1,13 @@
 // src/lib/adminPermissions.ts
 
-export type AdminRole = "admin" | "super" | "support";
+export type AdminRole = "admin" | "leader" | "support";
 
 const ADMIN_ROOT_PATH = "/admin";
 
-const SUPER_BLOCKED_PATHS = ["/admin/wallet-addresses"];
-
-const SUPPORT_ALLOWED_PATHS = [
-  "/admin/users",
-  "/admin/support",
-  "/admin/wallet-requests",
-];
+const SCOPED_STAFF_BLOCKED_PATHS = ["/admin/wallet-addresses"];
 
 export function isAdminRole(role?: string | null): role is AdminRole {
-  return role === "admin" || role === "super" || role === "support";
+  return role === "admin" || role === "leader" || role === "support";
 }
 
 function pathMatches(pathname: string, basePath: string) {
@@ -24,6 +18,10 @@ function isAdminArea(pathname: string) {
   return pathname === ADMIN_ROOT_PATH || pathname.startsWith(`${ADMIN_ROOT_PATH}/`);
 }
 
+function isScopedStaff(role: string | null | undefined) {
+  return role === "leader" || role === "support";
+}
+
 export function canAccessAdminPath(
   role: string | null | undefined,
   pathname: string
@@ -32,15 +30,13 @@ export function canAccessAdminPath(
     return isAdminArea(pathname);
   }
 
-  if (role === "super") {
+  if (isScopedStaff(role)) {
     return (
       isAdminArea(pathname) &&
-      !SUPER_BLOCKED_PATHS.some((path) => pathMatches(pathname, path))
+      !SCOPED_STAFF_BLOCKED_PATHS.some((path) =>
+        pathMatches(pathname, path)
+      )
     );
-  }
-
-  if (role === "support") {
-    return SUPPORT_ALLOWED_PATHS.some((path) => pathMatches(pathname, path));
   }
 
   return false;

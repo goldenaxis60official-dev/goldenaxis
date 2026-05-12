@@ -176,43 +176,68 @@ useEffect(() => {
   }
 }, [filteredTickets, selectedTicketId, loadingTickets]);
 
-  async function loadTickets() {
-    setLoadingTickets(true);
-    setErrorText("");
+async function loadTickets() {
+  setLoadingTickets(true);
+  setErrorText("");
 
-    const { data, error } = await supabase
-  .from("support_messages")
-  .select(
-    `
-    *,
-   profiles (
-  member_id,
-  display_name,
-  email,
-  phone
-)
-  `
-  )
-  .order("created_at", { ascending: false });
+  const { data: visibleProfiles, error: visibleProfilesError } =
+    await supabase.rpc("get_staff_visible_profiles");
 
-    if (error) {
-      setErrorText(error.message);
-      setLoadingTickets(false);
-      return;
-    }
-
-    const rows = (data || []) as AdminTicket[];
-    setTickets(rows);
-
-    if (rows.length === 0) {
-      setSelectedTicketId(null);
-      setChatMessages([]);
-    } else if (!selectedTicketId || !rows.some((item) => item.id === selectedTicketId)) {
-      setSelectedTicketId(rows[0].id);
-    }
-
+  if (visibleProfilesError) {
+    setErrorText(visibleProfilesError.message);
     setLoadingTickets(false);
+    return;
   }
+
+  const visibleUserIds = ((visibleProfiles || []) as Profile[])
+    .filter((user) => user.status !== "deleted")
+    .map((user) => user.id);
+
+  if (visibleUserIds.length === 0) {
+    setTickets([]);
+    setSelectedTicketId(null);
+    setChatMessages([]);
+    setLoadingTickets(false);
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("support_messages")
+    .select(
+      `
+      *,
+      profiles (
+        member_id,
+        display_name,
+        email,
+        phone
+      )
+    `
+    )
+    .in("user_id", visibleUserIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    setErrorText(error.message);
+    setLoadingTickets(false);
+    return;
+  }
+
+  const rows = (data || []) as AdminTicket[];
+  setTickets(rows);
+
+  if (rows.length === 0) {
+    setSelectedTicketId(null);
+    setChatMessages([]);
+  } else if (
+    !selectedTicketId ||
+    !rows.some((item) => item.id === selectedTicketId)
+  ) {
+    setSelectedTicketId(rows[0].id);
+  }
+
+  setLoadingTickets(false);
+}
 
   async function loadChat(ticketId: string) {
     setLoadingChat(true);
@@ -293,6 +318,18 @@ useEffect(() => {
       return;
     }
 
+    const { data: canAccess, error: accessError } = await supabase.rpc(
+  "staff_can_access_user",
+  {
+    p_target_user_id: selectedTicket.user_id,
+  }
+);
+
+if (accessError || !canAccess) {
+  setErrorText("You cannot reply to this user's support ticket.");
+  return;
+}
+
     setSending(true);
     setSuccessText("");
     setErrorText("");
@@ -335,11 +372,23 @@ useEffect(() => {
     await loadTickets();
   }
 
-  async function handleStatusChange(nextStatus: SupportStatus) {
-    if (!selectedTicket) return;
+async function handleStatusChange(nextStatus: SupportStatus) {
+  if (!selectedTicket) return;
 
-    setErrorText("");
-    setSuccessText("");
+  setErrorText("");
+  setSuccessText("");
+
+  const { data: canAccess, error: accessError } = await supabase.rpc(
+    "staff_can_access_user",
+    {
+      p_target_user_id: selectedTicket.user_id,
+    }
+  );
+
+  if (accessError || !canAccess) {
+    setErrorText("You cannot update this user's support ticket.");
+    return;
+  }
 
     const { error } = await supabase
       .from("support_messages")
