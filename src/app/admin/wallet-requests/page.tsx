@@ -124,28 +124,9 @@ async function loadRecords(options?: { silent?: boolean }) {
     return;
   }
 
-  const { data, error } = await supabase
-    .from("wallet_requests")
-    .select(
-      `
-      *,
-      profiles (
-        member_id,
-        display_name,
-        email,
-        phone,
-        referral_code,
-        referred_by,
-        balance,
-        deposited_balance,
-        referral_bonus_balance,
-        task_profit_balance,
-        current_step
-      )
-    `
-    )
-    .in("user_id", visibleUserIds)
-    .order("created_at", { ascending: false });
+const { data, error } = await supabase.rpc(
+  "get_staff_visible_wallet_requests"
+);
 
   if (error) {
     setErrorText(error.message);
@@ -153,7 +134,29 @@ async function loadRecords(options?: { silent?: boolean }) {
     return;
   }
 
-  const rawRecords = (data || []) as AdminWalletRequest[];
+const profileMap = new Map(
+  ((visibleProfiles || []) as Profile[]).map((user) => [
+    user.id,
+    {
+      member_id: user.member_id,
+      display_name: user.display_name,
+      email: user.email,
+      phone: user.phone,
+      referral_code: user.referral_code,
+      referred_by: user.referred_by,
+      balance: user.balance,
+      deposited_balance: user.deposited_balance,
+      referral_bonus_balance: user.referral_bonus_balance,
+      task_profit_balance: user.task_profit_balance,
+      current_step: user.current_step,
+    },
+  ])
+);
+
+const rawRecords = ((data || []) as AdminWalletRequest[]).map((item) => ({
+  ...item,
+  profiles: profileMap.get(item.user_id) || null,
+}));
 
   const referrerIds = Array.from(
     new Set(
