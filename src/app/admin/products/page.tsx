@@ -332,25 +332,26 @@ useEffect(() => {
     setSuccessText("");
   }
 
-  function editProduct(product: Product) {
-    setForm({
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      price: Number(product.price),
-      currency: product.currency,
-      rating: Number(product.rating),
-      reviews_count: Number(product.reviews_count),
-      description: product.description || "",
-      images: Array.isArray(product.images) ? product.images : [],
-      main_image: product.main_image || "",
-      tier: getProductTier(Number(product.price)),
-      is_active: product.is_active,
-      product_type: product.product_type || "normal",
-    });
+function editProduct(product: Product) {
+  setForm({
+    id: product.id,
+    name: product.name,
+    category: product.category,
+    price: Number(product.price),
+    currency: product.currency,
+    rating: Number(product.rating),
+    reviews_count: Number(product.reviews_count),
+    description: product.description || "",
+    images: Array.isArray(product.images) ? product.images : [],
+    main_image: product.main_image || "",
+    tier: getProductTier(Number(product.price)),
+    is_active: product.is_active,
+    product_type: product.product_type || "normal",
+  });
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  setSuccessText(`Editing: ${product.name}`);
+  setErrorText("");
+}
 
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
