@@ -637,7 +637,14 @@ loadProducts();
   <StatCard label="Normal Products" value={`${productTypeCounts.normal} / 171`} />
   <StatCard label="Lucky Products" value={`${productTypeCounts.lucky} / 10`} />
   <StatCard label="Total Products" value={String(products.length)} />
-  <StatCard label="Gallery Status" value={t.stats.galleryReady} />
+  <StatCard
+  label="Gallery Status"
+  value={
+    products.some((product) => !product.main_image)
+      ? "Photos Missing"
+      : t.stats.galleryReady
+  }
+/>
 </div>
 
 <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
