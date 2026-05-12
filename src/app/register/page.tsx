@@ -7,6 +7,7 @@ import Link from "next/link";
 import { guestAuth } from "@/i18n/guestAuth";
 import { useRouter } from "next/navigation";
 import {
+  ArrowRight,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -332,8 +333,8 @@ function handleRegister(e: FormEvent<HTMLFormElement>) {
   type="submit"
   className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_18px_45px_rgba(234,179,8,0.22)] transition active:scale-[0.98]"
 >
-  Registration Closed
-  <Lock className="h-5 w-5" />
+  Create Account
+  <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
 </button>
               </div>
             </form>
@@ -346,10 +347,10 @@ function handleRegister(e: FormEvent<HTMLFormElement>) {
 
                 <div>
 <p className="text-sm font-bold text-white/85">
-  Registration temporarily closed
+  Member account setup
 </p>
 <p className="mt-1 text-xs leading-5 text-white/45">
-  New account creation is paused while this demo website is under limited review access.
+   New account creation is paused while this demo website is under limited review access.
 </p>
                 </div>
               </div>
