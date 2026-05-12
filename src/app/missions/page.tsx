@@ -269,18 +269,19 @@ const totalProfitAmount = useMemo(() => {
     });
   }
 
+function getUsableCampaignBalance() {
+  const mainBalance = Number(profile.balance || 0);
+  const depositBalance = Number(profile.deposited_balance || 0);
+
+  return mainBalance + depositBalance;
+}
+
   async function handleCompleteGeneratedOrder(order: GeneratedOrder) {
   if (order.step_number !== profile.current_step) return;
 
  const orderTotal = Number(order.order_total || 0);
 
-const isLuckyOrder = order.is_lucky_bonus || order.order_type === "lucky";
-
-const mainBalance = Number(profile.balance || 0);
-
-// profile.balance is already the real usable total.
-// Do not add deposited_balance again.
-const availableForOrder = mainBalance;
+const availableForOrder = getUsableCampaignBalance();
 
 const neededForOrder = Math.max(orderTotal - availableForOrder, 0);
 
@@ -387,16 +388,10 @@ if (neededForOrder > 0) {
 
 const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
 
-const mainBalance = Number(profile.balance || 0);
+const mainBalance = getUsableCampaignBalance();
 const todayEarnings = Number(profile.today_earnings || 0);
-// Reserved for future stat display if needed.
-// const taskEarnBalance = Number(profile.task_profit_balance || 0);
-// const referralBalance = Number(profile.referral_bonus_balance || 0);
 
-// profile.balance already includes deposit + referral + profit.
-// Do not add deposited_balance again.
 const displayTotalBalance = mainBalance;
-
 const availableForLuckyRequirement = mainBalance;
 function calculateDisplayReward(order: GeneratedOrder | null) {
   if (!order) return 0;
@@ -700,7 +695,7 @@ const processingProgressPercent = Math.min(
 
     <div className="mt-4 grid grid-cols-3 gap-2 text-center">
       <div className="rounded-2xl bg-black/35 p-3">
-        <p className="text-[10px] uppercase text-white/35">Required</p>
+        <p className="text-[10px] uppercase text-white/35">Needed</p>
         <p className="mt-1 text-sm font-black text-yellow-300">
           ${insufficientInfo.required.toFixed(2)}
         </p>
@@ -714,7 +709,7 @@ const processingProgressPercent = Math.min(
 </div>
 
       <div className="rounded-2xl bg-black/35 p-3">
-        <p className="text-[10px] uppercase text-white/35">Needed</p>
+        <p className="text-[10px] uppercase text-white/35">Required</p>
         <p className="mt-1 text-sm font-black text-rose-200">
           ${insufficientInfo.needed.toFixed(2)}
         </p>
