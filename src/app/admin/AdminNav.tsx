@@ -225,12 +225,12 @@ export default function AdminNav({ language, profile }: AdminNavProps) {
             </p>
             <h2 className="text-lg font-black text-white">{t.title}</h2>
 
-            {profile && (
-              <p className="mt-1 text-xs text-white/40">
-                {profile.email || profile.display_name || "Control account"} •{" "}
-                {profile.role}
-              </p>
-            )}
+{profile && (
+  <p className="mt-1 text-xs text-white/40">
+    {profile.phone ? `Phone: ${profile.phone}` : profile.display_name || "Control account"} •{" "}
+    {profile.role}
+  </p>
+)}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

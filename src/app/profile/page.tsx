@@ -266,8 +266,11 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
                 {profile.display_name || t.profile.goldMember}
               </h1>
 
-              <p className="mt-1 truncate text-sm text-white/50">
-  {profile.email || t.profile.goldenAxisUser}
+<p className="mt-1 truncate text-sm text-white/50">
+  Phone:{" "}
+  <span className="font-bold text-white/65">
+    {profile.phone || "-"}
+  </span>
 </p>
 
 <div className="mt-3 flex flex-wrap items-center gap-2">

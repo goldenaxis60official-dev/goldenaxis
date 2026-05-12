@@ -37,6 +37,7 @@ type AdminTicket = {
   member_id: string | null;
   display_name: string | null;
   email: string | null;
+  phone: string | null;
 } | null;
 };
 
@@ -109,6 +110,7 @@ useEffect(() => {
   const result = tickets.filter((ticket) => {
 const name = ticket.profiles?.display_name || "";
 const email = ticket.profiles?.email || "";
+const phone = ticket.profiles?.phone || "";
 const memberId = ticket.profiles?.member_id || "";
 const userId = ticket.user_id || "";
 
@@ -118,6 +120,7 @@ const userId = ticket.user_id || "";
       ticket.message.toLowerCase().includes(keyword) ||
       name.toLowerCase().includes(keyword) ||
 email.toLowerCase().includes(keyword) ||
+phone.toLowerCase().includes(keyword) ||
 memberId.toLowerCase().includes(keyword) ||
 userId.toLowerCase().includes(keyword) ||
 ticket.id.toLowerCase().includes(keyword);
@@ -182,10 +185,11 @@ useEffect(() => {
   .select(
     `
     *,
-    profiles (
+   profiles (
   member_id,
   display_name,
-  email
+  email,
+  phone
 )
   `
   )
@@ -607,9 +611,12 @@ useEffect(() => {
       />
     </div>
 
-    <div className="mt-2 flex flex-wrap items-center gap-2">
+<div className="mt-2 flex flex-wrap items-center gap-2">
   <p className="text-sm text-white/45">
-    {selectedTicket.profiles?.email || t.chat.noEmail}
+    Phone:{" "}
+    <span className="font-bold text-white/65">
+      {selectedTicket.profiles?.phone || "-"}
+    </span>
   </p>
 
   <span className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">

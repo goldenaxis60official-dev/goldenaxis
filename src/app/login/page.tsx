@@ -38,11 +38,14 @@ function getRoleRedirectPath(role?: string | null) {
   return "/";
 }
 
-const DEFAULT_COUNTRY_CODE = "+1";
+function formatPhoneInput(rawPhone: string) {
+  const digits = rawPhone.replace(/\D/g, "").slice(0, 15);
+  return digits ? `+${digits}` : "+";
+}
 
-function buildPhoneNumber(rawPhone: string) {
-  const localDigits = rawPhone.replace(/\D/g, "").replace(/^0+/, "").slice(0, 10);
-  return `${DEFAULT_COUNTRY_CODE}${localDigits}`;
+function normalizePhoneNumber(rawPhone: string) {
+  const digits = rawPhone.replace(/\D/g, "").slice(0, 15);
+  return digits ? `+${digits}` : "";
 }
 
 function isValidPhoneNumber(phone: string) {
@@ -149,7 +152,7 @@ export default function LoginPage() {
       return;
     }
 
-    const cleanPhone = buildPhoneNumber(cleanLoginId);
+    const cleanPhone = normalizePhoneNumber(cleanLoginId);
 
     if (!adminEntrance && !isValidPhoneNumber(cleanPhone)) {
       setErrorText("Please enter a valid phone number.");
@@ -273,24 +276,17 @@ export default function LoginPage() {
     {isAdminPortal ? (
       <Mail className="h-5 w-5 text-yellow-300/80" />
     ) : (
-      <>
-        <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-1.5 text-sm font-black text-yellow-200">
-          +1
-        </div>
-        <Phone className="h-5 w-5 text-yellow-300/80" />
-      </>
+      <Phone className="h-5 w-5 text-yellow-300/80" />
     )}
 
     <input
       value={loginId}
       onChange={(e) =>
         setLoginId(
-          isAdminPortal
-            ? e.target.value
-            : e.target.value.replace(/\D/g, "").slice(0, 10)
+          isAdminPortal ? e.target.value : formatPhoneInput(e.target.value)
         )
       }
-      placeholder={isAdminPortal ? "admin@example.com" : "5551234567"}
+      placeholder={isAdminPortal ? "admin@example.com" : "+1xxx"}
       type={isAdminPortal ? "email" : "tel"}
       inputMode={isAdminPortal ? "email" : "numeric"}
       autoComplete={isAdminPortal ? "email" : "tel"}
