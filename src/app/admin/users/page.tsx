@@ -883,35 +883,12 @@ async function openViewOrdersModal(user: ManagedUser) {
   setSuccessText("");
   setErrorText("");
 
-  const { data, error } = await supabase
-    .from("user_generated_orders")
-    .select(
-      `
-      id,
-      step_number,
-      order_total,
-      profit_rate,
-      profit_amount,
-      lucky_profit_rate_percent,
-      lucky_profit_amount,
-      campaign_base_amount,
-      normal_task_rate,
-      order_type,
-      status,
-      is_lucky_bonus,
-      created_at,
-      completed_at,
-      user_generated_order_items (
-        id,
-        product_snapshot,
-        unit_price,
-        quantity,
-        subtotal
-      )
-    `
-    )
-    .eq("user_id", user.id)
-    .order("step_number", { ascending: true });
+  const { data, error } = await supabase.rpc(
+    "get_staff_visible_generated_orders",
+    {
+      p_user_id: user.id,
+    }
+  );
 
   if (error) {
     setErrorText(error.message);
@@ -1122,17 +1099,10 @@ const { error } = await supabase.rpc("reset_user_generated_orders", {
 
   const cleanNickname = nicknameValue.trim();
 
-  const { error } = await supabase.from("admin_user_notes").upsert(
-    {
-      user_id: nicknameUser.id,
-      nickname: cleanNickname || null,
-      updated_by: profile.id,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "user_id",
-    }
-  );
+const { error } = await supabase.rpc("admin_upsert_user_nickname", {
+  input_user_id: nicknameUser.id,
+  input_nickname: cleanNickname,
+});
 
   if (error) {
     setErrorText(error.message);
