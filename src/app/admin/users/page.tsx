@@ -271,10 +271,9 @@ async function loadUsers() {
   const summaryMap: Record<string, UserOrderSummary> = {};
 
   if (userIds.length > 0) {
-    const { data: orderRows, error: orderError } = await supabase
-      .from("user_generated_orders")
-      .select("user_id, step_number, status, is_lucky_bonus")
-      .in("user_id", userIds);
+const { data: orderRows, error: orderError } = await supabase.rpc(
+  "get_staff_visible_generated_order_summaries"
+);
 
     if (orderError) {
       setErrorText(orderError.message);
@@ -284,12 +283,14 @@ async function loadUsers() {
       return;
     }
 
-    ((orderRows || []) as {
-      user_id: string;
-      step_number: number | null;
-      status: string | null;
-      is_lucky_bonus: boolean | null;
-    }[]).forEach((order) => {
+((orderRows || []) as {
+  user_id: string;
+  step_number: number | null;
+  status: string | null;
+  is_lucky_bonus: boolean | null;
+}[])
+  .filter((order) => userIds.includes(order.user_id))
+  .forEach((order) => {
       const userId = order.user_id;
       const stepNumber = Number(order.step_number || 0);
 
