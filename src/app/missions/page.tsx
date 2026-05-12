@@ -277,10 +277,10 @@ const totalProfitAmount = useMemo(() => {
 const isLuckyOrder = order.is_lucky_bonus || order.order_type === "lucky";
 
 const mainBalance = Number(profile.balance || 0);
-const depositReserve = Number(profile.deposited_balance || 0);
-const availableForOrder = isLuckyOrder
-  ? mainBalance + depositReserve
-  : mainBalance;
+
+// profile.balance is already the real usable total.
+// Do not add deposited_balance again.
+const availableForOrder = mainBalance;
 
 const neededForOrder = Math.max(orderTotal - availableForOrder, 0);
 
@@ -388,17 +388,16 @@ if (neededForOrder > 0) {
 const activeItems = activeOrder ? getOrderItems(activeOrder) : [];
 
 const mainBalance = Number(profile.balance || 0);
-const depositBalance = Number(profile.deposited_balance || 0);
 const todayEarnings = Number(profile.today_earnings || 0);
 // Reserved for future stat display if needed.
 // const taskEarnBalance = Number(profile.task_profit_balance || 0);
 // const referralBalance = Number(profile.referral_bonus_balance || 0);
 
-// Frontend display only.
-// This does not change task generation, task completion, or lucky calculation.
-const displayTotalBalance = mainBalance + depositBalance;
+// profile.balance already includes deposit + referral + profit.
+// Do not add deposited_balance again.
+const displayTotalBalance = mainBalance;
 
-const availableForLuckyRequirement = mainBalance + depositBalance;
+const availableForLuckyRequirement = mainBalance;
 function calculateDisplayReward(order: GeneratedOrder | null) {
   if (!order) return 0;
 
