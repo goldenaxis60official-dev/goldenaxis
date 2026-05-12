@@ -60,7 +60,7 @@ function phoneToHiddenEmail(phone: string) {
 export default function LoginPage() {
   const router = useRouter();
 
-  const [loginId, setLoginId] = useState("");
+  const [loginId, setLoginId] = useState("+");
   const [password, setPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -70,9 +70,16 @@ export default function LoginPage() {
 
   const t = guestAuth.en;
 
-  useEffect(() => {
-    setIsAdminPortal(isAdminEntrance());
-  }, []);
+useEffect(() => {
+  const adminPortal = isAdminEntrance();
+  setIsAdminPortal(adminPortal);
+
+  if (adminPortal) {
+    setLoginId("");
+  } else {
+    setLoginId("+");
+  }
+}, []);
 
   const PortalIcon = isAdminPortal ? Crown : Gem;
 
@@ -142,7 +149,7 @@ export default function LoginPage() {
     const cleanLoginId = loginId.trim();
     const adminEntrance = isAdminEntrance();
 
-    if (!cleanLoginId || !password) {
+    if (!password || (!adminEntrance && normalizePhoneNumber(cleanLoginId) === "") || (adminEntrance && !cleanLoginId)) {
       setErrorText(
         adminEntrance
           ? "Please enter your email and password."
