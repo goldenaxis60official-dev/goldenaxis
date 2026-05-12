@@ -42,6 +42,7 @@ type AdminWalletRequest = {
   member_id: string | null;
   display_name: string | null;
   email: string | null;
+  phone: string | null;
   referral_code: string | null;
   referred_by: string | null;
   balance: number;
@@ -110,10 +111,11 @@ async function loadRecords(options?: { silent?: boolean }) {
       `
       *,
       profiles (
-        member_id,
-        display_name,
-        email,
-        referral_code,
+  member_id,
+  display_name,
+  email,
+  phone,
+  referral_code,
         referred_by,
         balance,
         deposited_balance,
@@ -300,6 +302,7 @@ const matchesSearch =
   !keyword ||
   item.profiles?.display_name?.toLowerCase().includes(keyword) ||
   item.profiles?.email?.toLowerCase().includes(keyword) ||
+item.profiles?.phone?.toLowerCase().includes(keyword) ||
   item.profiles?.member_id?.toLowerCase().includes(keyword) ||
   item.profiles?.referral_code?.toLowerCase().includes(keyword) ||
   item.profiles?.referred_by?.toLowerCase().includes(keyword) ||
@@ -461,7 +464,7 @@ useEffect(() => {
       <input
         value={searchText}
         onChange={(event) => setSearchText(event.target.value)}
-        placeholder={t.filters.searchPlaceholder}
+        placeholder="Search user, phone, method, note, request ID..."
         className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-yellow-400/50"
       />
     </div>
@@ -615,9 +618,12 @@ const displayBalance =
                   <p className="mt-2 font-black">
                     {item.profiles?.display_name || t.list.unknownUser}
                   </p>
-                  <p className="mt-1 truncate text-xs text-white/45">
-                    {item.profiles?.email || t.list.noEmail}
-                  </p>
+<p className="mt-1 truncate text-xs text-white/45">
+  Phone:{" "}
+  <span className="font-bold text-white/65">
+    {item.profiles?.phone || "-"}
+  </span>
+</p>
 
                   <p className="mt-1 text-xs font-bold text-yellow-300">
   ID: {item.profiles?.member_id || item.user_id.slice(0, 8)}
