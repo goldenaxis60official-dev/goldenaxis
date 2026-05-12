@@ -113,14 +113,6 @@ const menuItems = [
     danger: false,
     subtitleKey: null,
   },
-  {
-    key: "logout",
-    icon: LogOut,
-    href: "/login",
-    featured: false,
-    danger: true,
-    subtitleKey: null,
-  },
 ] as const;
 
 export default function ProfilePage() {
@@ -198,15 +190,14 @@ window.dispatchEvent(
 setSavingLanguage(false);
 }
 
-  async function handleMenuClick(item: (typeof menuItems)[number]) {
-    if (item.key === "logout") {
-      await supabase.auth.signOut();
-      router.replace("/login");
-      return;
-    }
+function handleMenuClick(item: (typeof menuItems)[number]) {
+  router.push(item.href);
+}
 
-    router.push(item.href);
-  }
+async function handleLogout() {
+  await supabase.auth.signOut();
+  router.replace("/login");
+}
 
   async function copyReferralCode() {
   if (!profile.referral_code) return;
@@ -246,7 +237,7 @@ const depositedBalance = Number(profile.deposited_balance || 0);
 const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
   return (
     <AppShell>
-      <section className="px-5 pb-32 pt-8">
+      <section className="px-5 pb-44 pt-7">
                 <LuxuryCard goldGlow className="mb-5 p-5">
           <div className="flex items-center gap-4">
             <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.7rem] border border-yellow-400/40 bg-yellow-400/10 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
@@ -296,9 +287,14 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
 </h2>
     </div>
 
-    <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
-      <Wallet className="h-7 w-7" />
-    </div>
+<button
+  type="button"
+  aria-label="Open deposit page"
+  onClick={() => router.push("/deposit")}
+  className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)] transition hover:brightness-110 active:scale-95"
+>
+  <Wallet className="h-7 w-7" />
+</button>
   </div>
 
   <div className="grid grid-cols-3 gap-3 text-center">
@@ -341,6 +337,38 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
     </p>
   )}
 </LuxuryCard>
+
+<div className="mb-6 grid grid-cols-2 gap-3">
+  <button
+    type="button"
+    onClick={() => setShowLanguageModal(true)}
+    className="rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.08] p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,0.25)] transition active:scale-[0.98]"
+  >
+    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
+      <Languages className="h-5 w-5" />
+    </div>
+
+    <p className="font-black text-white">{t.profile.language}</p>
+    <p className="mt-1 text-xs text-white/45">
+      {language === "en" ? t.profile.english : t.profile.chinese}
+    </p>
+  </button>
+
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="rounded-[1.5rem] border border-red-400/20 bg-red-500/[0.08] p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,0.25)] transition active:scale-[0.98]"
+  >
+    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/10 text-red-300">
+      <LogOut className="h-5 w-5" />
+    </div>
+
+    <p className="font-black text-red-100">{t.profile.menu.logout}</p>
+    <p className="mt-1 text-xs text-red-100/45">
+      Sign out safely
+    </p>
+  </button>
+</div>
 
         <button
           type="button"
@@ -404,90 +432,59 @@ const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
           </span>
         </div>
 
-        <LuxuryCard className="mb-8 overflow-hidden p-0">
-  {menuItems.map((item) => {
+<LuxuryCard className="mb-8 overflow-hidden p-0">
+  {menuItems.map((item, index) => {
     const Icon = item.icon;
-    const isLogout = item.key === "logout";
+    const isLast = index === menuItems.length - 1;
 
     return (
-      <div key={item.key}>
-        {isLogout && (
-          <button
-            type="button"
-            onClick={() => setShowLanguageModal(true)}
-            className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035]"
+      <button
+        key={item.key}
+        onClick={() => handleMenuClick(item)}
+        className={`flex w-full items-center justify-between px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035] ${
+          isLast ? "" : "border-b border-white/10"
+        } ${
+          item.featured
+            ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
+            : ""
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+              item.featured
+                ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
+                : "bg-yellow-400/10 text-yellow-300"
+            }`}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-300">
-                <Languages className="h-5 w-5" />
-              </div>
-
-              <div className="text-left">
-                <span className="font-medium text-white/80">
-                  {t.profile.language}
-                </span>
-
-                <p className="mt-0.5 text-xs text-white/40">
-                  {language === "en" ? t.profile.english : t.profile.chinese}
-                </p>
-              </div>
-            </div>
-
-            <ChevronRight className="h-5 w-5 text-white/35" />
-          </button>
-        )}
-
-        <button
-          onClick={() => handleMenuClick(item)}
-          className={`flex w-full items-center justify-between px-5 py-4 text-left transition active:scale-[0.99] hover:bg-white/[0.035] ${
-            isLogout ? "" : "border-b border-white/10"
-          } ${
-            item.featured
-              ? "bg-gradient-to-r from-yellow-400/20 via-yellow-400/10 to-transparent"
-              : ""
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
-                item.danger
-                  ? "bg-red-500/10 text-red-300"
-                  : item.featured
-                    ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
-                    : "bg-yellow-400/10 text-yellow-300"
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-            </div>
-
-            <div className="text-left">
-              <span
-                className={`font-medium ${
-                  item.danger
-                    ? "text-red-200"
-                    : item.featured
-                      ? "font-black text-yellow-200"
-                      : "text-white/80"
-                }`}
-              >
-                {t.profile.menu[item.key]}
-              </span>
-
-              {item.subtitleKey && (
-                <p
-                  className={`mt-0.5 text-xs ${
-                    item.featured ? "text-yellow-100/60" : "text-white/40"
-                  }`}
-                >
-                  {t.profile.menuSubtitles[item.subtitleKey]}
-                </p>
-              )}
-            </div>
+            <Icon className="h-5 w-5" />
           </div>
 
-          <ChevronRight className="h-5 w-5 text-white/35" />
-        </button>
-      </div>
+          <div className="text-left">
+            <span
+              className={`font-medium ${
+                item.featured
+                  ? "font-black text-yellow-200"
+                  : "text-white/80"
+              }`}
+            >
+              {t.profile.menu[item.key]}
+            </span>
+
+            {item.subtitleKey && (
+              <p
+                className={`mt-0.5 text-xs ${
+                  item.featured ? "text-yellow-100/60" : "text-white/40"
+                }`}
+              >
+                {t.profile.menuSubtitles[item.subtitleKey]}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <ChevronRight className="h-5 w-5 text-white/35" />
+      </button>
     );
   })}
 </LuxuryCard>

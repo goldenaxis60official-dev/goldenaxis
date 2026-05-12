@@ -263,87 +263,59 @@ setProofPreview("");
 setLoading(false);
   }
 
-  return (
-    <AppShell>
-      <section className="px-5 pb-32 pt-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-yellow-200/80">{t.deposit.walletCenter}</p>
-            <h1 className="text-2xl font-black">{t.deposit.depositCredits}</h1>
-            <p className="mt-1 text-xs text-white/45">
-              {t.deposit.subtitle}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
-            <Wallet className="h-6 w-6 text-yellow-300" />
-          </div>
+return (
+  <AppShell>
+    <section className="px-5 pb-32 pt-7">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-bold text-yellow-200/70">
+            Wallet Center
+          </p>
+          <h1 className="text-2xl font-black">Add Deposit</h1>
+          <p className="mt-1 text-xs text-white/45">
+            Choose amount, send payment, upload screenshot.
+          </p>
         </div>
 
-        <LuxuryCard goldGlow className="mb-5 p-5">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-white/50">{t.deposit.currentBalance}</p>
-              <h2 className="mt-2 text-4xl font-black">
-                ${displayBalance.toFixed(2)}
-              </h2>
+        <button
+          type="button"
+          onClick={() => router.push("/wallet-records?type=deposit_credit")}
+          className="rounded-2xl border border-yellow-400/25 bg-yellow-400/10 p-3 text-yellow-300 active:scale-95"
+        >
+          <ClipboardList className="h-6 w-6" />
+        </button>
+      </div>
 
-<div className="mt-4 grid grid-cols-2 gap-2">
-  <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Deposit Reserve</p>
-    <p className="mt-1 text-sm font-black text-white">
-      ${depositReserve.toFixed(2)}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Lucky Available</p>
-    <p className="mt-1 text-sm font-black text-yellow-300">
-      ${luckyAvailableBalance.toFixed(2)}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Referral</p>
-    <p className="mt-1 text-sm font-black text-yellow-300">
-      ${referralBalance.toFixed(2)}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-black/30 p-3">
-    <p className="text-[10px] text-white/40">Profit</p>
-    <p className="mt-1 text-sm font-black text-emerald-300">
-      ${taskProfitBalance.toFixed(2)}
-    </p>
-  </div>
-</div>
-            </div>
-
-            <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
-              <BadgeDollarSign className="h-7 w-7" />
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
-            <p className="text-sm leading-6 text-yellow-100/80">
-              {t.deposit.adminConfirmNote}
+      <LuxuryCard goldGlow className="mb-5 p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm text-white/50">Current Balance</p>
+            <h2 className="mt-1 text-4xl font-black">
+              ${displayBalance.toFixed(2)}
+            </h2>
+            <p className="mt-2 text-xs text-white/45">
+              Deposit will be added after review.
             </p>
           </div>
-        </LuxuryCard>
 
-        <LuxuryCard className="p-4">
-  <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="font-bold">{t.deposit.selectAmount}</p>
-              <p className="text-xs text-yellow-300">
-                ${finalAmount > 0 ? finalAmount.toFixed(2) : "0.00"}
-              </p>
+          <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black">
+            <BadgeDollarSign className="h-7 w-7" />
+          </div>
+        </div>
+      </LuxuryCard>
+
+      <LuxuryCard className="p-4">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
+                1
+              </span>
+              <p className="font-black">Choose Amount</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {amounts.map((value) => (
+            <div className="grid grid-cols-3 gap-2">
+              {[100, 300, 500].map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -351,10 +323,10 @@ setLoading(false);
                     setAmount(value);
                     setCustomAmount("");
                   }}
-                  className={`rounded-2xl border px-3 py-4 font-black ${
+                  className={`rounded-2xl border px-3 py-4 text-sm font-black ${
                     !customAmount && amount === value
                       ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-white/10 bg-black/30 text-white/75"
+                      : "border-white/10 bg-black/30 text-white/70"
                   }`}
                 >
                   ${value}
@@ -368,21 +340,33 @@ setLoading(false);
               type="number"
               min="1"
               step="0.01"
-              placeholder={t.deposit.customAmountPlaceholder}
+              placeholder="Other amount"
               className="mt-3 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
+
+            <div className="mt-3 rounded-2xl bg-black/30 px-4 py-3">
+              <p className="text-xs text-white/40">You selected</p>
+              <p className="text-xl font-black text-yellow-300">
+                ${finalAmount > 0 ? finalAmount.toFixed(2) : "0.00"}
+              </p>
+            </div>
           </div>
 
-          <div className="mb-6">
-            <p className="mb-3 font-bold">{t.deposit.selectAsset}</p>
+          <div className="mb-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
+                2
+              </span>
+              <p className="font-black">Send Payment</p>
+            </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="mb-3 grid grid-cols-2 gap-2">
               {assets.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setAsset(item)}
-                  className={`rounded-2xl border px-4 py-4 font-black ${
+                  className={`rounded-2xl border px-4 py-3 text-sm font-black ${
                     asset === item
                       ? "border-yellow-400 bg-yellow-400 text-black"
                       : "border-white/10 bg-black/30 text-white/70"
@@ -391,19 +375,13 @@ setLoading(false);
                   {item}
                 </button>
               ))}
-            </div>
-          </div>
 
-          <div className="mb-6">
-            <p className="mb-3 font-bold">{t.deposit.selectNetwork}</p>
-
-            <div className="grid grid-cols-2 gap-3">
               {networks.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setNetwork(item)}
-                  className={`rounded-2xl border px-4 py-4 font-black ${
+                  className={`rounded-2xl border px-4 py-3 text-sm font-black ${
                     network === item
                       ? "border-yellow-400 bg-yellow-400 text-black"
                       : "border-white/10 bg-black/30 text-white/70"
@@ -413,175 +391,119 @@ setLoading(false);
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="mb-6 rounded-[1.7rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <QrCode className="h-5 w-5 text-yellow-300" />
-                <p className="font-black">{t.deposit.sendPayment}</p>
-              </div>
-
-              {depositAddress && (
-                <button
-                  type="button"
-                  onClick={handleCopyAddress}
-                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-bold text-white/70"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  {copied ? t.deposit.copied : t.deposit.copy}
-                </button>
-              )}
-            </div>
 
             {addressLoading ? (
               <div className="rounded-2xl bg-black/30 p-4 text-center text-sm text-white/50">
-                {t.deposit.loadingWallet}
+                Loading wallet address...
               </div>
             ) : (
-              <>
-                {selectedWalletAddress?.qr_image_url && (
-                  <div className="mb-4 flex justify-center">
-                    <div className="rounded-[1.5rem] border border-yellow-400/20 bg-white p-3 shadow-[0_0_30px_rgba(234,179,8,0.15)]">
-                      <img
-                        src={selectedWalletAddress.qr_image_url}
-                        alt={`${asset} ${network} deposit QR`}
-                        className="h-44 w-44 rounded-2xl object-cover"
-                      />
-                    </div>
+              <div className="rounded-2xl bg-black/35 p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-white/40">Pay to</p>
+                    <p className="font-black text-white">
+                      {asset} • {network}
+                    </p>
                   </div>
+
+                  {depositAddress && (
+                    <button
+                      type="button"
+                      onClick={handleCopyAddress}
+                      className="flex items-center gap-1 rounded-full bg-yellow-400 px-3 py-2 text-xs font-black text-black active:scale-95"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  )}
+                </div>
+
+                {depositAddress ? (
+                  <p className="break-all rounded-xl bg-black/35 p-3 text-sm leading-6 text-yellow-100">
+                    {depositAddress}
+                  </p>
+                ) : (
+                  <p className="rounded-xl bg-red-500/10 p-3 text-sm text-red-200">
+                    Address unavailable. Please contact support.
+                  </p>
                 )}
 
-                <div className="rounded-2xl bg-black/30 p-4">
-                  <p className="text-xs text-white/45">{t.deposit.assetNetwork}</p>
-                  <p className="mt-1 font-black text-white">
-                    {asset} • {network}
-                  </p>
-
-                  <p className="mt-4 text-xs text-white/45">{t.deposit.depositAddress}</p>
-
-                  {depositAddress ? (
-                    <p className="mt-1 break-all text-sm leading-6 text-yellow-100">
-                      {depositAddress}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm leading-6 text-red-200">
-                      {t.deposit.addressUnavailable}
-                    </p>
-                  )}
-
-                  <p className="mt-4 text-xs text-white/45">{t.deposit.instruction}</p>
-                  <p className="mt-1 text-sm leading-6 text-white/65">
-                    {selectedWalletAddress?.memo ||
-                      t.deposit.defaultInstruction
-  .replace("{asset}", asset)
-  .replace("{network}", network)}
-                  </p>
-                </div>
+                <p className="mt-3 text-xs leading-5 text-white/45">
+                  Only send {asset} using {network}. Wrong network may lose funds.
+                </p>
 
                 <button
                   type="button"
                   onClick={openWalletSupport}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/20 bg-black/30 px-5 py-4 font-bold text-yellow-100"
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-yellow-400/20 bg-black/30 px-4 py-3 text-sm font-bold text-yellow-100"
                 >
-                  <MessageCircle className="h-5 w-5" />
-                  {t.deposit.walletSupport}
+                  <MessageCircle className="h-4 w-4" />
+                  Need help? Contact Support
                 </button>
-              </>
+              </div>
             )}
           </div>
 
-          <div className="mb-5">
-            <p className="mb-3 font-bold">{t.deposit.submitReview}</p>
+          <div className="mb-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
+                3
+              </span>
+              <p className="font-black">Upload Screenshot</p>
+            </div>
+
+            {proofPreview ? (
+              <div className="mb-3 overflow-hidden rounded-2xl border border-yellow-400/20 bg-black/40">
+                <img
+                  src={proofPreview}
+                  alt="Deposit proof preview"
+                  className="max-h-72 w-full object-cover"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => handleProofChange(null)}
+                  className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-3 text-sm font-bold text-red-200"
+                >
+                  <X className="h-4 w-4" />
+                  Remove Screenshot
+                </button>
+              </div>
+            ) : (
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-yellow-400/30 bg-black/30 px-4 py-6 text-center active:scale-[0.99]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] || null;
+                    handleProofChange(file);
+                  }}
+                  className="hidden"
+                />
+
+                <ImagePlus className="mb-2 h-7 w-7 text-yellow-300" />
+                <span className="font-black text-yellow-100">
+                  Tap to upload payment screenshot
+                </span>
+                <span className="mt-1 text-xs text-white/40">
+                  Screenshot or transaction proof
+                </span>
+              </label>
+            )}
 
             <input
               value={txHash}
               onChange={(event) => setTxHash(event.target.value)}
-              placeholder={t.deposit.txHashPlaceholder}
-              className="mb-3 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+              placeholder="Transaction ID optional"
+              className="mt-3 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
-
-            <div className="mb-3 rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
-  <div className="mb-3 flex items-center justify-between gap-3">
-    <div>
-      <p className="font-bold text-white">{t.deposit.proofTitle}</p>
-      <p className="mt-1 text-xs text-white/45">
-        {t.deposit.proofNote}
-      </p>
-    </div>
-
-    <ImagePlus className="h-5 w-5 text-yellow-300" />
-  </div>
-
-  {proofPreview ? (
-    <div className="mb-3 overflow-hidden rounded-2xl border border-yellow-400/20 bg-black/40">
-      <img
-        src={proofPreview}
-        alt="Deposit proof preview"
-        className="max-h-72 w-full object-cover"
-      />
-
-      <button
-        type="button"
-        onClick={() => handleProofChange(null)}
-        className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-3 text-sm font-bold text-red-200"
-      >
-        <X className="h-4 w-4" />
-        {t.deposit.removeScreenshot}
-      </button>
-    </div>
-  ) : (
-    <label className="flex cursor-pointer items-center justify-center rounded-2xl border border-dashed border-yellow-400/25 bg-yellow-400/10 px-4 py-5 text-center text-sm font-bold text-yellow-100">
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(event) => {
-          const file = event.target.files?.[0] || null;
-          handleProofChange(file);
-        }}
-        className="hidden"
-      />
-      {t.deposit.uploadScreenshot}
-    </label>
-  )}
-</div>
 
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              placeholder={t.deposit.adminNotePlaceholder}
-              className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
+              placeholder="Note optional"
+              className="mt-3 min-h-20 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
             />
-          </div>
-
-          <div className="mb-5 rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
-            <p className="text-xs text-white/45">{t.deposit.requestSummary}</p>
-
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-white/40">{t.deposit.amount}</p>
-                <p className="mt-1 font-black text-yellow-300">
-                  ${finalAmount > 0 ? finalAmount.toFixed(2) : "0.00"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-white/40">{t.deposit.method}</p>
-                <p className="mt-1 font-black text-white">
-                  {asset} {network}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-white/40">{t.deposit.status}</p>
-                <p className="mt-1 font-black text-blue-300">{t.deposit.pendingReview}</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-white/40">{t.deposit.balanceUpdate}</p>
-                <p className="mt-1 font-black text-white">{t.deposit.afterApproval}</p>
-              </div>
-            </div>
           </div>
 
           {successText && (
@@ -603,7 +525,7 @@ setLoading(false);
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:opacity-60"
           >
             <ArrowDownToLine className="h-5 w-5" />
-            {loading ? t.deposit.submitting : t.deposit.submitDepositReview}
+            {loading ? "Submitting..." : "Submit Deposit"}
           </button>
 
           <button
@@ -612,11 +534,11 @@ setLoading(false);
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 font-bold text-white/75"
           >
             <ClipboardList className="h-5 w-5" />
-            {t.deposit.viewDepositRecords}
+            View Deposit Records
           </button>
-          </form>
-</LuxuryCard>
-      </section>
-    </AppShell>
-  );
+        </form>
+      </LuxuryCard>
+    </section>
+  </AppShell>
+);
 }
