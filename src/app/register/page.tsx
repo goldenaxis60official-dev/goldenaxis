@@ -7,25 +7,25 @@ import Link from "next/link";
 import { guestAuth } from "@/i18n/guestAuth";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Gem,
-  Lock,
+ArrowRight,
+CheckCircle2,
+Eye,
+EyeOff,
+Gem,
+Loader2,
+Lock,
   Phone,
   ShieldCheck,
   Sparkles,
   UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { generateReferralCode } from "@/lib/referral";
 
 function formatPhoneInput(rawPhone: string) {
   const digits = rawPhone.replace(/\D/g, "").slice(0, 15);
   return digits ? `+${digits}` : "+";
 }
-const REGISTRATION_LOCKED_MESSAGE =
-  "This demo website has limited access during the review period. Please use verified domain address";
 
 function normalizePhoneNumber(rawPhone: string) {
   const digits = rawPhone.replace(/\D/g, "").slice(0, 15);
@@ -54,6 +54,7 @@ export default function RegisterPage() {
   const [accepted, setAccepted] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
   const t = guestAuth.en;
 
@@ -90,9 +91,143 @@ if (
     redirectIfLoggedIn();
   }, [router]);
 
-function handleRegister(e: FormEvent<HTMLFormElement>) {
+async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
-  setErrorText(REGISTRATION_LOCKED_MESSAGE);
+  setErrorText("");
+
+  if (!accepted) {
+    setErrorText(t.register.errors.acceptAgreement);
+    return;
+  }
+
+  const cleanPhone = normalizePhoneNumber(phone);
+  const hiddenEmail = phoneToHiddenEmail(cleanPhone);
+  const cleanDisplayName = displayName.trim();
+  const cleanReferralCode = referralCode
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, "")
+    .slice(0, 20);
+
+  if (!cleanDisplayName) {
+    setErrorText(t.register.errors.displayNameRequired);
+    return;
+  }
+
+  if (!isValidPhoneNumber(cleanPhone) || !password) {
+    setErrorText("Valid phone number and password are required.");
+    return;
+  }
+
+  if (password.length < 6) {
+    setErrorText(t.register.errors.passwordLength);
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setErrorText(t.register.errors.passwordMismatch);
+    return;
+  }
+
+  if (!/^[0-9]{6}$/.test(withdrawPasscode)) {
+    setErrorText(t.register.errors.passcodeFormat);
+    return;
+  }
+
+  if (withdrawPasscode !== confirmWithdrawPasscode) {
+    setErrorText(t.register.errors.passcodeMismatch);
+    return;
+  }
+
+  if (cleanReferralCode.length < 4) {
+    setErrorText(t.register.errors.referralRequired);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const { data: referrerRows, error: referralError } = await supabase.rpc(
+      "verify_referral_code",
+      {
+        input_referral_code: cleanReferralCode,
+      }
+    );
+
+    if (referralError) throw referralError;
+
+    const referrerProfile = referrerRows?.[0];
+
+    if (!referrerProfile?.referrer_id) {
+      setErrorText(t.register.errors.invalidReferral);
+      setLoading(false);
+      return;
+    }
+
+    const { data: signUpData, error: signUpError } =
+      await supabase.auth.signUp({
+        email: hiddenEmail,
+        password,
+        options: {
+          data: {
+            display_name: cleanDisplayName,
+            phone: cleanPhone,
+            referral_code: cleanReferralCode,
+          },
+        },
+      });
+
+    if (signUpError) throw signUpError;
+
+    const newUser = signUpData.user;
+
+    if (!newUser) {
+      throw new Error(t.register.errors.sessionNotFound);
+    }
+
+    if (!signUpData.session) {
+      throw new Error(
+        "Email confirmation is still enabled in Supabase. Turn off email confirmation first."
+      );
+    }
+
+    const { error: profileError } = await supabase.from("profiles").insert({
+      id: newUser.id,
+      email: hiddenEmail,
+      phone: cleanPhone,
+      display_name: cleanDisplayName,
+      referral_code: generateReferralCode(),
+      referred_by: referrerProfile.referrer_id,
+      terms_accepted: true,
+      role: "user",
+      balance: 0,
+      today_earnings: 0,
+      total_earnings: 0,
+      current_step: 1,
+      credit_score: 100,
+      status: "active",
+      language: "en",
+    });
+
+    if (profileError) throw profileError;
+
+    const { error: passcodeError } = await supabase.rpc(
+      "set_withdraw_passcode",
+      {
+        p_passcode: withdrawPasscode,
+      }
+    );
+
+    if (passcodeError) throw passcodeError;
+
+    router.replace("/");
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : t.register.errors.unknown;
+    setErrorText(message);
+  } finally {
+    setLoading(false);
+  }
 }
 
   return (
@@ -330,11 +465,20 @@ function handleRegister(e: FormEvent<HTMLFormElement>) {
                 )}
 
 <button
-  type="submit"
-  className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_18px_45px_rgba(234,179,8,0.22)] transition active:scale-[0.98]"
+  disabled={loading}
+  className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_18px_45px_rgba(234,179,8,0.22)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
 >
-  Create Account
-  <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+  {loading ? (
+    <>
+      <Loader2 className="h-5 w-5 animate-spin" />
+      Creating account...
+    </>
+  ) : (
+    <>
+      Create Account
+      <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+    </>
+  )}
 </button>
               </div>
             </form>
@@ -350,7 +494,7 @@ function handleRegister(e: FormEvent<HTMLFormElement>) {
   Member account setup
 </p>
 <p className="mt-1 text-xs leading-5 text-white/45">
-   New account creation is paused while this demo website is under limited review access.
+   Your account is created securely and may be reviewed for normal platform protection.
 </p>
                 </div>
               </div>
