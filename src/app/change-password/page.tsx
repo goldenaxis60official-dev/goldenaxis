@@ -43,10 +43,12 @@ function ChangePasswordContent({ profile }: { profile: Profile }) {
     setSuccessText("");
     setErrorText("");
 
-    if (!profile.email) {
-      setErrorText("This account does not have an email address.");
-      return;
-    }
+const loginId = profile.email || profile.phone;
+
+if (!loginId) {
+  setErrorText("This account does not have a login ID.");
+  return;
+}
 
     if (!currentPassword || !newPassword || !confirmNewPassword) {
       setErrorText("Please fill in all password fields.");
@@ -70,10 +72,13 @@ function ChangePasswordContent({ profile }: { profile: Profile }) {
 
     setLoading(true);
 
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email: profile.email,
-      password: currentPassword,
-    });
+const loginPayload = profile.email
+  ? { email: profile.email, password: currentPassword }
+  : { phone: profile.phone || "", password: currentPassword };
+
+const { error: loginError } = await supabase.auth.signInWithPassword(
+  loginPayload
+);
 
     if (loginError) {
       setErrorText("Current password is incorrect.");

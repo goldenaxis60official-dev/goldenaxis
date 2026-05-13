@@ -1269,8 +1269,8 @@ async function handleDeleteUser() {
     return;
   }
 
-  if (deleteUser.role === "admin") {
-    setErrorText(t.messages.cannotDeleteAdmin);
+  if (deleteUser.role !== "user") {
+    setErrorText("Only normal user accounts can be deleted.");
     return;
   }
 
@@ -1283,13 +1283,31 @@ async function handleDeleteUser() {
   setSuccessText("");
   setErrorText("");
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ status: "deleted" })
-    .eq("id", deleteUser.id);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (error) {
-    setErrorText(error.message);
+  if (!session?.access_token) {
+    setErrorText("Staff session expired. Please login again.");
+    setActionLoading(false);
+    return;
+  }
+
+  const response = await fetch("/api/admin/delete-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      userId: deleteUser.id,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    setErrorText(result.error || "Failed to delete user.");
     setActionLoading(false);
     return;
   }
@@ -1302,6 +1320,7 @@ async function handleDeleteUser() {
   setDeleteUser(null);
   setDeleteConfirmText("");
   setActionLoading(false);
+  loadUsers();
 }
 
   if (!hasPageAccess) {
