@@ -25,8 +25,8 @@ import {
   X,
 } from "lucide-react";
 
-type WalletAsset = "USDT" | "USDC";
-type WalletNetwork = "TRC20" | "ERC20";
+type WalletAsset = "USDT" | "USDC" | "BTC";
+type WalletNetwork = "TRC20" | "ERC20" | "BTC";
 
 type WalletAddress = {
   id: string;
@@ -39,8 +39,42 @@ type WalletAddress = {
 };
 
 const amounts = [100, 300, 500, 1000, 1500, 3000];
-const assets: WalletAsset[] = ["USDT", "USDC"];
-const networks: WalletNetwork[] = ["TRC20", "ERC20"];
+
+const assets: WalletAsset[] = ["USDT", "USDC", "BTC"];
+
+const networkOptionsByAsset: Record<WalletAsset, WalletNetwork[]> = {
+  USDT: ["TRC20", "ERC20"],
+  USDC: ["TRC20", "ERC20"],
+  BTC: ["BTC"],
+};
+
+function getDefaultNetworkForAsset(asset: WalletAsset): WalletNetwork {
+  return asset === "BTC" ? "BTC" : "TRC20";
+}
+
+function getWalletLabel(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "BTC Bitcoin";
+  }
+
+  return `${asset} ${network}`;
+}
+
+function getNetworkLabel(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "Bitcoin";
+  }
+
+  return network;
+}
+
+function getDepositInstruction(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "Only send BTC using the native Bitcoin network. Wrong asset or network may lose funds.";
+  }
+
+  return `Only send ${asset} using ${network}. Wrong network may lose funds.`;
+}
 
 export default function DepositPage() {
   return (
@@ -87,6 +121,7 @@ const taskProfitBalance = Number(profile.task_profit_balance || 0);
 const displayBalance = mainBalance + depositReserve;
 
 const luckyAvailableBalance = mainBalance + depositReserve;
+const availableNetworks = networkOptionsByAsset[asset];
 
   async function loadWalletAddresses() {
     setAddressLoading(true);
@@ -111,13 +146,24 @@ const luckyAvailableBalance = mainBalance + depositReserve;
   const urlAsset = params.get("asset")?.toUpperCase();
   const urlNetwork = params.get("network")?.toUpperCase();
 
-  if (urlAsset === "USDT" || urlAsset === "USDC") {
-    setAsset(urlAsset);
-  }
+let nextAsset: WalletAsset = "USDT";
 
-  if (urlNetwork === "TRC20" || urlNetwork === "ERC20") {
-    setNetwork(urlNetwork);
-  }
+if (urlAsset === "USDT" || urlAsset === "USDC" || urlAsset === "BTC") {
+  nextAsset = urlAsset;
+}
+
+const allowedNetworks = networkOptionsByAsset[nextAsset];
+let nextNetwork: WalletNetwork = getDefaultNetworkForAsset(nextAsset);
+
+if (
+  (urlNetwork === "TRC20" || urlNetwork === "ERC20" || urlNetwork === "BTC") &&
+  allowedNetworks.includes(urlNetwork)
+) {
+  nextNetwork = urlNetwork;
+}
+
+setAsset(nextAsset);
+setNetwork(nextNetwork);
 
   loadWalletAddresses();
 }, []);
@@ -230,7 +276,7 @@ try {
 
 const finalNote = [
       `Asset: ${asset}`,
-      `Network: ${network}`,
+      `Network: ${getNetworkLabel(asset, network)}`,
       `Deposit Address Used: ${depositAddress}`,
       txHash.trim() ? `Transaction Hash: ${txHash.trim()}` : null,
       note.trim() ? `User Note: ${note.trim()}` : null,
@@ -242,7 +288,7 @@ const finalNote = [
   user_id: profile.id,
   type: "deposit_credit",
   amount: finalAmount,
-  method: `${asset} ${network}`,
+  method: getWalletLabel(asset, network),
   note: finalNote,
   proof_image_url: proofImageUrl || null,
   status: "pending",
@@ -360,37 +406,64 @@ return (
               <p className="font-black">Send Payment</p>
             </div>
 
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {assets.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setAsset(item)}
-                  className={`rounded-2xl border px-4 py-3 text-sm font-black ${
-                    asset === item
-                      ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-white/10 bg-black/30 text-white/70"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
+<div className="mb-3 space-y-3">
+  <div>
+    <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-white/45">
+      Asset
+    </p>
 
-              {networks.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setNetwork(item)}
-                  className={`rounded-2xl border px-4 py-3 text-sm font-black ${
-                    network === item
-                      ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-white/10 bg-black/30 text-white/70"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+    <div className="grid grid-cols-3 gap-2">
+      {assets.map((item) => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => {
+            const nextNetwork = networkOptionsByAsset[item].includes(network)
+              ? network
+              : getDefaultNetworkForAsset(item);
+
+            setAsset(item);
+            setNetwork(nextNetwork);
+          }}
+          className={`rounded-2xl border px-4 py-3 text-sm font-black ${
+            asset === item
+              ? "border-yellow-400 bg-yellow-400 text-black"
+              : "border-white/10 bg-black/30 text-white/70"
+          }`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <div>
+    <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-white/45">
+      Network
+    </p>
+
+    <div
+      className={`grid gap-2 ${
+        availableNetworks.length === 1 ? "grid-cols-1" : "grid-cols-2"
+      }`}
+    >
+      {availableNetworks.map((item) => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setNetwork(item)}
+          className={`rounded-2xl border px-4 py-3 text-sm font-black ${
+            network === item
+              ? "border-yellow-400 bg-yellow-400 text-black"
+              : "border-white/10 bg-black/30 text-white/70"
+          }`}
+        >
+          {getNetworkLabel(asset, item)}
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
 
             {addressLoading ? (
               <div className="rounded-2xl bg-black/30 p-4 text-center text-sm text-white/50">
@@ -401,9 +474,9 @@ return (
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs text-white/40">Pay to</p>
-                    <p className="font-black text-white">
-                      {asset} • {network}
-                    </p>
+<p className="font-black text-white">
+  {getWalletLabel(asset, network)}
+</p>
                   </div>
 
                   {depositAddress && (
@@ -418,6 +491,27 @@ return (
                   )}
                 </div>
 
+                {selectedWalletAddress?.qr_image_url ? (
+  <div className="mb-3 flex items-center gap-3 rounded-2xl border border-yellow-400/15 bg-yellow-400/[0.06] p-3">
+    <img
+      src={selectedWalletAddress.qr_image_url}
+      alt={`${getWalletLabel(asset, network)} QR`}
+      className="h-24 w-24 rounded-2xl border border-white/10 bg-white object-contain p-1"
+    />
+
+    <div className="min-w-0">
+      <div className="flex items-center gap-2 text-yellow-200">
+        <QrCode className="h-4 w-4" />
+        <p className="text-sm font-black">Scan QR</p>
+      </div>
+
+      <p className="mt-1 text-xs leading-5 text-white/45">
+        Scan the official wallet QR or copy the address below.
+      </p>
+    </div>
+  </div>
+) : null}
+
                 {depositAddress ? (
                   <p className="break-all rounded-xl bg-black/35 p-3 text-sm leading-6 text-yellow-100">
                     {depositAddress}
@@ -429,8 +523,13 @@ return (
                 )}
 
                 <p className="mt-3 text-xs leading-5 text-white/45">
-                  Only send {asset} using {network}. Wrong network may lose funds.
+                  {getDepositInstruction(asset, network)}
                 </p>
+                {selectedWalletAddress?.memo ? (
+  <p className="mt-2 rounded-xl border border-yellow-400/15 bg-yellow-400/[0.06] p-3 text-xs leading-5 text-yellow-100/80">
+    {selectedWalletAddress.memo}
+  </p>
+) : null}
 
                 <button
                   type="button"

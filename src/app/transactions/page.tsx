@@ -204,7 +204,7 @@ const depositReserve = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const displayBalance = mainBalance;
+const displayBalance = mainBalance + depositReserve;
 const luckyAvailableBalance = mainBalance + depositReserve;
 
 const generatedProfitTotal = transactions

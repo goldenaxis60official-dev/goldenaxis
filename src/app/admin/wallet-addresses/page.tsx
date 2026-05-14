@@ -16,8 +16,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-type WalletAsset = "USDT" | "USDC";
-type WalletNetwork = "TRC20" | "ERC20";
+type WalletAsset = "USDT" | "USDC" | "BTC";
+type WalletNetwork = "TRC20" | "ERC20" | "BTC";
 
 type WalletAddressRow = {
   id?: string;
@@ -34,10 +34,27 @@ const walletOptions: Array<{ asset: WalletAsset; network: WalletNetwork }> = [
   { asset: "USDT", network: "ERC20" },
   { asset: "USDC", network: "TRC20" },
   { asset: "USDC", network: "ERC20" },
+  { asset: "BTC", network: "BTC" },
 ];
 
 function getKey(asset: WalletAsset, network: WalletNetwork) {
   return `${asset}-${network}`;
+}
+
+function getWalletLabel(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "BTC Bitcoin";
+  }
+
+  return `${asset} ${network}`;
+}
+
+function getNetworkTitle(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "Bitcoin Address";
+  }
+
+  return `${network} Address`;
 }
 
 export default function AdminWalletAddressesPage() {
@@ -156,7 +173,9 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
     qr_image_url: data.publicUrl,
   });
 
-  setSuccessText(`${asset} ${network} QR image uploaded. Click Save Address to keep it.`);
+  setSuccessText(
+  `${getWalletLabel(asset, network)} QR image uploaded. Click Save Address to keep it.`
+);
   setSavingKey(null);
 }
 
@@ -187,7 +206,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
       return;
     }
 
-    setSuccessText(`${asset} ${network} wallet address saved.`);
+    setSuccessText(`${getWalletLabel(asset, network)} wallet address saved.`);
     setSavingKey(null);
     loadAddresses();
   }
@@ -245,7 +264,9 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
           <div className="mb-5">
             <p className="text-sm text-yellow-200/80">Deposit Settings</p>
-            <h2 className="text-2xl font-black">USDT / USDC Network Address</h2>
+            <h2 className="text-2xl font-black">
+  USDT / USDC / BTC Deposit Addresses
+</h2>
           </div>
 
           {loading ? (
@@ -269,8 +290,8 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                           {item.asset}
                         </p>
                         <h3 className="mt-1 text-xl font-black">
-                          {item.network} Address
-                        </h3>
+  {getNetworkTitle(item.asset, item.network)}
+</h3>
                       </div>
 
                       <label className="flex items-center gap-2 text-sm text-white/60">
@@ -298,7 +319,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                             address: event.target.value,
                           })
                         }
-                        placeholder={`Enter ${item.asset} ${item.network} deposit address`}
+                        placeholder={`Enter ${getWalletLabel(item.asset, item.network)} deposit address`}
                         className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
                       />
                     </div>
@@ -312,7 +333,7 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
     <div className="mb-3 flex items-center gap-4 rounded-2xl border border-white/10 bg-black/35 p-3">
       <img
         src={row.qr_image_url}
-        alt={`${item.asset} ${item.network} QR`}
+        alt={`${getWalletLabel(item.asset, item.network)} QR`}
         className="h-24 w-24 rounded-2xl border border-white/10 bg-white object-contain p-1"
       />
 
@@ -382,7 +403,20 @@ function AdminWalletAddressesContent({ profile }: { profile: Profile }) {
                     </button>
                   </div>
                 );
-              })}
+                            })}
+            </div>
+          )}
+
+          {!loading && (
+            <div className="mt-5 rounded-[1.5rem] border border-yellow-400/15 bg-yellow-400/10 p-4 text-sm text-yellow-100/80">
+              <p className="font-black text-yellow-200">
+                Wallet setup note
+              </p>
+              <p className="mt-1 text-white/55">
+                USDT and USDC support TRC20/ERC20 networks. BTC uses the native
+                Bitcoin network. Always make sure the saved address and uploaded
+                QR image match the selected asset before users deposit.
+              </p>
             </div>
           )}
         </section>

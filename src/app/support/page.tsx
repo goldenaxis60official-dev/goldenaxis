@@ -49,8 +49,8 @@ type ChatMessage = {
 
 type SupportTopic = "missionHelp" | "walletHelp" | "accountSecurity";
 
-type WalletAsset = "USDT" | "USDC";
-type WalletNetwork = "TRC20" | "ERC20";
+type WalletAsset = "USDT" | "USDC" | "BTC";
+type WalletNetwork = "TRC20" | "ERC20" | "BTC";
 type WalletAction = "deposit" | "withdraw";
 
 type WalletAddress = {
@@ -87,8 +87,33 @@ const topicSubjectMap: Record<SupportTopic, string> = {
   accountSecurity: "Account Security",
 };
 
-const assets: WalletAsset[] = ["USDT", "USDC"];
-const networks: WalletNetwork[] = ["TRC20", "ERC20"];
+const assets: WalletAsset[] = ["USDT", "USDC", "BTC"];
+
+const networkOptionsByAsset: Record<WalletAsset, WalletNetwork[]> = {
+  USDT: ["TRC20", "ERC20"],
+  USDC: ["TRC20", "ERC20"],
+  BTC: ["BTC"],
+};
+
+function getDefaultNetworkForAsset(asset: WalletAsset): WalletNetwork {
+  return asset === "BTC" ? "BTC" : "TRC20";
+}
+
+function getWalletLabel(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "BTC Bitcoin";
+  }
+
+  return `${asset} ${network}`;
+}
+
+function getNetworkLabel(asset: WalletAsset, network: WalletNetwork) {
+  if (asset === "BTC" && network === "BTC") {
+    return "Bitcoin";
+  }
+
+  return network;
+}
 
 export default function SupportPage() {
   return (
@@ -125,12 +150,12 @@ function SupportContent({ profile }: { profile: Profile }) {
 
   const finalSubject =
   activeTopic === "walletHelp" && walletAction && walletAsset && walletNetwork
-    ? `Wallet Help - ${walletAction.toUpperCase()} ${walletAsset} ${walletNetwork}`
+    ? `Wallet Help - ${walletAction.toUpperCase()} ${getWalletLabel(walletAsset, walletNetwork)}`
     : topicSubjectMap[activeTopic];
 
 const finalSubjectLabel =
   activeTopic === "walletHelp" && walletAction && walletAsset && walletNetwork
-    ? `${t.support.topics.walletHelp.title} - ${t.support.walletActions[walletAction]} ${walletAsset} ${walletNetwork}`
+    ? `${t.support.topics.walletHelp.title} - ${t.support.walletActions[walletAction]} ${getWalletLabel(walletAsset, walletNetwork)}`
     : t.support.topics[activeTopic].title;
 
 const activeTopicData = helpTopics.find((item) => item.key === activeTopic);
@@ -274,13 +299,21 @@ async function loadTicketsAndChat(showLoader = true) {
         setWalletAction(action);
       }
 
-      if (asset === "USDT" || asset === "USDC") {
-        setWalletAsset(asset);
-      }
+if (asset === "USDT" || asset === "USDC" || asset === "BTC") {
+  setWalletAsset(asset);
 
-      if (network === "TRC20" || network === "ERC20") {
-        setWalletNetwork(network);
-      }
+  const allowedNetworks = networkOptionsByAsset[asset];
+  const defaultNetwork = getDefaultNetworkForAsset(asset);
+
+  if (
+    (network === "TRC20" || network === "ERC20" || network === "BTC") &&
+    allowedNetworks.includes(network)
+  ) {
+    setWalletNetwork(network);
+  } else {
+    setWalletNetwork(defaultNetwork);
+  }
+}
     }
   }, []);
 
@@ -306,12 +339,12 @@ async function loadTicketsAndChat(showLoader = true) {
     setMessage("");
   }
 
-  function handleWalletAsset(asset: WalletAsset) {
-    setWalletAsset(asset);
-    setWalletNetwork(null);
-    setCopied(false);
-    setMessage("");
-  }
+function handleWalletAsset(asset: WalletAsset) {
+  setWalletAsset(asset);
+  setWalletNetwork(getDefaultNetworkForAsset(asset));
+  setCopied(false);
+  setMessage("");
+}
 
   async function handleCopyAddress() {
     if (!depositAddress) return;
@@ -817,22 +850,28 @@ function WalletAssistantCard({
       {walletAction && walletAsset && (
         <div className="mb-4">
           <p className="mb-2 text-xs font-bold text-white/60">{t.network}</p>
-          <div className="grid grid-cols-2 gap-3">
-            {networks.map((network) => (
-              <button
-                key={network}
-                type="button"
-                onClick={() => onSelectNetwork(network)}
-                className={`rounded-2xl border px-4 py-3 font-black ${
-                  walletNetwork === network
-                    ? "border-yellow-400 bg-yellow-400 text-black"
-                    : "border-white/10 bg-black/30 text-white/60"
-                }`}
-              >
-                {network}
-              </button>
-            ))}
-          </div>
+<div
+  className={`grid gap-3 ${
+    networkOptionsByAsset[walletAsset].length === 1
+      ? "grid-cols-1"
+      : "grid-cols-2"
+  }`}
+>
+  {networkOptionsByAsset[walletAsset].map((network) => (
+    <button
+      key={network}
+      type="button"
+      onClick={() => onSelectNetwork(network)}
+      className={`rounded-2xl border px-4 py-3 font-black ${
+        walletNetwork === network
+          ? "border-yellow-400 bg-yellow-400 text-black"
+          : "border-white/10 bg-black/30 text-white/60"
+      }`}
+    >
+      {getNetworkLabel(walletAsset, network)}
+    </button>
+  ))}
+</div>
         </div>
       )}
 
@@ -866,7 +905,7 @@ function WalletAssistantCard({
                   <div className="rounded-[1.5rem] border border-yellow-400/20 bg-white p-3 shadow-[0_0_30px_rgba(234,179,8,0.15)]">
                     <img
                       src={selectedWalletAddress.qr_image_url}
-                      alt={`${walletAsset} ${walletNetwork} deposit QR`}
+                      alt={`${getWalletLabel(walletAsset, walletNetwork)} deposit QR`}
                       className="h-44 w-44 rounded-2xl object-cover"
                     />
                   </div>
@@ -876,7 +915,7 @@ function WalletAssistantCard({
               <div className="rounded-2xl bg-black/30 p-3">
                 <p className="text-xs text-white/45">{t.assetNetwork}</p>
                 <p className="mt-1 text-sm font-black text-white">
-                  {walletAsset} • {walletNetwork}
+                  {getWalletLabel(walletAsset, walletNetwork)}
                 </p>
 
                 <p className="mt-3 text-xs text-white/45">{t.depositAddress}</p>
@@ -916,13 +955,13 @@ function WalletAssistantCard({
             <div className="rounded-2xl bg-black/30 p-3">
               <p className="text-xs text-white/45">{t.withdrawalNetwork}</p>
               <p className="mt-1 text-sm font-black text-white">
-                {walletAsset} • {walletNetwork}
+                {getWalletLabel(walletAsset, walletNetwork)}
               </p>
 
               <p className="mt-3 text-sm leading-6 text-white/70">
   {t.withdrawNote
     .replace("{asset}", walletAsset)
-    .replace("{network}", walletNetwork)}
+    .replace("{network}", getNetworkLabel(walletAsset, walletNetwork))}
 </p>
 
               <Link

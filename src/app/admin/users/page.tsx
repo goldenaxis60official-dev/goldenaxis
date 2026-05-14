@@ -49,6 +49,7 @@ type ReferralParentInfo = {
 type ManagedUser = Profile & {
   admin_nickname: string | null;
   referral_parent: ReferralParentInfo | null;
+  last_seen_at: string | null;
 };
 
 type LuckyProductOption = {
@@ -216,10 +217,12 @@ async function loadUsers() {
   let noteMap = new Map<string, string | null>();
 
   if (userIds.length > 0) {
-    const { data: noteRows, error: noteError } = await supabase
-      .from("admin_user_notes")
-      .select("user_id, nickname")
-      .in("user_id", userIds);
+const { data: noteRows, error: noteError } = await supabase.rpc(
+  "get_staff_visible_user_notes",
+  {
+    p_user_ids: userIds,
+  }
+);
 
     if (noteError) {
       setErrorText(noteError.message);
@@ -231,6 +234,32 @@ async function loadUsers() {
       ((noteRows || []) as { user_id: string; nickname: string | null }[]).map(
         (note) => [note.user_id, note.nickname]
       )
+    );
+  }
+
+    let onlineMap = new Map<string, string | null>();
+
+  if (userIds.length > 0) {
+    const { data: onlineRows, error: onlineError } = await supabase.rpc(
+      "get_staff_visible_online_status",
+      {
+        p_user_ids: userIds,
+      }
+    );
+
+    if (onlineError) {
+      setErrorText(onlineError.message);
+      setLoading(false);
+      return;
+    }
+
+    onlineMap = new Map(
+      (
+        (onlineRows || []) as {
+          user_id: string;
+          last_seen_at: string | null;
+        }[]
+      ).map((item) => [item.user_id, item.last_seen_at])
     );
   }
 
@@ -260,13 +289,14 @@ async function loadUsers() {
     }
   }
 
-  const mergedUsers = profileRows.map((user) => ({
-    ...user,
-    admin_nickname: noteMap.get(user.id) || null,
-    referral_parent: user.referred_by
-      ? parentMap.get(user.referred_by) || null
-      : null,
-  }));
+const mergedUsers = profileRows.map((user) => ({
+  ...user,
+  admin_nickname: noteMap.get(user.id) || null,
+  last_seen_at: onlineMap.get(user.id) || null,
+  referral_parent: user.referred_by
+    ? parentMap.get(user.referred_by) || null
+    : null,
+}));
 
   const summaryMap: Record<string, UserOrderSummary> = {};
 
@@ -508,6 +538,16 @@ function shortId(value: string) {
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
   return new Date(value).toLocaleDateString();
+}
+
+function isOnline(user: ManagedUser) {
+  if (!user.last_seen_at) return false;
+
+  const lastSeenTime = new Date(user.last_seen_at).getTime();
+
+  if (Number.isNaN(lastSeenTime)) return false;
+
+  return Date.now() - lastSeenTime <= 5 * 60 * 1000;
 }
 
 function getDisplayBalance(user: ManagedUser) {
@@ -1419,12 +1459,12 @@ async function handleDeleteUser() {
   </div>
 
   <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-    <p className="text-[11px] font-black uppercase tracking-wide text-white/45">
-      Active
-    </p>
-    <p className="mt-1 text-2xl font-black text-emerald-200">
-      {users.filter((item) => item.status === "active").length}
-    </p>
+<p className="text-[11px] font-black uppercase tracking-wide text-white/45">
+  Online
+</p>
+<p className="mt-1 text-2xl font-black text-emerald-200">
+  {users.filter((item) => isOnline(item)).length}
+</p>
   </div>
 </div>
 
@@ -1621,6 +1661,7 @@ async function handleDeleteUser() {
           <tbody className="divide-y divide-slate-200">
   {paginatedUsers.map((user) => {
     const isUserAdmin = user.role === "admin";
+    const userIsOnline = isOnline(user);
     const displayBalance = getDisplayBalance(user);
     const depositBalance = Number(user.deposited_balance || 0);
     const referralBalance = Number(user.referral_bonus_balance || 0);
@@ -1666,15 +1707,15 @@ async function handleDeleteUser() {
                   {user.display_name || t.row.noName}
                 </p>
 
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-                    user.status === "active"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {user.status}
-                </span>
+<span
+  className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
+    userIsOnline
+      ? "bg-emerald-100 text-emerald-700"
+      : "bg-slate-100 text-slate-500"
+  }`}
+>
+  {userIsOnline ? "Online" : "Offline"}
+</span>
 
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-600">
                   {user.role}
@@ -1903,15 +1944,15 @@ async function handleDeleteUser() {
         <td className="px-4 py-3 align-middle">
           <div className="min-w-[145px] space-y-1 text-[11px] font-bold text-slate-500">
             <div>
-              <span
-                className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-black uppercase ${
-                  user.status === "active"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {user.status}
-              </span>
+<span
+  className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-black uppercase ${
+    userIsOnline
+      ? "bg-emerald-100 text-emerald-700"
+      : "bg-slate-100 text-slate-500"
+  }`}
+>
+  {userIsOnline ? "Online" : "Offline"}
+</span>
             </div>
 
             <p>
