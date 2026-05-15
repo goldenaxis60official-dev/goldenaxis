@@ -755,11 +755,12 @@ async function handleGenerateOrders() {
   if (!generateUser) return;
 
   if (generateTaskCount < 1) {
-  setErrorText("Task count must be at least 1.");
-  return;
-}
+    setErrorText("Task count must be at least 1.");
+    return;
+  }
 
-  const autoCapitalAmount = getAutoOrderAmount(generateUser);
+  const targetUser = generateUser;
+  const autoCapitalAmount = getAutoOrderAmount(targetUser);
 
   if (autoCapitalAmount <= 0) {
     setErrorText("This user has no available balance for auto order generation.");
@@ -776,7 +777,7 @@ async function handleGenerateOrders() {
   setErrorText("");
 
   const { error } = await supabase.rpc("generate_user_orders", {
-    p_user_id: generateUser.id,
+    p_user_id: targetUser.id,
     p_task_count: generateTaskCount,
     p_capital_amount: autoCapitalAmount,
     p_profit_rate_percent: generateProfitRate,
@@ -790,19 +791,21 @@ async function handleGenerateOrders() {
   }
 
   setSuccessText(
-  `${generateResetExisting ? "Reset and generated" : "Added"} ${generateTaskCount} auto orders for ${
-    generateUser.display_name || generateUser.phone || "user"
-  } using ${generateProfitRate} campaign rate and base amount ${formatMoney(
-    autoCapitalAmount
-  )}.`
-);
+    `${generateResetExisting ? "Reset and generated" : "Added"} ${generateTaskCount} auto orders for ${
+      targetUser.display_name || targetUser.phone || "user"
+    } using ${generateProfitRate} campaign rate and base amount ${formatMoney(
+      autoCapitalAmount
+    )}.`
+  );
 
   setGenerateUser(null);
   setGenerateTaskCount(60);
   setGenerateProfitRate(0.008);
   setGenerateResetExisting(false);
+
+  await loadUsers();
+
   setActionLoading(false);
-  loadUsers();
 }
 
 async function openLuckyOrderModal(user: ManagedUser) {
