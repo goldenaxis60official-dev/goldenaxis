@@ -111,16 +111,24 @@ function DepositContent({ profile }: { profile: Profile }) {
 
   const finalAmount = customAmount ? Number(customAmount) : Number(amount);
 
-const mainBalance = Number(profile.balance || 0);
+const rawMainBalance = Number(profile.balance || 0);
 const depositReserve = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-// Frontend display only.
-// Shows the same visible total as Home/Profile/Missions/Admin.
-const displayBalance = mainBalance + depositReserve;
+const hasSplitBalances =
+  profile.deposited_balance !== undefined ||
+  profile.referral_bonus_balance !== undefined ||
+  profile.task_profit_balance !== undefined;
 
-const luckyAvailableBalance = mainBalance + depositReserve;
+const splitBalance = Number(
+  (depositReserve + referralBalance + taskProfitBalance).toFixed(2)
+);
+
+// After split-balance SQL fix, profile.balance already represents the total.
+// Do not add deposited_balance again.
+const displayBalance = hasSplitBalances ? splitBalance : rawMainBalance;
+
 const availableNetworks = networkOptionsByAsset[asset];
 
   async function loadWalletAddresses() {

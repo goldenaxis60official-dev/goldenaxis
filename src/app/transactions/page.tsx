@@ -199,13 +199,27 @@ useEffect(() => {
 
   const netChange = totalIn - totalOut;
 
-const mainBalance = Number(profile.balance || 0);
+const rawMainBalance = Number(profile.balance || 0);
 const depositReserve = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-const displayBalance = mainBalance + depositReserve;
-const luckyAvailableBalance = mainBalance + depositReserve;
+const hasSplitBalances =
+  profile.deposited_balance !== undefined ||
+  profile.referral_bonus_balance !== undefined ||
+  profile.task_profit_balance !== undefined;
+
+const splitBalance = Number(
+  (depositReserve + referralBalance + taskProfitBalance).toFixed(2)
+);
+
+// After split-balance SQL fix, profile.balance is only compatibility total.
+// Do not add deposited_balance again.
+const displayBalance = hasSplitBalances ? splitBalance : rawMainBalance;
+const luckyAvailableBalance = displayBalance;
+
+// Keep existing UI variable name, but make it show the real total.
+const mainBalance = displayBalance;
 
 const generatedProfitTotal = transactions
   .filter(
