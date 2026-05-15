@@ -619,17 +619,22 @@ useEffect(() => {
     <>
       <div className="space-y-4">
         {paginatedRecords.map((item) => {
-          const isDeposit = item.type === "deposit_credit";
-          const isPending = item.status === "pending";
-          const separatedBalance =
-  Number(item.profiles?.deposited_balance || 0) +
-  Number(item.profiles?.referral_bonus_balance || 0) +
-  Number(item.profiles?.task_profit_balance || 0);
+const isDeposit = item.type === "deposit_credit";
+const isPending = item.status === "pending";
 
-const displayBalance =
-  separatedBalance > 0
-    ? separatedBalance
-    : Number(item.profiles?.balance || 0);
+const rawMainBalance = Number(item.profiles?.balance || 0);
+const deposited = Number(item.profiles?.deposited_balance || 0);
+const referral = Number(item.profiles?.referral_bonus_balance || 0);
+const profit = Number(item.profiles?.task_profit_balance || 0);
+
+const hasSplitBalances =
+  item.profiles?.deposited_balance !== undefined ||
+  item.profiles?.referral_bonus_balance !== undefined ||
+  item.profiles?.task_profit_balance !== undefined;
+
+const separatedBalance = Number((deposited + referral + profit).toFixed(2));
+
+const displayBalance = hasSplitBalances ? separatedBalance : rawMainBalance;
 
           return (
             <div
