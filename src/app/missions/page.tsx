@@ -245,10 +245,21 @@ const totalProfitAmount = useMemo(() => {
   }
 
 function getUsableCampaignBalance() {
-  const mainBalance = Number(profile.balance || 0);
-  const depositBalance = Number(profile.deposited_balance || 0);
+  const rawMainBalance = Number(profile.balance || 0);
+  const deposited = Number(profile.deposited_balance || 0);
+  const referral = Number(profile.referral_bonus_balance || 0);
+  const profit = Number(profile.task_profit_balance || 0);
 
-  return mainBalance + depositBalance;
+  const hasSplitBalances =
+    profile.deposited_balance !== undefined ||
+    profile.referral_bonus_balance !== undefined ||
+    profile.task_profit_balance !== undefined;
+
+  if (hasSplitBalances) {
+    return Number((deposited + referral + profit).toFixed(2));
+  }
+
+  return Number(rawMainBalance.toFixed(2));
 }
 
   async function handleCompleteGeneratedOrder(order: GeneratedOrder) {

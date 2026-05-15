@@ -219,11 +219,23 @@ const nextTaskCategory =
         ? liveText.pending
         : liveText.completed;
 
+const rawMainBalance = Number(profile.balance || 0);
 const depositedBalance = Number(profile.deposited_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-// Frontend display only.
-// This matches Missions page display and does not change task/lucky calculation.
-const homepageTotalBalance = Number(profile.balance || 0) + depositedBalance;
+const hasSplitBalances =
+  profile.deposited_balance !== undefined ||
+  profile.referral_bonus_balance !== undefined ||
+  profile.task_profit_balance !== undefined;
+
+const splitBalance = Number(
+  (depositedBalance + referralBalance + taskProfitBalance).toFixed(2)
+);
+
+// After split-balance SQL fix, profile.balance already represents the total.
+// Do not add deposited_balance again.
+const homepageTotalBalance = hasSplitBalances ? splitBalance : rawMainBalance;
 
     const actionStatus = {
     startMission: missionStatusLabel,

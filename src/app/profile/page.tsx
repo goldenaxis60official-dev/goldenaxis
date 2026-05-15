@@ -207,12 +207,23 @@ async function handleLogout() {
   const missionTotalText =
     assignedTotal === null ? "..." : assignedTotal > 0 ? assignedTotal : "-";
 
+const rawMainBalance = Number(profile.balance || 0);
 const depositedBalance = Number(profile.deposited_balance || 0);
+const referralBalance = Number(profile.referral_bonus_balance || 0);
+const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-// Frontend display only.
-// This matches Home and Missions page display.
-// It does not change task/lucky calculation.
-const profileTotalBalance = Number(profile.balance || 0) + depositedBalance;
+const hasSplitBalances =
+  profile.deposited_balance !== undefined ||
+  profile.referral_bonus_balance !== undefined ||
+  profile.task_profit_balance !== undefined;
+
+const splitBalance = Number(
+  (depositedBalance + referralBalance + taskProfitBalance).toFixed(2)
+);
+
+// After split-balance SQL fix, profile.balance already represents the total.
+// Do not add deposited_balance again.
+const profileTotalBalance = hasSplitBalances ? splitBalance : rawMainBalance;
   return (
     <AppShell>
       <section className="px-5 pb-44 pt-7">
