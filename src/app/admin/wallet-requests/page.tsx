@@ -309,8 +309,8 @@ async function handleApprove(id: string) {
   }
 
   setSuccessText(t.messages.approved);
-  setActionId(null);
-  loadRecords();
+await loadRecords();
+setActionId(null);
 }
 
 async function handleReject(id: string) {
@@ -350,8 +350,8 @@ async function handleReject(id: string) {
   }
 
   setSuccessText(t.messages.rejected);
-  setActionId(null);
-  loadRecords();
+await loadRecords();
+setActionId(null);
 }
 
   const filteredRecords = useMemo(() => {
