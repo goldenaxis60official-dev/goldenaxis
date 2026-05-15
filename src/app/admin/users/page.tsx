@@ -298,69 +298,40 @@ const mergedUsers = profileRows.map((user) => ({
     : null,
 }));
 
-  const summaryMap: Record<string, UserOrderSummary> = {};
+const summaryMap: Record<string, UserOrderSummary> = {};
 
-  if (userIds.length > 0) {
-const { data: orderRows, error: orderError } = await supabase.rpc(
-  "get_staff_visible_generated_order_summaries"
-);
+if (userIds.length > 0) {
+  const orderResults = await Promise.all(
+    userIds.map(async (userId) => {
+      const { data, error } = await supabase.rpc(
+        "get_staff_visible_generated_orders",
+        {
+          p_user_id: userId,
+        }
+      );
 
-    if (orderError) {
-      setErrorText(orderError.message);
-      setUsers(mergedUsers);
-      setOrderStatsByUser({});
-      setLoading(false);
-      return;
-    }
-
-((orderRows || []) as {
-  user_id: string;
-  step_number: number | null;
-  status: string | null;
-  is_lucky_bonus: boolean | null;
-}[])
-  .filter((order) => userIds.includes(order.user_id))
-  .forEach((order) => {
-      const userId = order.user_id;
-      const stepNumber = Number(order.step_number || 0);
-
-      if (!summaryMap[userId]) {
-        summaryMap[userId] = {
-          totalOrders: 0,
-          maxStep: 0,
-          completedOrders: 0,
-          pendingOrders: 0,
-          luckySteps: [],
+      if (error) {
+        return {
+          userId,
+          orders: [] as GeneratedOrderPreview[],
         };
       }
 
-      summaryMap[userId].totalOrders += 1;
-      summaryMap[userId].maxStep = Math.max(
-        summaryMap[userId].maxStep,
-        stepNumber
-      );
+      return {
+        userId,
+        orders: (data || []) as unknown as GeneratedOrderPreview[],
+      };
+    })
+  );
 
-      if (order.status === "completed") {
-        summaryMap[userId].completedOrders += 1;
-      }
+  orderResults.forEach(({ userId, orders }) => {
+    summaryMap[userId] = buildOrderSummary(orders);
+  });
+}
 
-      if (order.status === "pending") {
-        summaryMap[userId].pendingOrders += 1;
-      }
-
-      if (order.is_lucky_bonus && stepNumber > 0) {
-        summaryMap[userId].luckySteps.push(stepNumber);
-      }
-    });
-
-    Object.values(summaryMap).forEach((summary) => {
-      summary.luckySteps.sort((a, b) => a - b);
-    });
-  }
-
-  setUsers(mergedUsers);
-  setOrderStatsByUser(summaryMap);
-  setLoading(false);
+setUsers(mergedUsers);
+setOrderStatsByUser(summaryMap);
+setLoading(false);
 }
 
   useEffect(() => {
