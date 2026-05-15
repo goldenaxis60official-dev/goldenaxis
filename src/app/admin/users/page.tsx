@@ -576,6 +576,48 @@ function getAutoOrderAmount(user: ManagedUser) {
   return Number(Math.min(availableBalance, 10000).toFixed(2));
 }
 
+function buildOrderSummary(orders: GeneratedOrderPreview[]): UserOrderSummary {
+  const summary: UserOrderSummary = {
+    totalOrders: orders.length,
+    maxStep: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    luckySteps: [],
+  };
+
+  orders.forEach((order) => {
+    const stepNumber = Number(order.step_number || 0);
+
+    summary.maxStep = Math.max(summary.maxStep, stepNumber);
+
+    if (order.status === "completed") {
+      summary.completedOrders += 1;
+    }
+
+    if (order.status === "pending") {
+      summary.pendingOrders += 1;
+    }
+
+    if (order.is_lucky_bonus && stepNumber > 0) {
+      summary.luckySteps.push(stepNumber);
+    }
+  });
+
+  summary.luckySteps.sort((a, b) => a - b);
+
+  return summary;
+}
+
+function updateUserOrderSummary(
+  userId: string,
+  orders: GeneratedOrderPreview[]
+) {
+  setOrderStatsByUser((current) => ({
+    ...current,
+    [userId]: buildOrderSummary(orders),
+  }));
+}
+
 async function openGenerateOrdersModal(user: ManagedUser) {
   setGenerateUser(user);
   setGenerateTaskCount(60);
@@ -798,14 +840,26 @@ async function handleGenerateOrders() {
     )}.`
   );
 
-  setGenerateUser(null);
-  setGenerateTaskCount(60);
-  setGenerateProfitRate(0.008);
-  setGenerateResetExisting(false);
+const { data: refreshedOrders, error: refreshError } = await supabase.rpc(
+  "get_staff_visible_generated_orders",
+  {
+    p_user_id: targetUser.id,
+  }
+);
 
-  await loadUsers();
+if (!refreshError) {
+  const orders = (refreshedOrders || []) as unknown as GeneratedOrderPreview[];
+  updateUserOrderSummary(targetUser.id, orders);
+}
 
-  setActionLoading(false);
+setGenerateUser(null);
+setGenerateTaskCount(60);
+setGenerateProfitRate(0.008);
+setGenerateResetExisting(false);
+
+await loadUsers();
+
+setActionLoading(false);
 }
 
 async function openLuckyOrderModal(user: ManagedUser) {
@@ -947,7 +1001,10 @@ async function openViewOrdersModal(user: ManagedUser) {
     return;
   }
 
-  setViewOrders((data || []) as unknown as GeneratedOrderPreview[]);
+  const orders = (data || []) as unknown as GeneratedOrderPreview[];
+
+  setViewOrders(orders);
+  updateUserOrderSummary(user.id, orders);
   setViewOrdersLoading(false);
 }
 
