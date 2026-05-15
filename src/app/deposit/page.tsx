@@ -90,8 +90,7 @@ function DepositContent({ profile }: { profile: Profile }) {
   const lang = getLanguage(profile.language);
   const t = messages[lang];
 
-  const [amount, setAmount] = useState(100);
-  const [customAmount, setCustomAmount] = useState("");
+const [depositAmount, setDepositAmount] = useState("");
 
   const [asset, setAsset] = useState<WalletAsset>("USDT");
   const [network, setNetwork] = useState<WalletNetwork>("TRC20");
@@ -109,7 +108,7 @@ function DepositContent({ profile }: { profile: Profile }) {
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  const finalAmount = customAmount ? Number(customAmount) : Number(amount);
+  const finalAmount = Number(depositAmount || 0);
 
 const rawMainBalance = Number(profile.balance || 0);
 const depositReserve = Number(profile.deposited_balance || 0);
@@ -311,7 +310,7 @@ const finalNote = [
     setSuccessText(t.deposit.successSubmitted);
     setTxHash("");
 setNote("");
-setCustomAmount("");
+setDepositAmount("");
 setProofFile(null);
 setProofPreview("");
 setLoading(false);
@@ -361,50 +360,42 @@ return (
       <LuxuryCard className="p-4">
         <form onSubmit={handleSubmit}>
           <div className="mb-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
-                1
-              </span>
-              <p className="font-black">Choose Amount</p>
-            </div>
+  <div className="mb-4 flex items-center gap-2">
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
+      1
+    </span>
+    <div>
+      <p className="font-black">Enter Deposit Amount</p>
+      <p className="mt-0.5 text-xs text-white/40">
+        Fill the amount you sent for review.
+      </p>
+    </div>
+  </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {[100, 300, 500].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => {
-                    setAmount(value);
-                    setCustomAmount("");
-                  }}
-                  className={`rounded-2xl border px-3 py-4 text-sm font-black ${
-                    !customAmount && amount === value
-                      ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-white/10 bg-black/30 text-white/70"
-                  }`}
-                >
-                  ${value}
-                </button>
-              ))}
-            </div>
+  <div className="rounded-[1.4rem] border border-yellow-400/20 bg-black/35 p-3 shadow-[inset_0_0_24px_rgba(250,204,21,0.05)]">
+    <label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-yellow-200/60">
+      Amount
+    </label>
 
-            <input
-              value={customAmount}
-              onChange={(event) => setCustomAmount(event.target.value)}
-              type="number"
-              min="1"
-              step="0.01"
-              placeholder="Other amount"
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-            />
+    <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-4 focus-within:border-yellow-400/55">
+      <span className="text-2xl font-black text-yellow-300">$</span>
 
-            <div className="mt-3 rounded-2xl bg-black/30 px-4 py-3">
-              <p className="text-xs text-white/40">You selected</p>
-              <p className="text-xl font-black text-yellow-300">
-                ${finalAmount > 0 ? finalAmount.toFixed(2) : "0.00"}
-              </p>
-            </div>
-          </div>
+      <input
+        value={depositAmount}
+        onChange={(event) => setDepositAmount(event.target.value)}
+        type="number"
+        min="1"
+        step="0.01"
+        placeholder="Enter amount"
+        className="w-full bg-transparent text-2xl font-black text-white outline-none placeholder:text-white/25"
+      />
+    </div>
+
+    <p className="mt-3 text-xs leading-5 text-white/40">
+      Your deposit will be added after payment proof is reviewed.
+    </p>
+  </div>
+</div>
 
           <div className="mb-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
             <div className="mb-3 flex items-center gap-2">

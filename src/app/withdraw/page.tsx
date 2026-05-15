@@ -119,15 +119,26 @@ function WithdrawContent({ profile }: { profile: Profile }) {
 
   const hasNoGeneratedOrders = !loadingProgress && generatedTotal === 0;
 
-const mainBalance = Number(profile.balance || 0);
+const rawMainBalance = Number(profile.balance || 0);
 const depositReserve = Number(profile.deposited_balance || 0);
 const referralBalance = Number(profile.referral_bonus_balance || 0);
 const taskProfitBalance = Number(profile.task_profit_balance || 0);
 
-// Frontend display + withdraw form limit.
-// Matches Home/Profile/Missions/Admin visible balance.
-// Backend withdrawal approval already deducts from profit/referral/deposit/main safely.
-const availableBalance = mainBalance + depositReserve;
+const hasSplitBalances =
+  profile.deposited_balance !== undefined ||
+  profile.referral_bonus_balance !== undefined ||
+  profile.task_profit_balance !== undefined;
+
+const splitBalance = Number(
+  (depositReserve + referralBalance + taskProfitBalance).toFixed(2)
+);
+
+// After split-balance SQL fix, profile.balance already represents the total.
+// Do not add deposited_balance again.
+const availableBalance = hasSplitBalances ? splitBalance : rawMainBalance;
+
+// Keep this for the withdraw note text below.
+const mainBalance = availableBalance;
 
   const withdrawAmount = Number(amount || 0);
 
