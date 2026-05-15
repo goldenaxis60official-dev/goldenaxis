@@ -45,12 +45,21 @@ type GenerateOrdersModalProps = {
 };
 
 function getAvailableBalance(user: ModalUser) {
-  const mainBalance = Number(user.balance || 0);
-  const depositBalance = Number(user.deposited_balance || 0);
+  const deposited = Number(user.deposited_balance || 0);
+  const referral = Number(user.referral_bonus_balance || 0);
+  const profit = Number(user.task_profit_balance || 0);
+  const legacyBalance = Number(user.balance || 0);
 
-  // Match admin visible Total Balance.
-  // This fixes reset/generate modal showing only old balance.
-  return mainBalance + depositBalance;
+  const hasSplitBalances =
+    user.deposited_balance !== undefined ||
+    user.referral_bonus_balance !== undefined ||
+    user.task_profit_balance !== undefined;
+
+  if (hasSplitBalances) {
+    return Number((deposited + referral + profit).toFixed(2));
+  }
+
+  return Number(legacyBalance.toFixed(2));
 }
 
 function getAutoOrderAmount(user: ModalUser) {

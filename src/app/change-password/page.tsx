@@ -1,3 +1,5 @@
+//src>app>change-password>page.tsx
+
 "use client";
 
 import { FormEvent, useState } from "react";
