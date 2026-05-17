@@ -77,29 +77,53 @@ export default function GuestSupportPage() {
     }
   }, []);
 
-  async function loadThread(
-    activeSessionId = guestSessionId,
-    activeTicketId = ticketId
-  ) {
-    if (!activeSessionId || !activeTicketId) return;
+  useEffect(() => {
+  if (!guestSessionId || !ticketId) return;
 
+  const intervalId = window.setInterval(() => {
+    loadThread(guestSessionId, ticketId, true);
+  }, 8000);
+
+  return () => {
+    window.clearInterval(intervalId);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [guestSessionId, ticketId]);
+
+async function loadThread(
+  activeSessionId = guestSessionId,
+  activeTicketId = ticketId,
+  silent = false
+) {
+  if (!activeSessionId || !activeTicketId) return;
+
+  if (!silent) {
     setLoadingThread(true);
-    setErrorText("");
+  }
 
-    const { data, error } = await supabase.rpc("get_guest_support_thread", {
-      p_guest_session_id: activeSessionId,
-      p_ticket_id: activeTicketId,
-    });
+  setErrorText("");
 
-    if (error) {
-      setErrorText(error.message);
+  const { data, error } = await supabase.rpc("get_guest_support_thread", {
+    p_guest_session_id: activeSessionId,
+    p_ticket_id: activeTicketId,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+
+    if (!silent) {
       setLoadingThread(false);
-      return;
     }
 
-    setChatMessages((data || []) as GuestChatMessage[]);
+    return;
+  }
+
+  setChatMessages((data || []) as GuestChatMessage[]);
+
+  if (!silent) {
     setLoadingThread(false);
   }
+}
 
   async function handleCreateTicket(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -328,7 +352,7 @@ export default function GuestSupportPage() {
 
                 <div className="mt-3 flex items-center gap-2 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100/75">
                   <ShieldCheck className="h-4 w-4" />
-                  Please keep this page on the same browser to view replies.
+                  Please keep this page on the same browser.
                 </div>
               </div>
 
