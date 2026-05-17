@@ -244,9 +244,21 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
-            {secureLabel}
-          </div>
+<div className="flex items-center gap-2">
+  {!isAdminPortal && (
+    <Link
+      href="/guest-support"
+      aria-label="Customer support"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400/10 text-yellow-300 shadow-[0_0_22px_rgba(234,179,8,0.18)] transition hover:border-yellow-300/60 hover:bg-yellow-400/15 active:scale-95"
+    >
+      <Headphones className="h-5 w-5" />
+    </Link>
+  )}
+
+  <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold text-emerald-200">
+    {secureLabel}
+  </div>
+</div>
         </div>
 
         <div className="relative z-10 flex flex-1 flex-col justify-center px-5 pb-10">
@@ -380,29 +392,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {!isAdminPortal && (
-  <Link
-    href="/guest-support"
-    className="mt-4 flex items-center justify-between rounded-3xl border border-yellow-400/20 bg-gradient-to-r from-yellow-400/12 via-white/[0.04] to-black/30 p-4 shadow-[0_14px_45px_rgba(0,0,0,0.28)] transition hover:border-yellow-300/45 active:scale-[0.98]"
-  >
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_22px_rgba(234,179,8,0.28)]">
-        <Headphones className="h-5 w-5" />
-      </div>
-
-      <div>
-        <p className="text-sm font-black text-yellow-100">
-          Customer Support
-        </p>
-        <p className="mt-0.5 text-xs text-white/45">
-          Get help with login or account access
-        </p>
-      </div>
-    </div>
-
-    <ArrowRight className="h-5 w-5 text-yellow-300/80" />
-  </Link>
-)}
 
             {!isAdminPortal && (
               <p className="mt-6 text-center text-sm text-white/50">
