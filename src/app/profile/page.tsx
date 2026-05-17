@@ -37,22 +37,7 @@ const menuItems = [
     danger: false,
     subtitleKey: "customerSupport",
   },
-  {
-    key: "depositCredits",
-    icon: Upload,
-    href: "/deposit",
-    featured: false,
-    danger: false,
-    subtitleKey: null,
-  },
-  {
-    key: "withdrawRequest",
-    icon: Download,
-    href: "/withdraw",
-    featured: false,
-    danger: false,
-    subtitleKey: null,
-  },
+  key: "depositCredits",
   {
     key: "depositRecord",
     icon: ClipboardList,
