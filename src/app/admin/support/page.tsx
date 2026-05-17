@@ -24,9 +24,15 @@ import {
 
 type SupportStatus = "open" | "reviewing" | "closed";
 
+type SupportSource = "member" | "guest";
+
 type AdminTicket = {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  source: SupportSource;
+  guest_name: string | null;
+  guest_contact: string | null;
+  guest_session_id: string | null;
   subject: string;
   message: string;
   status: SupportStatus;
@@ -34,11 +40,11 @@ type AdminTicket = {
   created_at: string;
   replied_at: string | null;
   profiles: {
-  member_id: string | null;
-  display_name: string | null;
-  email: string | null;
-  phone: string | null;
-} | null;
+    member_id: string | null;
+    display_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
 };
 
 type ChatMessage = {
@@ -91,6 +97,34 @@ function getSupportStatusLabel(value: SupportStatus) {
   return t.status[value];
 }
 
+function isGuestTicket(ticket: AdminTicket) {
+  return ticket.source === "guest" || !ticket.user_id;
+}
+
+function getTicketName(ticket: AdminTicket) {
+  if (isGuestTicket(ticket)) {
+    return ticket.guest_name || "Guest";
+  }
+
+  return ticket.profiles?.display_name || t.list.unknownUser;
+}
+
+function getTicketContact(ticket: AdminTicket) {
+  if (isGuestTicket(ticket)) {
+    return ticket.guest_contact || "-";
+  }
+
+  return ticket.profiles?.phone || ticket.profiles?.email || "-";
+}
+
+function getTicketIdLabel(ticket: AdminTicket) {
+  if (isGuestTicket(ticket)) {
+    return `Guest: ${ticket.guest_session_id?.slice(0, 8) || ticket.id.slice(0, 8)}`;
+  }
+
+  return ticket.profiles?.member_id || ticket.user_id?.slice(0, 8) || ticket.id.slice(0, 8);
+}
+
 useEffect(() => {
   if (!hasPageAccess) {
     setLoadingTickets(false);
@@ -108,11 +142,13 @@ useEffect(() => {
   const keyword = searchText.trim().toLowerCase();
 
   const result = tickets.filter((ticket) => {
-const name = ticket.profiles?.display_name || "";
+const name = ticket.profiles?.display_name || ticket.guest_name || "";
 const email = ticket.profiles?.email || "";
 const phone = ticket.profiles?.phone || "";
+const guestContact = ticket.guest_contact || "";
 const memberId = ticket.profiles?.member_id || "";
 const userId = ticket.user_id || "";
+const source = ticket.source || "member";
 
     const matchesSearch =
       !keyword ||
@@ -121,6 +157,8 @@ const userId = ticket.user_id || "";
       name.toLowerCase().includes(keyword) ||
 email.toLowerCase().includes(keyword) ||
 phone.toLowerCase().includes(keyword) ||
+guestContact.toLowerCase().includes(keyword) ||
+source.toLowerCase().includes(keyword) ||
 memberId.toLowerCase().includes(keyword) ||
 userId.toLowerCase().includes(keyword) ||
 ticket.id.toLowerCase().includes(keyword);
@@ -193,15 +231,35 @@ async function loadTickets() {
     .filter((user) => user.status !== "deleted")
     .map((user) => user.id);
 
-  if (visibleUserIds.length === 0) {
-    setTickets([]);
-    setSelectedTicketId(null);
-    setChatMessages([]);
-    setLoadingTickets(false);
-    return;
+  let memberRows: AdminTicket[] = [];
+
+  if (visibleUserIds.length > 0) {
+    const { data: memberData, error: memberError } = await supabase
+      .from("support_messages")
+      .select(
+        `
+        *,
+        profiles (
+          member_id,
+          display_name,
+          email,
+          phone
+        )
+      `
+      )
+      .in("user_id", visibleUserIds)
+      .order("created_at", { ascending: false });
+
+    if (memberError) {
+      setErrorText(memberError.message);
+      setLoadingTickets(false);
+      return;
+    }
+
+    memberRows = (memberData || []) as AdminTicket[];
   }
 
-  const { data, error } = await supabase
+  const { data: guestData, error: guestError } = await supabase
     .from("support_messages")
     .select(
       `
@@ -214,16 +272,21 @@ async function loadTickets() {
       )
     `
     )
-    .in("user_id", visibleUserIds)
+    .eq("source", "guest")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    setErrorText(error.message);
+  if (guestError) {
+    setErrorText(guestError.message);
     setLoadingTickets(false);
     return;
   }
 
-  const rows = (data || []) as AdminTicket[];
+  const guestRows = (guestData || []) as AdminTicket[];
+
+  const rows = [...memberRows, ...guestRows].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
   setTickets(rows);
 
   if (rows.length === 0) {
@@ -318,16 +381,18 @@ async function loadTickets() {
       return;
     }
 
-    const { data: canAccess, error: accessError } = await supabase.rpc(
-  "staff_can_access_user",
-  {
-    p_target_user_id: selectedTicket.user_id,
-  }
-);
+if (!isGuestTicket(selectedTicket)) {
+  const { data: canAccess, error: accessError } = await supabase.rpc(
+    "staff_can_access_user",
+    {
+      p_target_user_id: selectedTicket.user_id,
+    }
+  );
 
-if (accessError || !canAccess) {
-  setErrorText("You cannot reply to this user's support ticket.");
-  return;
+  if (accessError || !canAccess) {
+    setErrorText("You cannot reply to this user's support ticket.");
+    return;
+  }
 }
 
     setSending(true);
@@ -378,6 +443,7 @@ async function handleStatusChange(nextStatus: SupportStatus) {
   setErrorText("");
   setSuccessText("");
 
+if (!isGuestTicket(selectedTicket)) {
   const { data: canAccess, error: accessError } = await supabase.rpc(
     "staff_can_access_user",
     {
@@ -389,6 +455,7 @@ async function handleStatusChange(nextStatus: SupportStatus) {
     setErrorText("You cannot update this user's support ticket.");
     return;
   }
+}
 
     const { error } = await supabase
       .from("support_messages")
@@ -537,7 +604,7 @@ async function handleStatusChange(nextStatus: SupportStatus) {
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-black text-white">
-                          {ticket.profiles?.display_name || t.list.unknownUser}
+                          {getTicketName(ticket)}
                         </p>
                         <StatusBadge
   status={ticket.status}
@@ -566,7 +633,7 @@ async function handleStatusChange(nextStatus: SupportStatus) {
     ID
   </p>
   <p className="mt-1 text-xs font-black text-yellow-300">
-    {ticket.profiles?.member_id || ticket.user_id.slice(0, 8)}
+    {getTicketIdLabel(ticket)}
   </p>
 </div>
 
@@ -652,7 +719,7 @@ async function handleStatusChange(nextStatus: SupportStatus) {
 
     <div className="flex items-center gap-3">
       <h2 className="truncate text-xl font-black">
-        {selectedTicket.profiles?.display_name || t.list.unknownUser}
+        {getTicketName(selectedTicket)}
       </h2>
       <StatusBadge
         status={selectedTicket.status}
@@ -662,14 +729,14 @@ async function handleStatusChange(nextStatus: SupportStatus) {
 
 <div className="mt-2 flex flex-wrap items-center gap-2">
   <p className="text-sm text-white/45">
-    Phone:{" "}
-    <span className="font-bold text-white/65">
-      {selectedTicket.profiles?.phone || "-"}
-    </span>
+    {isGuestTicket(selectedTicket) ? "Contact" : "Phone"}:{" "}
+<span className="font-bold text-white/65">
+  {getTicketContact(selectedTicket)}
+</span>
   </p>
 
   <span className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">
-    ID: {selectedTicket.profiles?.member_id || selectedTicket.user_id.slice(0, 8)}
+    ID: {getTicketIdLabel(selectedTicket)}
   </span>
 </div>
   </div>

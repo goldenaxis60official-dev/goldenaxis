@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   Gem,
+  Headphones,
   Loader2,
   Lock,
   Mail,
@@ -225,9 +226,11 @@ useEffect(() => {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto flex min-h-screen max-w-md flex-col overflow-hidden border-x border-white/10 bg-[radial-gradient(circle_at_top,#3a2a08_0%,#0b0903_34%,#050505_72%,#000_100%)]">
-        <div className="flex items-center justify-between px-5 py-5">
+    <main className="min-h-dvh bg-black text-white">
+  <div className="relative mx-auto flex min-h-dvh max-w-md flex-col overflow-hidden border-x border-white/10 bg-[radial-gradient(circle_at_top,#4a3407_0%,#171005_30%,#050505_68%,#000_100%)]">
+    <div className="pointer-events-none absolute -left-24 top-20 h-56 w-56 rounded-full bg-yellow-400/10 blur-3xl" />
+    <div className="pointer-events-none absolute -right-28 bottom-24 h-64 w-64 rounded-full bg-yellow-600/10 blur-3xl" />
+        <div className="relative z-10 flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 shadow-[0_0_30px_rgba(234,179,8,0.22)]">
               <PortalIcon className="h-5 w-5 text-yellow-300" />
@@ -246,7 +249,7 @@ useEffect(() => {
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col justify-center px-5 pb-10">
+        <div className="relative z-10 flex flex-1 flex-col justify-center px-5 pb-10">
           <div className="relative">
             <div className="absolute -top-24 left-1/2 h-52 w-52 -translate-x-1/2 rounded-full bg-yellow-400/10 blur-3xl" />
 
@@ -397,6 +400,23 @@ useEffect(() => {
           </div>
         </div>
 
+        {!isAdminPortal && (
+          <Link
+            href="/guest-support"
+            aria-label="Customer support"
+            className="fixed bottom-6 right-6 z-50 group flex items-center gap-2 rounded-full border border-yellow-300/35 bg-black/75 p-1.5 pr-4 text-yellow-100 shadow-[0_0_35px_rgba(234,179,8,0.28)] backdrop-blur-xl transition hover:border-yellow-300/70 hover:bg-black/90 active:scale-95"
+          >
+            <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 text-black shadow-[0_0_28px_rgba(234,179,8,0.35)]">
+              <span className="absolute inset-0 rounded-full bg-yellow-300/25 blur-xl" />
+              <Headphones className="relative h-5 w-5" />
+            </span>
+
+            <span className="hidden text-xs font-black uppercase tracking-[0.14em] sm:block">
+              Support
+            </span>
+          </Link>
+        )}
+
         <div className="px-5 pb-5 text-center text-[11px] text-white/35">
           <p>{footerText}</p>
 
@@ -405,9 +425,9 @@ useEffect(() => {
               {t.common.terms}
             </Link>
             <span className="text-white/20">•</span>
-            <Link href="/support" className="hover:text-yellow-300">
-              {t.common.support}
-            </Link>
+<Link href="/guest-support" className="hover:text-yellow-300">
+  {t.common.support}
+</Link>
           </div>
         </div>
       </div>
