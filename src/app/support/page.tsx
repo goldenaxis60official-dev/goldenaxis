@@ -129,6 +129,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
   const [activeTopic, setActiveTopic] = useState<SupportTopic>("missionHelp");
   const [message, setMessage] = useState("");
+  const [replyTicketId, setReplyTicketId] = useState<string | null>(null);
 
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -182,6 +183,14 @@ const ActiveTopicIcon = activeTopicData?.icon || Headphones;
       messages: chatMessages.filter((chat) => chat.ticket_id === ticket.id),
     }));
   }, [tickets, chatMessages]);
+
+  const replyTargetTicket = useMemo(() => {
+  return tickets.find((ticket) => ticket.id === replyTicketId) || null;
+}, [tickets, replyTicketId]);
+
+const formSubjectLabel = replyTargetTicket
+  ? replyTargetTicket.subject
+  : finalSubjectLabel;
 
 async function loadTicketsAndChat(showLoader = true) {
   if (showLoader) {
@@ -317,19 +326,20 @@ if (asset === "USDT" || asset === "USDC" || asset === "BTC") {
     }
   }, []);
 
-  function handleTopicSelect(topic: SupportTopic) {
-    setActiveTopic(topic);
-    setSuccessText("");
-    setErrorText("");
+function handleTopicSelect(topic: SupportTopic) {
+  setActiveTopic(topic);
+  setSuccessText("");
+  setErrorText("");
+  setReplyTicketId(null);
 
-    if (topic !== "walletHelp") {
-      setWalletAction(null);
-      setWalletAsset(null);
-      setWalletNetwork(null);
-      setCopied(false);
-      setMessage("");
-    }
+  if (topic !== "walletHelp") {
+    setWalletAction(null);
+    setWalletAsset(null);
+    setWalletNetwork(null);
+    setCopied(false);
+    setMessage("");
   }
+}
 
   function handleWalletAction(action: WalletAction) {
     setWalletAction(action);
@@ -337,6 +347,7 @@ if (asset === "USDT" || asset === "USDC" || asset === "BTC") {
     setWalletNetwork(null);
     setCopied(false);
     setMessage("");
+    setReplyTicketId(null);
   }
 
 function handleWalletAsset(asset: WalletAsset) {
@@ -344,6 +355,7 @@ function handleWalletAsset(asset: WalletAsset) {
   setWalletNetwork(getDefaultNetworkForAsset(asset));
   setCopied(false);
   setMessage("");
+  setReplyTicketId(null);
 }
 
   async function handleCopyAddress() {
@@ -356,6 +368,17 @@ function handleWalletAsset(asset: WalletAsset) {
       setCopied(false);
     }, 1600);
   }
+
+  function handleReplyToTicket(ticketId: string) {
+  const ticket = tickets.find((item) => item.id === ticketId);
+
+  if (!ticket || ticket.status === "closed") return;
+
+  setReplyTicketId(ticketId);
+  setMessage("");
+  setSuccessText("");
+  setErrorText("");
+}
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -372,11 +395,22 @@ function handleWalletAsset(asset: WalletAsset) {
       return;
     }
 
-    let targetTicket = tickets.find(
+let targetTicket = replyTargetTicket;
+
+if (targetTicket?.status === "closed") {
+  setErrorText("This conversation is closed.");
+  setSubmitting(false);
+  return;
+}
+
+if (!targetTicket) {
+  targetTicket =
+    tickets.find(
       (ticket) =>
         ticket.subject === finalSubject &&
         ticket.status !== "closed"
-    );
+    ) || null;
+}
 
     if (!targetTicket) {
       const { data: newTicket, error: ticketError } = await supabase
@@ -428,10 +462,11 @@ function handleWalletAsset(asset: WalletAsset) {
       return;
     }
 
-    setSuccessText(t.support.messageSent);
-    setMessage("");
-    setCopied(false);
-    setSubmitting(false);
+setSuccessText(t.support.messageSent);
+setMessage("");
+setCopied(false);
+setReplyTicketId(null);
+setSubmitting(false);
 
     await loadTicketsAndChat();
   }
@@ -598,13 +633,31 @@ function handleWalletAsset(asset: WalletAsset) {
                         />
                       ))}
 
-                      {ticket.status !== "closed" &&
-                        !messages.some(
-                          (chat) => chat.sender_role === "admin"
-                        ) && <WaitingBubble label={t.support.waitingReview} />}
-                    </>
-                  )}
-                </div>
+{ticket.status !== "closed" &&
+  !messages.some(
+    (chat) => chat.sender_role === "admin"
+  ) && <WaitingBubble label={t.support.waitingReview} />}
+</>
+)}
+
+{ticket.status !== "closed" && (
+  <div className="flex justify-center">
+    <button
+      type="button"
+      onClick={() => handleReplyToTicket(ticket.id)}
+      className={`rounded-full border px-4 py-2 text-xs font-black transition active:scale-[0.98] ${
+        replyTicketId === ticket.id
+          ? "border-yellow-400 bg-yellow-400 text-black"
+          : "border-yellow-400/25 bg-yellow-400/10 text-yellow-200"
+      }`}
+    >
+      {replyTicketId === ticket.id
+        ? "Reply target selected"
+        : "Reply to this notice"}
+    </button>
+  </div>
+)}
+</div>
               ))}
           </div>
         </LuxuryCard>
@@ -616,9 +669,19 @@ function handleWalletAsset(asset: WalletAsset) {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-white/45">{t.support.messageToSupport}</p>
-              <p className="text-sm font-black text-yellow-200">
-                {finalSubjectLabel}
-              </p>
+<p className="text-sm font-black text-yellow-200">
+  {formSubjectLabel}
+</p>
+
+{replyTargetTicket && (
+  <button
+    type="button"
+    onClick={() => setReplyTicketId(null)}
+    className="mt-1 text-xs font-bold text-white/45 underline decoration-white/20"
+  >
+    Cancel reply target
+  </button>
+)}
             </div>
 
             {successText && (
@@ -639,10 +702,12 @@ function handleWalletAsset(asset: WalletAsset) {
           <textarea
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder={
-  activeTopic === "walletHelp"
-    ? t.support.walletPlaceholder
-    : t.support.defaultPlaceholder
+placeholder={
+  replyTargetTicket
+    ? "Reply to this official notice..."
+    : activeTopic === "walletHelp"
+      ? t.support.walletPlaceholder
+      : t.support.defaultPlaceholder
 }
             className="mb-3 min-h-24 w-full rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
           />

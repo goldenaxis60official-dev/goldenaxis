@@ -96,6 +96,15 @@ const menuItems = [
   },
 ] as const;
 
+type SupportTicketPreview = {
+  id: string;
+};
+
+type SupportChatPreview = {
+  id: string;
+  created_at: string;
+};
+
 export default function ProfilePage() {
   return (
     <RequireAuth>
@@ -117,6 +126,7 @@ const [showLanguageModal, setShowLanguageModal] = useState(false);
 
 const [assignedTotal, setAssignedTotal] = useState<number | null>(null);
 const [copied, setCopied] = useState(false);
+const [hasUnreadSupport, setHasUnreadSupport] = useState(false);
 
   useEffect(() => {
     if (profile.role === "admin") {
@@ -139,6 +149,86 @@ const [copied, setCopied] = useState(false);
       loadAssignedCount();
     }
   }, [profile.id, profile.role]);
+
+  useEffect(() => {
+  let mounted = true;
+
+  async function loadUnreadSupport() {
+    if (profile.role !== "user") return;
+
+    const lastSeenKey = `golden_axis_support_seen_${profile.id}`;
+    const lastSeen = localStorage.getItem(lastSeenKey) || "";
+
+    const { data: ticketData } = await supabase
+      .from("support_messages")
+      .select("id")
+      .eq("user_id", profile.id)
+      .neq("status", "closed");
+
+    if (!mounted) return;
+
+    const ticketRows = (ticketData || []) as SupportTicketPreview[];
+    const ticketIds = ticketRows.map((ticket) => ticket.id);
+
+    if (ticketIds.length === 0) {
+      setHasUnreadSupport(false);
+      return;
+    }
+
+    let query = supabase
+      .from("support_chat_messages")
+      .select("id, created_at")
+      .in("ticket_id", ticketIds)
+      .eq("sender_role", "admin")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (lastSeen) {
+      query = query.gt("created_at", lastSeen);
+    }
+
+    const { data: chatData } = await query;
+
+    if (!mounted) return;
+
+    const rows = (chatData || []) as SupportChatPreview[];
+    setHasUnreadSupport(rows.length > 0);
+  }
+
+  loadUnreadSupport();
+
+  const channel = supabase
+    .channel(`profile-support-unread-${profile.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "support_messages",
+        filter: `user_id=eq.${profile.id}`,
+      },
+      () => {
+        loadUnreadSupport();
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "support_chat_messages",
+      },
+      () => {
+        loadUnreadSupport();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    mounted = false;
+    supabase.removeChannel(channel);
+  };
+}, [profile.id, profile.role]);
 
 async function handleLanguageChange(nextLanguage: Language) {
   if (nextLanguage === language || savingLanguage) return;
@@ -172,6 +262,14 @@ setSavingLanguage(false);
 }
 
 function handleMenuClick(item: (typeof menuItems)[number]) {
+  if (item.href === "/support") {
+    localStorage.setItem(
+      `golden_axis_support_seen_${profile.id}`,
+      new Date().toISOString()
+    );
+    setHasUnreadSupport(false);
+  }
+
   router.push(item.href);
 }
 
@@ -374,26 +472,41 @@ const profileTotalBalance = hasSplitBalances ? splitBalance : rawMainBalance;
         }`}
       >
         <div className="flex items-center gap-3">
-          <div
-            className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
-              item.featured
-                ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
-                : "bg-yellow-400/10 text-yellow-300"
-            }`}
-          >
-            <Icon className="h-5 w-5" />
-          </div>
+<div
+  className={`relative flex h-11 w-11 items-center justify-center rounded-2xl ${
+    item.featured
+      ? "bg-gradient-to-br from-yellow-300 to-yellow-600 text-black shadow-[0_0_25px_rgba(234,179,8,0.35)]"
+      : "bg-yellow-400/10 text-yellow-300"
+  }`}
+>
+  {item.key === "customerSupport" && hasUnreadSupport && (
+    <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-70" />
+      <span className="relative inline-flex h-3.5 w-3.5 rounded-full border border-black bg-red-500" />
+    </span>
+  )}
+
+  <Icon className="h-5 w-5" />
+</div>
 
           <div className="text-left">
-            <span
-              className={`font-medium ${
-                item.featured
-                  ? "font-black text-yellow-200"
-                  : "text-white/80"
-              }`}
-            >
-              {t.profile.menu[item.key]}
-            </span>
+<div className="flex items-center gap-2">
+  <span
+    className={`font-medium ${
+      item.featured
+        ? "font-black text-yellow-200"
+        : "text-white/80"
+    }`}
+  >
+    {t.profile.menu[item.key]}
+  </span>
+
+  {item.key === "customerSupport" && hasUnreadSupport && (
+    <span className="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black uppercase text-white">
+      New
+    </span>
+  )}
+</div>
 
             {item.subtitleKey && (
               <p

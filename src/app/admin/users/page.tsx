@@ -16,6 +16,7 @@ import DeleteUserModal from "./components/DeleteUserModal";
 import NicknameModal from "./components/NicknameModal";
 import ReferralCodeModal from "./components/ReferralCodeModal";
 import ReferralBonusModal from "./components/ReferralBonusModal";
+import UserMessageModal from "./components/UserMessageModal";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
@@ -27,6 +28,7 @@ import {
   ChevronRight,
   Crown,
   Eye,
+  MessageCircle,
   RotateCcw,
   PackagePlus,
   Pencil,
@@ -134,6 +136,7 @@ const [maxBalanceFilter, setMaxBalanceFilter] = useState("");
 const [minStepFilter, setMinStepFilter] = useState("");
 const [maxStepFilter, setMaxStepFilter] = useState("");
 const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
+const [messageUser, setMessageUser] = useState<ManagedUser | null>(null);
 const [nicknameUser, setNicknameUser] = useState<ManagedUser | null>(null);
 const [nicknameValue, setNicknameValue] = useState("");
 
@@ -1340,6 +1343,38 @@ async function handleSaveReferralBonus() {
   setActionLoading(false);
 }
 
+async function handleSendUserMessage(subject: string, message: string) {
+  if (!messageUser) return;
+
+  if (messageUser.role !== "user") {
+    setErrorText("Only normal users can receive direct notices.");
+    return;
+  }
+
+  setActionLoading(true);
+  setSuccessText("");
+  setErrorText("");
+
+  const { error } = await supabase.rpc("staff_start_user_chat", {
+    p_user_id: messageUser.id,
+    p_subject: subject,
+    p_message: message,
+  });
+
+  if (error) {
+    setErrorText(error.message);
+    setActionLoading(false);
+    return;
+  }
+
+  setSuccessText(
+    `Notice sent to ${messageUser.display_name || messageUser.phone || "user"}.`
+  );
+
+  setMessageUser(null);
+  setActionLoading(false);
+}
+
 async function handleDeleteUser() {
   if (!deleteUser) return;
 
@@ -2014,6 +2049,18 @@ async function handleDeleteUser() {
         <td className="px-5 py-3 align-middle">
           <div className="flex min-w-[270px] flex-wrap justify-end gap-1.5">
             <button
+  onClick={() => {
+    setMessageUser(user);
+    setSuccessText("");
+    setErrorText("");
+  }}
+  disabled={!isStaffControlRole || user.role !== "user"}
+  className="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-35"
+>
+  <MessageCircle className="h-3.5 w-3.5" />
+  Message
+</button>
+            <button
               onClick={() => openGenerateOrdersModal(user)}
               disabled={!canManageOrders || user.role !== "user"}
               className="inline-flex items-center justify-center gap-1 rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-black text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-35"
@@ -2155,6 +2202,16 @@ async function handleDeleteUser() {
     </>
   )}
 </section>
+
+{messageUser && (
+  <UserMessageModal
+    user={messageUser}
+    fallbackName={t.list.fallbackName}
+    actionLoading={actionLoading}
+    onClose={() => setMessageUser(null)}
+    onSubmit={handleSendUserMessage}
+  />
+)}
 
 {generateUser && (
   <GenerateOrdersModal
