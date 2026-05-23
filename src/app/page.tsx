@@ -341,9 +341,14 @@ const homepageTotalBalance = hasSplitBalances ? splitBalance : rawMainBalance;
 </h2>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black shadow-[0_12px_30px_rgba(234,179,8,0.28)]">
-              <Wallet className="h-7 w-7" />
-            </div>
+<button
+  type="button"
+  onClick={() => router.push("/deposit")}
+  aria-label={t.home.quickActions.deposit}
+  className="rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-600 p-3 text-black shadow-[0_12px_30px_rgba(234,179,8,0.28)] transition active:scale-[0.96]"
+>
+  <Wallet className="h-7 w-7" />
+</button>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
