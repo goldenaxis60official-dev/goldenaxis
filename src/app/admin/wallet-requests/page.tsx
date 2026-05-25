@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { en } from "@/i18n/en";
 import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
+import AdminSessionGuard from "@/components/auth/AdminSessionGuard";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
@@ -61,7 +62,11 @@ type AdminWalletRequestsText = typeof en.adminWalletRequests;
 export default function AdminWalletRequestsPage() {
   return (
     <RequireAuth>
-      {(profile) => <AdminWalletRequestsContent profile={profile} />}
+      {(profile) => (
+        <AdminSessionGuard profile={profile}>
+          <AdminWalletRequestsContent profile={profile} />
+        </AdminSessionGuard>
+      )}
     </RequireAuth>
   );
 }

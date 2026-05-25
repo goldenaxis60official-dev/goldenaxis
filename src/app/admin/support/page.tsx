@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { en } from "@/i18n/en";
 import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
+import AdminSessionGuard from "@/components/auth/AdminSessionGuard";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
@@ -61,11 +62,14 @@ type AdminSupportText = typeof en.adminSupport;
 export default function AdminSupportPage() {
   return (
     <RequireAuth>
-      {(profile) => <AdminSupportContent profile={profile} />}
+      {(profile) => (
+        <AdminSessionGuard profile={profile}>
+          <AdminSupportContent profile={profile} />
+        </AdminSessionGuard>
+      )}
     </RequireAuth>
   );
 }
-
 function AdminSupportContent({ profile }: { profile: Profile }) {
   const currentLanguage = profile.language === "zh" ? "zh" : "en";
 

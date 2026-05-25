@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { en } from "@/i18n/en";
 import { zh } from "@/i18n/zh";
 import RequireAuth from "@/components/auth/RequireAuth";
+import AdminSessionGuard from "@/components/auth/AdminSessionGuard";
 import GenerateOrdersModal from "./components/GenerateOrdersModal";
 import LuckyOrderModal from "./components/LuckyOrderModal";
 import ViewOrdersModal from "./components/ViewOrdersModal";
@@ -107,7 +108,11 @@ type AdminUsersText = typeof en.adminUsers;
 export default function AdminUsersPage() {
   return (
     <RequireAuth>
-      {(profile) => <AdminUsersContent profile={profile} />}
+      {(profile) => (
+        <AdminSessionGuard profile={profile}>
+          <AdminUsersContent profile={profile} />
+        </AdminSessionGuard>
+      )}
     </RequireAuth>
   );
 }

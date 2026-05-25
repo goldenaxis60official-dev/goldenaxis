@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import RequireAuth from "@/components/auth/RequireAuth";
+import AdminSessionGuard from "@/components/auth/AdminSessionGuard";
 import AdminNav from "../AdminNav";
 import { supabase } from "@/lib/supabaseClient";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
@@ -60,7 +61,11 @@ function getNetworkTitle(asset: WalletAsset, network: WalletNetwork) {
 export default function AdminWalletAddressesPage() {
   return (
     <RequireAuth>
-      {(profile) => <AdminWalletAddressesContent profile={profile} />}
+      {(profile) => (
+        <AdminSessionGuard profile={profile}>
+          <AdminWalletAddressesContent profile={profile} />
+        </AdminSessionGuard>
+      )}
     </RequireAuth>
   );
 }

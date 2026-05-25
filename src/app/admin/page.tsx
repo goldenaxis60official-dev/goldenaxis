@@ -5,14 +5,20 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import RequireAuth from "@/components/auth/RequireAuth";
+import AdminSessionGuard from "@/components/auth/AdminSessionGuard";
 import { canAccessAdminPath } from "@/lib/adminPermissions";
 import type { Profile } from "@/types/profile";
 
+
 export default function AdminPage() {
   return (
-    <RequireAuth>
-      {(profile) => <AdminRedirect profile={profile} />}
-    </RequireAuth>
+<RequireAuth>
+  {(profile) => (
+    <AdminSessionGuard profile={profile}>
+      <AdminRedirect profile={profile} />
+    </AdminSessionGuard>
+  )}
+</RequireAuth>
   );
 }
 
