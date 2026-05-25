@@ -41,11 +41,6 @@ function phoneToHiddenEmail(phone: string) {
   return `${digits}@goldenaxis60.member`;
 }
 
-const REGISTRATION_MAINTENANCE_MODE = true;
-
-const REGISTRATION_MAINTENANCE_MESSAGE =
-  "New member registration is temporarily paused while we complete a scheduled system review. Existing members can still log in normally. Please try again later";
-
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -62,8 +57,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 const [errorText, setErrorText] = useState("");
 const t = guestAuth.en;
-
-const isMaintenanceNotice = errorText === REGISTRATION_MAINTENANCE_MESSAGE;
 
   useEffect(() => {
     async function redirectIfLoggedIn() {
@@ -102,10 +95,6 @@ async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
   setErrorText("");
 
-  if (REGISTRATION_MAINTENANCE_MODE) {
-    setErrorText(REGISTRATION_MAINTENANCE_MESSAGE);
-    return;
-  }
 
   if (!accepted) {
     setErrorText(t.register.errors.acceptAgreement);
