@@ -460,16 +460,8 @@ async function handleRegister(e: FormEvent<HTMLFormElement>) {
                 </label>
 
 {errorText && (
-  <div
-    className={
-      isMaintenanceNotice
-        ? "rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-4 py-3 text-sm leading-5 text-yellow-50 shadow-[0_0_35px_rgba(234,179,8,0.12)]"
-        : "rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-100"
-    }
-  >
-    <p className="font-black">
-      {isMaintenanceNotice ? "Registration Temporarily Paused" : "Action Required"}
-    </p>
+  <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-100">
+    <p className="font-black">Action Required</p>
     <p className="mt-1 text-xs leading-5 opacity-80">{errorText}</p>
   </div>
 )}
@@ -485,7 +477,7 @@ async function handleRegister(e: FormEvent<HTMLFormElement>) {
     </>
   ) : (
     <>
-{REGISTRATION_MAINTENANCE_MODE ? "Check Registration Status" : "Create Account"}
+Create Account
 <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
     </>
   )}
