@@ -41,6 +41,11 @@ function phoneToHiddenEmail(phone: string) {
   return `${digits}@goldenaxis60.member`;
 }
 
+const REGISTRATION_MAINTENANCE_MODE = true;
+
+const REGISTRATION_MAINTENANCE_MESSAGE =
+  "New member registration is temporarily paused while we complete a scheduled system review. Existing members can still log in normally. Please try again later or contact your inviter for the next opening window.";
+
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -55,8 +60,10 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorText, setErrorText] = useState("");
-  const t = guestAuth.en;
+const [errorText, setErrorText] = useState("");
+const t = guestAuth.en;
+
+const isMaintenanceNotice = errorText === REGISTRATION_MAINTENANCE_MESSAGE;
 
   useEffect(() => {
     async function redirectIfLoggedIn() {
@@ -94,6 +101,11 @@ if (
 async function handleRegister(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
   setErrorText("");
+
+  if (REGISTRATION_MAINTENANCE_MODE) {
+    setErrorText(REGISTRATION_MAINTENANCE_MESSAGE);
+    return;
+  }
 
   if (!accepted) {
     setErrorText(t.register.errors.acceptAgreement);
@@ -458,11 +470,20 @@ async function handleRegister(e: FormEvent<HTMLFormElement>) {
                   </span>
                 </label>
 
-                {errorText && (
-                  <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-100">
-                    {errorText}
-                  </div>
-                )}
+{errorText && (
+  <div
+    className={
+      isMaintenanceNotice
+        ? "rounded-2xl border border-yellow-400/25 bg-yellow-400/10 px-4 py-3 text-sm leading-5 text-yellow-50 shadow-[0_0_35px_rgba(234,179,8,0.12)]"
+        : "rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-100"
+    }
+  >
+    <p className="font-black">
+      {isMaintenanceNotice ? "Registration Temporarily Paused" : "Action Required"}
+    </p>
+    <p className="mt-1 text-xs leading-5 opacity-80">{errorText}</p>
+  </div>
+)}
 
 <button
   disabled={loading}
@@ -475,8 +496,8 @@ async function handleRegister(e: FormEvent<HTMLFormElement>) {
     </>
   ) : (
     <>
-      Create Account
-      <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+{REGISTRATION_MAINTENANCE_MODE ? "Check Registration Status" : "Create Account"}
+<ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
     </>
   )}
 </button>
