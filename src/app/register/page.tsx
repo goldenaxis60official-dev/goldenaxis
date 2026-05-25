@@ -44,7 +44,7 @@ function phoneToHiddenEmail(phone: string) {
 const REGISTRATION_MAINTENANCE_MODE = true;
 
 const REGISTRATION_MAINTENANCE_MESSAGE =
-  "New member registration is temporarily paused while we complete a scheduled system review. Existing members can still log in normally. Please try again later or contact your inviter for the next opening window.";
+  "New member registration is temporarily paused while we complete a scheduled system review. Existing members can still log in normally. Please try again later";
 
 export default function RegisterPage() {
   const router = useRouter();
