@@ -1214,10 +1214,10 @@ const { error } = await supabase.rpc("admin_upsert_user_nickname", {
 async function handleSaveReferralCode() {
   if (!referralUser) return;
 
-if (!isAdmin && referralUser.role !== "user") {
-  setErrorText("Leader/support can only edit normal user referral codes.");
-  return;
-}
+  if (!isAdmin && referralUser.role !== "user") {
+    setErrorText("Leader/support can only edit normal user referral codes.");
+    return;
+  }
 
   const cleanCode = referralValue
     .trim()
@@ -1240,37 +1240,26 @@ if (!isAdmin && referralUser.role !== "user") {
   setSuccessText("");
   setErrorText("");
 
-  const { data: existingUser, error: checkError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("referral_code", cleanCode)
-    .neq("id", referralUser.id)
-    .maybeSingle();
-
-  if (checkError) {
-    setErrorText(checkError.message);
-    setActionLoading(false);
-    return;
-  }
-
-  if (existingUser) {
-    setErrorText(t.messages.referralCodeDuplicate);
-    setActionLoading(false);
-    return;
-  }
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ referral_code: cleanCode })
-    .eq("id", referralUser.id);
+  const { data, error } = await supabase.rpc(
+    "admin_update_user_referral_code",
+    {
+      input_user_id: referralUser.id,
+      input_referral_code: cleanCode,
+    }
+  );
 
   if (error) {
+    const message = error.message.toLowerCase();
+
     if (
       error.code === "23505" ||
-      error.message.toLowerCase().includes("duplicate") ||
-      error.message.toLowerCase().includes("unique")
+      message.includes("duplicate") ||
+      message.includes("unique") ||
+      message.includes("already exists")
     ) {
       setErrorText(t.messages.referralCodeDuplicate);
+    } else if (message.includes("invalid")) {
+      setErrorText(t.messages.referralCodeInvalid);
     } else {
       setErrorText(error.message);
     }
@@ -1279,10 +1268,15 @@ if (!isAdmin && referralUser.role !== "user") {
     return;
   }
 
+  const savedCode =
+    Array.isArray(data) && data[0]?.referral_code
+      ? data[0].referral_code
+      : cleanCode;
+
   setUsers((currentUsers) =>
     currentUsers.map((user) =>
       user.id === referralUser.id
-        ? { ...user, referral_code: cleanCode }
+        ? { ...user, referral_code: savedCode }
         : user
     )
   );
@@ -1290,6 +1284,9 @@ if (!isAdmin && referralUser.role !== "user") {
   setSuccessText(t.messages.referralCodeSaved);
   setReferralUser(null);
   setReferralValue("");
+
+  await loadUsers();
+
   setActionLoading(false);
 }
 
