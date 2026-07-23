@@ -252,7 +252,8 @@ async function loadTickets() {
       `
       )
       .in("user_id", visibleUserIds)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(100); // <-- ADD THIS LINE
 
     if (memberError) {
       setErrorText(memberError.message);
@@ -277,7 +278,8 @@ async function loadTickets() {
     `
     )
     .eq("source", "guest")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100); // <-- ADD THIS LINE
 
   if (guestError) {
     setErrorText(guestError.message);
@@ -336,44 +338,44 @@ async function loadTickets() {
 }, [selectedTicketId]);
 
   useEffect(() => {
-  if (!hasPageAccess) return;
+    if (!hasPageAccess) return;
 
-  const channel = supabase
-    .channel("admin-support-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "support_messages",
-      },
-      () => {
-        loadTickets();
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "support_chat_messages",
-      },
-      (payload) => {
-        const newMessage = payload.new as ChatMessage;
-
-        loadTickets();
-
-        if (newMessage.ticket_id === selectedTicketId) {
-          loadChat(selectedTicketId);
+    const channel = supabase
+      .channel("admin-support-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "support_messages",
+        },
+        () => {
+          // Only reload the ticket list if a TICKET is created or updated (status change)
+          loadTickets();
         }
-      }
-    )
-    .subscribe();
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "support_chat_messages",
+        },
+        (payload) => {
+          const newMessage = payload.new as ChatMessage;
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [hasPageAccess, selectedTicketId]);
+          // Only reload the chat window if the new message belongs to the ticket currently open
+          if (newMessage.ticket_id === selectedTicketId) {
+            loadChat(selectedTicketId);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [hasPageAccess, selectedTicketId]);
 
   async function handleSendReply() {
     if (!selectedTicket) return;

@@ -308,40 +308,32 @@ const mergedUsers = profileRows.map((user) => ({
 
 const summaryMap: Record<string, UserOrderSummary> = {};
 
-if (userIds.length > 0) {
-  const orderResults = await Promise.all(
-    userIds.map(async (userId) => {
-      const { data, error } = await supabase.rpc(
-        "get_staff_visible_generated_orders",
-        {
-          p_user_id: userId,
-        }
-      );
+  if (userIds.length > 0) {
+    // 1. Single lightweight query to fetch ONLY the columns needed for the progress bars
+    const { data: allOrders, error: ordersError } = await supabase
+      .from("user_generated_orders")
+      .select("id, user_id, step_number, status, is_lucky_bonus")
+      .in("user_id", userIds);
 
-      if (error) {
-        return {
-          userId,
-          orders: [] as GeneratedOrderPreview[],
-        };
-      }
+    if (!ordersError && allOrders) {
+      // 2. Group the lightweight orders by user_id
+      const ordersByUser = allOrders.reduce((acc, order) => {
+        if (!acc[order.user_id]) acc[order.user_id] = [];
+        acc[order.user_id].push(order);
+        return acc;
+      }, {} as Record<string, any[]>);
 
-      return {
-        userId,
-        orders: (data || []) as unknown as GeneratedOrderPreview[],
-      };
-    })
-  );
+      // 3. Build the summaries locally
+      userIds.forEach((userId) => {
+        summaryMap[userId] = buildOrderSummary(ordersByUser[userId] || []);
+      });
+    }
+  }
 
-  orderResults.forEach(({ userId, orders }) => {
-    summaryMap[userId] = buildOrderSummary(orders);
-  });
+  setUsers(mergedUsers);
+  setOrderStatsByUser(summaryMap);
+  setLoading(false);
 }
-
-setUsers(mergedUsers);
-setOrderStatsByUser(summaryMap);
-setLoading(false);
-}
-
   useEffect(() => {
     if (hasPageAccess) {
       loadUsers();

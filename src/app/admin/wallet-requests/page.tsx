@@ -216,66 +216,53 @@ const rawRecords = ((data || []) as AdminWalletRequest[]).map((item) => ({
 }
 
 useEffect(() => {
-  if (!hasPageAccess) {
-    setLoading(false);
-    return;
-  }
+    if (!hasPageAccess) {
+      setLoading(false);
+      return;
+    }
 
-  let isMounted = true;
+    let isMounted = true;
 
-  loadRecords();
+    loadRecords();
 
-  const channel = supabase
-    .channel("admin-wallet-requests-live")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "wallet_requests",
-      },
-      () => {
+    const channel = supabase
+      .channel("admin-wallet-requests-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "wallet_requests",
+        },
+        () => {
+          if (!isMounted) return;
+
+          setLastLiveUpdate(new Date().toLocaleTimeString());
+          loadRecords({ silent: true });
+        }
+      )
+      // The profiles listener was completely removed from here to stop the infinite refresh loop
+      .subscribe((status) => {
         if (!isMounted) return;
 
-        setLastLiveUpdate(new Date().toLocaleTimeString());
-        loadRecords({ silent: true });
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "profiles",
-      },
-      () => {
-        if (!isMounted) return;
+        if (status === "SUBSCRIBED") {
+          setLiveStatus("live");
+        }
 
-        setLastLiveUpdate(new Date().toLocaleTimeString());
-        loadRecords({ silent: true });
-      }
-    )
-    .subscribe((status) => {
-      if (!isMounted) return;
+        if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
+          setLiveStatus("error");
+        }
+      });
 
-      if (status === "SUBSCRIBED") {
-        setLiveStatus("live");
-      }
-
-      if (
-        status === "CHANNEL_ERROR" ||
-        status === "TIMED_OUT" ||
-        status === "CLOSED"
-      ) {
-        setLiveStatus("error");
-      }
-    });
-
-  return () => {
-    isMounted = false;
-    supabase.removeChannel(channel);
-  };
-}, [hasPageAccess]);
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [hasPageAccess]);
 
 async function handleApprove(id: string) {
   const request = records.find((item) => item.id === id);

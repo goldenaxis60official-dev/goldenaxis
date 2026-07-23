@@ -260,10 +260,11 @@ async function loadTicketsAndChat(showLoader = true) {
     loadWalletAddresses();
   }, [profile.id]);
 
-  useEffect(() => {
-  const channel = supabase
-    .channel(`user-support-realtime-${profile.id}`)
-    .on(
+useEffect(() => {
+    const channel = supabase.channel(`user-support-realtime-${profile.id}`);
+
+    // 1. Listen to the user's main tickets
+    channel.on(
       "postgres_changes",
       {
         event: "*",
@@ -271,27 +272,29 @@ async function loadTicketsAndChat(showLoader = true) {
         table: "support_messages",
         filter: `user_id=eq.${profile.id}`,
       },
-      () => {
-        loadTicketsAndChat(false);
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "support_chat_messages",
-      },
-      () => {
-        loadTicketsAndChat(false);
-      }
-    )
-    .subscribe();
+      () => loadTicketsAndChat(false)
+    );
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [profile.id]);
+    // 2. Only listen to chat messages for THEIR specific tickets
+    tickets.forEach((ticket) => {
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "support_chat_messages",
+          filter: `ticket_id=eq.${ticket.id}`,
+        },
+        () => loadTicketsAndChat(false)
+      );
+    });
+
+    channel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile.id, tickets.length]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

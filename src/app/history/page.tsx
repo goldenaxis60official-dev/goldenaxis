@@ -142,11 +142,11 @@ function HistoryContent({ profile }: { profile: Profile }) {
           id,
           step_number,
           order_total,
-profit_rate,
-profit_amount,
-lucky_profit_rate_percent,
-lucky_profit_amount,
-order_type,
+          profit_rate,
+          profit_amount,
+          lucky_profit_rate_percent,
+          lucky_profit_amount,
+          order_type,
           status,
           is_lucky_bonus,
           created_at,
@@ -162,7 +162,8 @@ order_type,
         )
         .eq("user_id", profile.id)
         .eq("status", "completed")
-        .order("completed_at", { ascending: false });
+        .order("completed_at", { ascending: false })
+        .limit(50); // <- This single line stops infinite data growth
 
       if (error) {
         setErrorText(error.message);

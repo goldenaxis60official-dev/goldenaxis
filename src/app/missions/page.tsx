@@ -109,48 +109,50 @@ const [finalReward, setFinalReward] = useState("0.00");
 
   const [galleryIndex, setGalleryIndex] = useState<Record<string, number>>({});
 
-  useEffect(() => {
+useEffect(() => {
     async function loadGeneratedOrders() {
       setLoading(true);
       setErrorText("");
 
-      const { data, error } = await supabase
+      // 1. Fetch ALL orders (history + active) but WITHOUT the heavy product_snapshot data
+      const { data: ordersData, error: ordersError } = await supabase
         .from("user_generated_orders")
-        .select(
-          `
-          id,
-          user_id,
-          step_number,
-          order_total,
-          profit_rate,
-          profit_amount,
-lucky_profit_rate_percent,
-lucky_profit_amount,
-order_type,
-          status,
-          is_lucky_bonus,
-          created_at,
-          completed_at,
-          user_generated_order_items (
-            id,
-            product_snapshot,
-            unit_price,
-            quantity,
-            subtotal
-          )
-        `
-        )
+        .select(`
+          id, user_id, step_number, order_total, profit_rate, profit_amount,
+          lucky_profit_rate_percent, lucky_profit_amount, order_type,
+          status, is_lucky_bonus, created_at, completed_at
+        `)
         .eq("user_id", profile.id)
         .in("status", ["pending", "completed"])
         .order("step_number", { ascending: true });
 
-      if (error) {
-        setErrorText(error.message);
+      if (ordersError) {
+        setErrorText(ordersError.message);
         setLoading(false);
         return;
       }
 
-      setOrders((data || []) as unknown as GeneratedOrder[]);
+      const fetchedOrders = (ordersData || []) as unknown as GeneratedOrder[];
+
+      // 2. Find the active pending order
+      const activeOrder =
+        fetchedOrders.find(
+          (o) => o.step_number === profile.current_step && o.status === "pending"
+        ) || fetchedOrders.find((o) => o.status === "pending");
+
+      // 3. ONLY fetch the heavy items for the active pending order
+      if (activeOrder) {
+        const { data: itemsData } = await supabase
+          .from("user_generated_order_items")
+          .select("id, product_snapshot, unit_price, quantity, subtotal")
+          .eq("user_generated_order_id", activeOrder.id); 
+
+        if (itemsData) {
+          activeOrder.user_generated_order_items = itemsData as any;
+        }
+      }
+
+      setOrders(fetchedOrders);
       setLoading(false);
     }
 
