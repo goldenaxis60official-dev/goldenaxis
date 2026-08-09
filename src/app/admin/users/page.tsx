@@ -309,25 +309,20 @@ const mergedUsers = profileRows.map((user) => ({
 const summaryMap: Record<string, UserOrderSummary> = {};
 
   if (userIds.length > 0) {
-    // 1. Single lightweight query to fetch ONLY the columns needed for the progress bars
-    // Added .limit() to bypass the default 1,000 row API restriction
-    const { data: allOrders, error: ordersError } = await supabase
-      .from("user_generated_orders")
-      .select("id, user_id, step_number, status, is_lucky_bonus")
-      .in("user_id", userIds)
-      .limit(50000);
+    // Call the secure RPC function to bypass limits and RLS entirely
+    const { data: summaryData, error: summaryError } = await supabase.rpc(
+      "get_staff_visible_generated_order_summary_counts"
+    );
 
-    if (!ordersError && allOrders) {
-      // 2. Group the lightweight orders by user_id
-      const ordersByUser = allOrders.reduce((acc, order) => {
-        if (!acc[order.user_id]) acc[order.user_id] = [];
-        acc[order.user_id].push(order);
-        return acc;
-      }, {} as Record<string, any[]>);
-
-      // 3. Build the summaries locally
-      userIds.forEach((userId) => {
-        summaryMap[userId] = buildOrderSummary(ordersByUser[userId] || []);
+    if (!summaryError && summaryData) {
+      summaryData.forEach((row: any) => {
+        summaryMap[row.user_id] = {
+          totalOrders: row.total_orders || 0,
+          maxStep: row.max_step || 0,
+          completedOrders: row.completed_orders || 0,
+          pendingOrders: row.pending_orders || 0,
+          luckySteps: row.lucky_steps || [],
+        };
       });
     }
   }
