@@ -145,10 +145,39 @@ useEffect(() => {
         const { data: itemsData } = await supabase
           .from("user_generated_order_items")
           .select("id, product_snapshot, unit_price, quantity, subtotal")
-          .eq("user_generated_order_id", activeOrder.id); 
+          .eq("user_generated_order_id", activeOrder.id);
 
-        if (itemsData) {
+        if (itemsData && itemsData.length > 0) {
           activeOrder.user_generated_order_items = itemsData as any;
+        } else {
+          // FALLBACK: If items were not generated, fetch live product data from global tasks table
+          const { data: taskData } = await supabase
+            .from("tasks")
+            .select("*, products(*)")
+            .eq("step_number", activeOrder.step_number)
+            .single();
+
+          if (taskData) {
+            const product = taskData.products || {};
+            activeOrder.user_generated_order_items = [
+              {
+                id: "fallback-item",
+                unit_price: Number(product.price || taskData.price || 0),
+                quantity: 1,
+                subtotal: Number(product.price || taskData.price || 0),
+                product_snapshot: {
+                  name: product.name || taskData.title,
+                  category: product.category || taskData.category,
+                  price: Number(product.price || taskData.price || 0),
+                  main_image: product.main_image || taskData.image_url,
+                  images: product.images || [],
+                  currency: product.currency || "USD",
+                  rating: Number(product.rating || 4.8),
+                  reviews_count: Number(product.reviews_count || 0),
+                },
+              },
+            ] as any;
+          }
         }
       }
 
