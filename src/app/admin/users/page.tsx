@@ -310,10 +310,12 @@ const summaryMap: Record<string, UserOrderSummary> = {};
 
   if (userIds.length > 0) {
     // 1. Single lightweight query to fetch ONLY the columns needed for the progress bars
+    // Added .limit() to bypass the default 1,000 row API restriction
     const { data: allOrders, error: ordersError } = await supabase
       .from("user_generated_orders")
       .select("id, user_id, step_number, status, is_lucky_bonus")
-      .in("user_id", userIds);
+      .in("user_id", userIds)
+      .limit(50000);
 
     if (!ordersError && allOrders) {
       // 2. Group the lightweight orders by user_id
