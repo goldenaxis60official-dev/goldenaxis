@@ -142,10 +142,10 @@ useEffect(() => {
 
       // 3. ONLY fetch the heavy items for the active pending order
       if (activeOrder) {
-        const { data: itemsData } = await supabase
-          .from("user_generated_order_items")
-          .select("id, product_snapshot, unit_price, quantity, subtotal")
-          .eq("user_generated_order_id", activeOrder.id);
+      const { data: itemsData } = await supabase
+        .from("user_generated_order_items")
+        .select("id, product_snapshot, unit_price, quantity, subtotal")
+        .eq("order_id", activeOrder.id);
 
         if (itemsData && itemsData.length > 0) {
           activeOrder.user_generated_order_items = itemsData as any;

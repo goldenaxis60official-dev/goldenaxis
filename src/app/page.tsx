@@ -86,24 +86,72 @@ function HomeContent({ profile }: { profile: Profile }) {
 
       setLoadingTasks(true);
 
-      const { data: assignmentData } = await supabase
-        .from("user_task_assignments")
-        .select(
-          `
-          id,
-          assigned_step,
-          is_active,
-          tasks (
-            *,
-            products (*)
-          )
-        `
-        )
+      // 1. Fetch active assignments from user_generated_orders
+      const { data: orders } = await supabase
+        .from("user_generated_orders")
+        .select("id, step_number, order_type, is_lucky_bonus, profit_amount, lucky_profit_amount")
         .eq("user_id", profile.id)
-        .eq("is_active", true)
-        .order("assigned_step", { ascending: true });
+        .in("status", ["pending", "completed"])
+        .order("step_number", { ascending: true });
 
-      setAssignments((assignmentData || []) as unknown as UserTaskAssignment[]);
+      const fetchedOrders = orders || [];
+      const stepNumbers = fetchedOrders.map(o => o.step_number);
+
+      // 2. Fetch baseline global tasks for normal product details
+      const { data: tasksData } = await supabase
+        .from("tasks")
+        .select("*, products(*)")
+        .in("step_number", stepNumbers.length > 0 ? stepNumbers : [0]);
+
+      const activeOrder = fetchedOrders.find(o => o.step_number === profile.current_step);
+      let luckySnapshot = null;
+
+      // 3. If lucky order, fetch the injected dynamic photo using order_id
+      if (activeOrder && (activeOrder.is_lucky_bonus || activeOrder.order_type === "lucky")) {
+        const { data: itemData } = await supabase
+          .from("user_generated_order_items")
+          .select("product_snapshot")
+          .eq("order_id", activeOrder.id)
+          .single();
+
+        luckySnapshot = itemData?.product_snapshot || null;
+      }
+
+      // 4. Transform into the structure the Home UI already expects
+      const mappedAssignments = fetchedOrders.map(order => {
+        const baseTask = (tasksData || []).find(t => t.step_number === order.step_number);
+        let clonedTask = baseTask ? { ...baseTask } : ({} as any);
+
+        if (order.step_number === profile.current_step && activeOrder) {
+          const isLucky = activeOrder.is_lucky_bonus || activeOrder.order_type === "lucky";
+          const finalReward = isLucky ? Number(activeOrder.lucky_profit_amount || 0) : Number(activeOrder.profit_amount || 0);
+
+          clonedTask.task_type = isLucky ? "lucky_bonus" : "standard";
+          clonedTask.price = finalReward;
+          clonedTask.commission_rate = 1; 
+          clonedTask.multiplier = 1;
+
+          if (luckySnapshot) {
+            clonedTask.title = luckySnapshot.name;
+            clonedTask.category = luckySnapshot.category;
+            clonedTask.image_url = luckySnapshot.main_image;
+            clonedTask.products = {
+              name: luckySnapshot.name,
+              category: luckySnapshot.category,
+              main_image: luckySnapshot.main_image,
+            };
+          }
+        }
+
+        return {
+          id: order.id,
+          assigned_step: order.step_number,
+          is_active: true,
+          tasks: clonedTask,
+        };
+      });
+
+      setAssignments(mappedAssignments as unknown as UserTaskAssignment[]);
       setLoadingTasks(false);
 
       const activities: RecentActivityItem[] = [];
