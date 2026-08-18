@@ -371,17 +371,20 @@ if (neededForOrder > 0) {
 
     const reward = Number(data?.profit_amount || 0);
 
-    const totalProfitAfterComplete = orders.reduce((sum, item) => {
-  if (item.id === order.id) {
-    return sum + reward;
-  }
+  const totalProfitAfterComplete = orders.reduce((sum, item) => {
+      if (item.id === order.id) {
+        return sum + reward;
+      }
 
-  if (item.status === "completed") {
-    return sum + Number(item.profit_amount || 0);
-  }
+      if (item.status === "completed") {
+        if (item.is_lucky_bonus || item.order_type === "lucky") {
+          return sum + Number(item.lucky_profit_amount || 0);
+        }
+        return sum + Number(item.profit_amount || 0);
+      }
 
-  return sum;
-}, 0);
+      return sum;
+    }, 0);
 
     const allCompleted =
       Boolean(data?.all_completed) || order.step_number >= maxStep;
@@ -420,11 +423,16 @@ function calculateDisplayReward(order: GeneratedOrder | null) {
       return storedLuckyProfit;
     }
 
-    return (
-      (Number(order.order_total || 0) *
-        Number(order.lucky_profit_rate_percent || 0)) /
-      100
-    );
+    if (order.lucky_profit_rate_percent != null && order.lucky_profit_rate_percent > 0) {
+      return (
+        (Number(order.order_total || 0) *
+          Number(order.lucky_profit_rate_percent)) /
+        100
+      );
+    }
+    
+    // Fallback to standard profit to perfectly match backend calculation
+    return Number(order.profit_amount || 0);
   }
 
   return Number(order.profit_amount || 0);
