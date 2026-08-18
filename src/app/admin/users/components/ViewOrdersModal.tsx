@@ -229,8 +229,23 @@ export default function ViewOrdersModal({
                   const firstItem = order.user_generated_order_items?.[0];
 
                   const normalProfit = Number(order.profit_amount || 0);
-                  const luckyProfit = Number(order.lucky_profit_amount || 0);
-                  const totalStepProfit = order.is_lucky_bonus
+                  let luckyProfit = Number(order.lucky_profit_amount || 0);
+
+                  // Dynamically project expected profit for pending lucky orders
+                  if (
+                    luckyProfit === 0 &&
+                    (order.is_lucky_bonus || order.order_type === "lucky") &&
+                    order.status === "pending"
+                  ) {
+                    if (order.lucky_profit_rate_percent != null && order.lucky_profit_rate_percent > 0) {
+                      luckyProfit = (Number(order.order_total || 0) * Number(order.lucky_profit_rate_percent)) / 100;
+                    } else {
+                      // Fallback to base profit just in case
+                      luckyProfit = normalProfit; 
+                    }
+                  }
+
+                  const totalStepProfit = order.is_lucky_bonus || order.order_type === "lucky"
                     ? luckyProfit
                     : normalProfit;
 
