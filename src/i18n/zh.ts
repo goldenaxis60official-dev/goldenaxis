@@ -1311,19 +1311,130 @@ adminUsers: {
     saveReferralCode: "保存推荐代码",
   },
   referralBonusModal: {
-  tag: "手动余额控制",
-  title: "推荐奖励余额",
-  description:
-    "为此用户设置准确的推荐奖励余额。用户前台不会收到通知。",
-  user: "用户",
-  currentReferral: "当前推荐奖励",
-  depositedBalance: "充值余额",
-  taskProfit: "任务利润",
-  newReferralBonus: "新的推荐奖励余额",
-  newTotalPreview: "新的总余额预览",
-  saving: "保存中...",
-  saveReferralBonus: "保存推荐余额",
-},
+    tag: "手动余额控制",
+    title: "推荐奖励余额",
+    description:
+      "为此用户设置准确的推荐奖励余额。用户前台不会收到通知。",
+    user: "用户",
+    currentReferral: "当前推荐奖励",
+    depositedBalance: "充值余额",
+    taskProfit: "任务利润",
+    newReferralBonus: "新的推荐奖励余额",
+    newTotalPreview: "新的总余额预览",
+    saving: "保存中...",
+    saveReferralBonus: "保存推荐余额",
+  },
+
+  generateModal: {
+    tag: "自动订单系统",
+    title: "生成订单",
+    description: "为此用户创建自动生成的推广订单。",
+    user: "用户",
+    balance: "余额",
+    step: "步骤",
+    taskCount: "任务数量",
+    taskCountHelp: "最少 1 个，最多 80 个。",
+    capitalAmount: "本金 / 订单金额",
+    capitalAmountHelp:
+      "例如：500、3000、8000、20000。系统会自动选择最接近的产品等级。",
+    profitRate: "任务收益率",
+    profitRateHelp: "默认 0.008，表示每个普通任务收益为 0.8%。",
+    resetExisting: "清除旧任务并从第 1 步重新开始",
+    resetExistingHelp:
+      "关闭时，新任务会添加到用户最后一个任务之后。只有需要删除该用户全部旧任务并重新开始时才开启。",
+    generating: "生成中...",
+    generateAutoOrders: "生成自动订单",
+  },
+
+  luckyModal: {
+    tag: "幸运订单系统",
+    title: "插入幸运订单",
+    description: "将一个待完成的生成订单替换为自动匹配的幸运订单。",
+    user: "用户",
+    balance: "余额",
+    currentStep: "当前步骤",
+
+    luckyStepNumber: "幸运步骤编号",
+    luckyStepHelp: "只能选择待完成步骤。已完成步骤不能替换。",
+
+    customLuckyAmount: "自定义幸运金额",
+    customLuckyAmountHelp:
+      "填写任意金额，系统会自动匹配最接近、最合适的产品。",
+
+    recommendedProduct: "自动推荐产品",
+    autoBadge: "自动",
+    productValue: "产品价值",
+    luckyOrderAmount: "幸运订单金额",
+    noLuckyProducts: "未找到可用产品",
+    noMatchingProduct: "未找到适合此金额的产品。",
+
+    luckyProfitRate: "幸运利润比例 %",
+    luckyProfitRateHelp:
+      "例如：5 表示 5%。$2,800 的幸运订单会获得 $140 利润。",
+
+    injecting: "插入中...",
+    injectLuckyOrder: "插入幸运订单",
+  },
+
+  viewOrdersModal: {
+    tag: "生成订单中心",
+    title: "查看订单",
+    description: "查看此用户的自动生成推广订单。",
+    user: "用户",
+    total: "总数",
+    completed: "已完成",
+    pending: "待完成",
+    lucky: "幸运",
+    loading: "正在加载生成订单...",
+    noOrdersTitle: "未找到生成订单",
+    noOrdersDescription: "请先生成订单，之后会显示在这里。",
+    step: "步骤",
+    product: "产品",
+    type: "类型",
+    orderTotal: "订单总额",
+    profit: "利润",
+    status: "状态",
+    completedDate: "完成时间",
+    generatedProduct: "生成产品",
+    qty: "数量",
+    subtotal: "小计",
+    normal: "普通",
+    cancelled: "已取消",
+  },
+
+  resetOrdersModal: {
+    tag: "生成订单重置",
+    title: "重置订单",
+    description: "清除此用户的生成推广订单。",
+    user: "用户",
+    balance: "余额",
+    step: "步骤",
+    warning:
+      "此操作只会删除该用户的生成订单。产品池、余额、收益、钱包记录和账户资料不会被删除。",
+    resetStep: "将用户步骤重置为 1",
+    resetStepHelp: "清除生成推广计划时建议开启。",
+    confirmLabel: "输入 RESET 确认",
+    confirmPlaceholder: "RESET",
+    resetting: "重置中...",
+    resetGeneratedOrders: "重置生成订单",
+  },
+
+  securityModal: {
+    tag: "账户安全",
+    title: "安全重置",
+    user: "用户",
+    email: "邮箱",
+    warning:
+      "仅用于重置。旧密码/提现密码不会显示。重置后请私下把新代码交给用户。",
+    newLoginPassword: "新登录密码",
+    temporaryPassword: "临时密码",
+    generate: "生成",
+    resetting: "重置中...",
+    resetLoginPassword: "重置登录密码",
+    newWithdrawPasscode: "新提现密码",
+    sixDigitCode: "6 位数字代码",
+    resetWithdrawPasscode: "重置提现密码",
+  },
 },
 
 adminWalletRequests: {
@@ -1404,118 +1515,6 @@ adminWalletRequests: {
     approved: "已通过",
     rejected: "已拒绝",
   },
-
-  generateModal: {
-  tag: "自动订单系统",
-  title: "生成订单",
-  description: "为此用户创建自动生成的推广订单。",
-  user: "用户",
-  balance: "余额",
-  step: "步骤",
-  taskCount: "任务数量",
-  taskCountHelp: "最少 1 个，最多 80 个。",
-  capitalAmount: "本金 / 订单金额",
-  capitalAmountHelp:
-    "例如：500、3000、8000、20000。系统会自动选择最接近的产品等级。",
-  profitRate: "任务收益率",
-profitRateHelp: "默认 0.008，表示每个普通任务收益为 0.8%。",
-  resetExisting: "清除旧任务并从第 1 步重新开始",
-resetExistingHelp:
-  "关闭时，新任务会添加到用户最后一个任务之后。只有需要删除该用户全部旧任务并重新开始时才开启。",
-  generating: "生成中...",
-  generateAutoOrders: "生成自动订单",
-},
-
-luckyModal: {
-  tag: "幸运订单系统",
-  title: "插入幸运订单",
-  description: "将一个待完成的生成订单替换为自动匹配的幸运订单。",
-  user: "用户",
-  balance: "余额",
-  currentStep: "当前步骤",
-
-  luckyStepNumber: "幸运步骤编号",
-  luckyStepHelp: "只能选择待完成步骤。已完成步骤不能替换。",
-
-  customLuckyAmount: "自定义幸运金额",
-  customLuckyAmountHelp:
-    "填写任意金额，系统会自动匹配最接近、最合适的产品。",
-
-  recommendedProduct: "自动推荐产品",
-  autoBadge: "自动",
-  productValue: "产品价值",
-  luckyOrderAmount: "幸运订单金额",
-  noLuckyProducts: "未找到可用产品",
-  noMatchingProduct: "未找到适合此金额的产品。",
-
-  luckyProfitRate: "幸运利润比例 %",
-  luckyProfitRateHelp:
-    "例如：5 表示 5%。$2,800 的幸运订单会获得 $140 利润。",
-
-  injecting: "插入中...",
-  injectLuckyOrder: "插入幸运订单",
-},
-
-viewOrdersModal: {
-  tag: "生成订单中心",
-  title: "查看订单",
-  description: "查看此用户的自动生成推广订单。",
-  user: "用户",
-  total: "总数",
-  completed: "已完成",
-  pending: "待完成",
-  lucky: "幸运",
-  loading: "正在加载生成订单...",
-  noOrdersTitle: "未找到生成订单",
-  noOrdersDescription: "请先生成订单，之后会显示在这里。",
-  step: "步骤",
-  product: "产品",
-  type: "类型",
-  orderTotal: "订单总额",
-  profit: "利润",
-  status: "状态",
-  completedDate: "完成时间",
-  generatedProduct: "生成产品",
-  qty: "数量",
-  subtotal: "小计",
-  normal: "普通",
-  cancelled: "已取消",
-},
-
-resetOrdersModal: {
-  tag: "生成订单重置",
-  title: "重置订单",
-  description: "清除此用户的生成推广订单。",
-  user: "用户",
-  balance: "余额",
-  step: "步骤",
-  warning:
-    "此操作只会删除该用户的生成订单。产品池、余额、收益、钱包记录和账户资料不会被删除。",
-  resetStep: "将用户步骤重置为 1",
-  resetStepHelp: "清除生成推广计划时建议开启。",
-  confirmLabel: "输入 RESET 确认",
-  confirmPlaceholder: "RESET",
-  resetting: "重置中...",
-  resetGeneratedOrders: "重置生成订单",
-},
-
-securityModal: {
-  tag: "账户安全",
-  title: "安全重置",
-  user: "用户",
-  email: "邮箱",
-  warning:
-    "仅用于重置。旧密码/提现密码不会显示。重置后请私下把新代码交给用户。",
-  newLoginPassword: "新登录密码",
-  temporaryPassword: "临时密码",
-  generate: "生成",
-  resetting: "重置中...",
-  resetLoginPassword: "重置登录密码",
-  newWithdrawPasscode: "新提现密码",
-  sixDigitCode: "6 位数字代码",
-  resetWithdrawPasscode: "重置提现密码",
-},
-
 },
 
 adminWalletAddresses: {
