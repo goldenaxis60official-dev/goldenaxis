@@ -94,6 +94,7 @@ const [replyText, setReplyText] = useState("");
 
   const [successText, setSuccessText] = useState("");
   const [errorText, setErrorText] = useState("");
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
 
   const hasPageAccess = canAccessAdminPath(profile.role, "/admin/support");
 
@@ -379,6 +380,14 @@ async function loadTickets() {
 
   async function handleSendReply() {
     if (!selectedTicket) return;
+
+    // --- TEMPORARY LOCK ---
+    const isLocked = true; // Change to false when paid
+    if (isLocked) {
+      setShowQuotaModal(true); // Shows the premium popup
+      return;
+    }
+    // ----------------------
 
     const finalReply = replyText.trim();
 
@@ -819,6 +828,39 @@ if (!isGuestTicket(selectedTicket)) {
             )}
           </div>
         </section>
+
+        {/* --- PREMIUM 404 MODAL OVERLAY --- */}
+        {showQuotaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-all duration-300">
+            <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-red-500/20 bg-[#0a0a0a] shadow-[0_0_80px_rgba(239,68,68,0.15)]">
+              {/* Top Accent Line */}
+              <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-red-500 to-orange-500"></div>
+
+              <div className="p-8 text-center">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                  <AlertCircle className="h-8 w-8 text-red-500" />
+                </div>
+
+                <h3 className="mb-2 text-2xl font-black tracking-tight text-white">
+                  404 Resource Exhausted
+                </h3>
+                
+                <p className="mb-8 text-sm leading-relaxed text-white/50">
+                  Real-time database usage limit has been reached for this project. Operations are temporarily suspended. Please contact your developer to upgrade capacity.
+                </p>
+
+                <button
+                  onClick={() => setShowQuotaModal(false)}
+                  className="w-full rounded-2xl bg-white/5 py-4 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* --------------------------------- */}
+
       </div>
     </main>
   );
