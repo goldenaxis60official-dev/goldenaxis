@@ -2427,7 +2427,7 @@ async function handleDeleteUser() {
               </h3>
               
               <p className="mb-8 text-sm leading-relaxed text-white/50">
-                Real-time database usage limit has been reached for this project. Operations are temporarily suspended. Please contact your developer to upgrade capacity.
+                Real-time database usage has been spent for its limit.
               </p>
 
               <button
