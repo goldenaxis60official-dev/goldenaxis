@@ -3,12 +3,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const ADMIN_DOMAIN = "goldenaxisadmin.vercel.app";
+const ADMIN_DOMAINS = ["goldenaxisadmin.vercel.app", "admin.goldenaxis60.company"];
 
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] || "";
   const pathname = request.nextUrl.pathname;
-  const isAdminDomain = host === ADMIN_DOMAIN;
+  const isAdminDomain = ADMIN_DOMAINS.includes(host);
 
   let response = NextResponse.next();
 
