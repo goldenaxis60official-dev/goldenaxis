@@ -1,4 +1,4 @@
-//src>sitemap.ts
+//src/app/sitemap.ts
 
 import { MetadataRoute } from "next";
 
@@ -16,6 +16,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
-    // We can add privacy policy or other public routes here later
+    {
+      url: "https://goldenaxis60.company/privacy",
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
   ];
 }
