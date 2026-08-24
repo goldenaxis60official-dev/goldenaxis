@@ -76,12 +76,30 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Adds official business structured data for Google and scanners
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Golden Axis 60",
+    url: "https://goldenaxis60.company",
+    logo: "https://goldenaxis60.company/logo.png",
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "Customer Support",
+      email: "support@goldenaxis60.company",
+    },
+  };
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#050505] text-[#f8f5ea]">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {children}
       </body>
     </html>

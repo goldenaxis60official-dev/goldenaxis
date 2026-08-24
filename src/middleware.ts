@@ -8,30 +8,29 @@ const ADMIN_DOMAIN = "goldenaxisadmin.vercel.app";
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] || "";
   const pathname = request.nextUrl.pathname;
-
   const isAdminDomain = host === ADMIN_DOMAIN;
 
-  // Admin control link:
-  // goldenaxisadmin.vercel.app -> goldenaxisadmin.vercel.app/admin
+  let response = NextResponse.next();
+
+  // Admin control link redirect
   if (isAdminDomain && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
-    return NextResponse.redirect(url);
+    response = NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // Apply Security Headers to build trust and prevent attacks
+  response.headers.set("X-DNS-Prefetch-Control", "on");
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    /*
-      Match all routes except:
-      - api routes
-      - Next.js static files
-      - images
-      - favicon
-      - files with extensions
-    */
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
   ],
 };

@@ -7,7 +7,6 @@ import { getLanguage, messages } from "@/i18n";
 import LuxuryCard from "@/components/ui/LuxuryCard";
 import Image from "next/image";
 import AppShell from "@/components/layout/AppShell";
-import RequireAuth from "@/components/auth/RequireAuth";
 import {
   ShieldCheck,
   FileText,
@@ -124,28 +123,25 @@ type Certificate = {
 };
 
 export default function TermsPage() {
-  const [selectedCertificate, setSelectedCertificate] =
-    useState<Certificate | null>(null);
+  const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
+
+  // Default to English for public scanners and unauthenticated guests
+  const lang = getLanguage("en"); 
+  const t = messages[lang].terms;
 
   return (
-    <RequireAuth>
-  {(profile) => {
-    const lang = getLanguage(profile.language);
-    const t = messages[lang].terms;
+    <AppShell>
+      <section className="px-5 pb-32 pt-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-yellow-200/80">{t.platformPolicy}</p>
+            <h1 className="text-2xl font-black">{t.title}</h1>
+          </div>
 
-    return (
-        <AppShell>
-          <section className="px-5 pb-32 pt-8">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-200/80">{t.platformPolicy}</p>
-                <h1 className="text-2xl font-black">{t.title}</h1>
-              </div>
-
-              <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 shadow-[0_0_30px_rgba(250,204,21,0.15)]">
-                <ShieldCheck className="h-6 w-6 text-yellow-300" />
-              </div>
-            </div>
+          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 shadow-[0_0_30px_rgba(250,204,21,0.15)]">
+            <ShieldCheck className="h-6 w-6 text-yellow-300" />
+          </div>
+        </div>
 
             {/* Premium Certificate Section */}
             <LuxuryCard goldGlow className="mb-5 overflow-hidden p-4">
@@ -308,9 +304,6 @@ export default function TermsPage() {
               </div>
             </div>
           )}
-                </AppShell>
-      );
-    }}
-  </RequireAuth>
+</AppShell>
   );
 }
