@@ -23,6 +23,8 @@ import {
   Send,
   ShieldCheck,
   Wallet,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 
 type SupportStatus = "open" | "reviewing" | "closed";
@@ -44,6 +46,7 @@ type ChatMessage = {
   sender_id: string | null;
   sender_role: "user" | "admin";
   message: string;
+  image_url?: string | null;
   created_at: string;
 };
 
@@ -129,6 +132,7 @@ function SupportContent({ profile }: { profile: Profile }) {
 
   const [activeTopic, setActiveTopic] = useState<SupportTopic>("missionHelp");
   const [message, setMessage] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [replyTicketId, setReplyTicketId] = useState<string | null>(null);
 
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -450,13 +454,30 @@ if (!targetTicket) {
       }
     }
 
+    let imageUrl = null;
+    if (attachment) {
+      const fileExt = attachment.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('support-attachments')
+        .upload(`chat/${fileName}`, attachment);
+
+      if (!uploadError && uploadData) {
+        const { data: publicUrlData } = supabase.storage
+          .from('support-attachments')
+          .getPublicUrl(`chat/${fileName}`);
+        imageUrl = publicUrlData.publicUrl;
+      }
+    }
+
     const { error: chatError } = await supabase
       .from("support_chat_messages")
       .insert({
         ticket_id: targetTicket.id,
         sender_id: profile.id,
         sender_role: "user",
-        message: finalMessage,
+        message: finalMessage || (imageUrl ? "Attached an image" : ""),
+        image_url: imageUrl,
       });
 
     if (chatError) {
@@ -465,8 +486,9 @@ if (!targetTicket) {
       return;
     }
 
-setSuccessText(t.support.messageSent);
-setMessage("");
+    setSuccessText(t.support.messageSent);
+    setMessage("");
+    setAttachment(null);
 setCopied(false);
 setReplyTicketId(null);
 setSubmitting(false);
@@ -627,13 +649,14 @@ setSubmitting(false);
                     <>
                       {messages.map((chat) => (
                         <ChatBubble
-                          key={chat.id}
-                          role={chat.sender_role}
-                          message={chat.message}
-                          time={chat.created_at}
-                          youLabel={t.support.you}
-                          supportReplyLabel={t.support.supportReply}
-                        />
+                        key={chat.id}
+                        role={chat.sender_role}
+                        message={chat.message}
+                        image_url={chat.image_url}
+                        time={chat.created_at}
+                        youLabel={t.support.you}
+                        supportReplyLabel={t.support.supportReply}
+                      />
                       ))}
 
 {ticket.status !== "closed" &&
@@ -702,18 +725,45 @@ setSubmitting(false);
             </div>
           )}
 
-          <textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-placeholder={
-  replyTargetTicket
-    ? "Reply to this official notice..."
-    : activeTopic === "walletHelp"
-      ? t.support.walletPlaceholder
-      : t.support.defaultPlaceholder
-}
-            className="mb-3 min-h-24 w-full rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50"
-          />
+          <div className="mb-3 overflow-hidden rounded-2xl border border-white/10 bg-black/45 focus-within:border-yellow-400/50">
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder={
+                replyTargetTicket
+                  ? "Reply to this official notice..."
+                  : activeTopic === "walletHelp"
+                    ? t.support.walletPlaceholder
+                    : t.support.defaultPlaceholder
+              }
+              className="min-h-20 w-full bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
+            />
+            
+            {attachment && (
+              <div className="mx-4 mb-2 flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-xs text-yellow-300">
+                <span className="truncate">{attachment.name}</span>
+                <button type="button" onClick={() => setAttachment(null)} className="ml-2 rounded-full p-1 hover:bg-white/10 text-white">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 bg-black/20 px-3 py-2">
+              <input
+                type="file"
+                id="chat-attachment"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              />
+              <label
+                htmlFor="chat-attachment"
+                className="flex cursor-pointer items-center justify-center rounded-lg p-2 text-white/50 transition hover:bg-white/10 hover:text-white"
+              >
+                <ImageIcon className="h-5 w-5" />
+              </label>
+            </div>
+          </div>
 
           <button
             disabled={submitting}
@@ -737,12 +787,14 @@ placeholder={
 function ChatBubble({
   role,
   message,
+  image_url,
   time,
   youLabel,
   supportReplyLabel,
 }: {
   role: "user" | "admin";
   message: string;
+  image_url?: string | null;
   time: string;
   youLabel: string;
   supportReplyLabel: string;
@@ -770,9 +822,19 @@ function ChatBubble({
           </p>
         </div>
 
-        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
-          {message}
-        </p>
+        {message && message !== "Attached an image" && (
+          <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
+            {message}
+          </p>
+        )}
+
+        {image_url && (
+          <img 
+            src={image_url} 
+            alt="Attachment" 
+            className="mt-3 max-w-full rounded-xl object-contain" 
+          />
+        )}
 
         <p className="mt-2 text-right text-[11px] text-white/35">
           {new Date(time).toLocaleString()}

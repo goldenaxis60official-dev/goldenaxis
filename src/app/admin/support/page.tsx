@@ -54,6 +54,7 @@ type ChatMessage = {
   sender_id: string | null;
   sender_role: "user" | "admin";
   message: string;
+  image_url?: string | null;
   created_at: string;
 };
 
@@ -786,13 +787,14 @@ if (!isGuestTicket(selectedTicket)) {
                   {!loadingChat &&
                     chatMessages.map((chat) => (
                       <ChatBubble
-  key={chat.id}
-  role={chat.sender_role}
-  message={chat.message}
-  time={chat.created_at}
-  adminLabel={t.chat.adminSupport}
-  userLabel={t.chat.user}
-/>
+                        key={chat.id}
+                        role={chat.sender_role}
+                        message={chat.message}
+                        image_url={chat.image_url}
+                        time={chat.created_at}
+                        adminLabel={t.chat.adminSupport}
+                        userLabel={t.chat.user}
+                      />
                     ))}
                 </div>
 
@@ -825,15 +827,18 @@ if (!isGuestTicket(selectedTicket)) {
   );
 }
 
+// Find ChatBubble and replace the whole block with this:
 function ChatBubble({
   role,
   message,
+  image_url,
   time,
   adminLabel,
   userLabel,
 }: {
   role: "user" | "admin";
   message: string;
+  image_url?: string | null;
   time: string;
   adminLabel: string;
   userLabel: string;
@@ -857,9 +862,19 @@ function ChatBubble({
           {isAdmin ? adminLabel : userLabel}
         </p>
 
-        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
-          {message}
-        </p>
+        {message && message !== "Attached an image" && (
+          <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/80">
+            {message}
+          </p>
+        )}
+
+        {image_url && (
+          <img 
+            src={image_url} 
+            alt="Attachment" 
+            className="mt-3 max-w-full rounded-xl object-contain" 
+          />
+        )}
 
         <p className="mt-2 text-right text-[11px] text-white/35">
           {new Date(time).toLocaleString()}
