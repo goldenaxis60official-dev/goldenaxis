@@ -1,3 +1,5 @@
+//src>components>auth>AdminSessionGuard.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";

@@ -22,7 +22,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
-const ADMIN_HOSTS = ["goldenaxisadmin.vercel.app"];
+const ADMIN_HOSTS = [
+  "goldenaxisadmin.vercel.app", 
+  "admin.goldenaxis60.company"
+];
 
 function isAdminEntrance() {
   if (typeof window === "undefined") return false;
