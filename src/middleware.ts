@@ -13,10 +13,18 @@ export function middleware(request: NextRequest) {
   let response = NextResponse.next();
 
   // Admin control link redirect
-  if (isAdminDomain && pathname === "/") {
+  if (isAdminDomain) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin";
-    response = NextResponse.redirect(url);
+    
+    if (pathname === "/") {
+      url.pathname = "/admin";
+      response = NextResponse.redirect(url);
+    } 
+    
+    if (pathname === "/login") {
+      url.pathname = "/admin/login"; 
+      response = NextResponse.rewrite(url); 
+    }
   }
 
   // Apply Security Headers to build trust and prevent attacks
