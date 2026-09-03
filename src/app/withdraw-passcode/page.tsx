@@ -1,3 +1,5 @@
+//src>app/withdraw-passcode/page.tsx
+
 "use client";
 
 import { FormEvent, useState } from "react";
@@ -24,6 +26,7 @@ export default function WithdrawPasscodePage() {
 function WithdrawPasscodeContent() {
   const router = useRouter();
 
+  const [currentPasscode, setCurrentPasscode] = useState("");
   const [newPasscode, setNewPasscode] = useState("");
   const [confirmPasscode, setConfirmPasscode] = useState("");
 
@@ -37,8 +40,13 @@ function WithdrawPasscodeContent() {
     setSuccessText("");
     setErrorText("");
 
+    if (!/^[0-9]{6}$/.test(currentPasscode)) {
+      setErrorText("Current passcode must be exactly 6 digits.");
+      return;
+    }
+
     if (!/^[0-9]{6}$/.test(newPasscode)) {
-      setErrorText("Withdraw passcode must be exactly 6 digits.");
+      setErrorText("New withdraw passcode must be exactly 6 digits.");
       return;
     }
 
@@ -47,8 +55,26 @@ function WithdrawPasscodeContent() {
       return;
     }
 
+    if (currentPasscode === newPasscode) {
+      setErrorText("New passcode must be different from the current one.");
+      return;
+    }
+
     setLoading(true);
 
+    // 1. Verify the current passcode first
+    const { data: isPasscodeValid, error: verifyError } = await supabase.rpc(
+      "verify_withdraw_passcode",
+      { p_passcode: currentPasscode }
+    );
+
+    if (verifyError || !isPasscodeValid) {
+      setErrorText("Incorrect current passcode.");
+      setLoading(false);
+      return;
+    }
+
+    // 2. If valid, set the new passcode
     const { error } = await supabase.rpc("set_withdraw_passcode", {
       p_passcode: newPasscode,
     });
@@ -60,6 +86,7 @@ function WithdrawPasscodeContent() {
     }
 
     setSuccessText("Withdraw passcode changed successfully.");
+    setCurrentPasscode("");
     setNewPasscode("");
     setConfirmPasscode("");
     setLoading(false);
@@ -94,6 +121,33 @@ function WithdrawPasscodeContent() {
           <form onSubmit={handleSavePasscode} className="space-y-4">
             <label className="block">
               <span className="mb-2 block text-xs font-bold text-white/45">
+                Current Withdraw Passcode
+              </span>
+
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
+                <Lock className="h-5 w-5 text-white/40" />
+
+                <input
+                  value={currentPasscode}
+                  onChange={(event) =>
+                    setCurrentPasscode(
+                      event.target.value.replace(/\D/g, "").slice(0, 6)
+                    )
+                  }
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter current 6-digit passcode"
+                  autoComplete="current-password"
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
+                />
+              </div>
+            </label>
+
+            <div className="my-2 h-px w-full bg-white/5" />
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold text-white/45">
                 New Withdraw Passcode
               </span>
 
@@ -119,7 +173,7 @@ function WithdrawPasscodeContent() {
 
             <label className="block">
               <span className="mb-2 block text-xs font-bold text-white/45">
-                Confirm Withdraw Passcode
+                Confirm New Passcode
               </span>
 
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 px-4 py-3.5 transition focus-within:border-yellow-400/60 focus-within:bg-black/60">
@@ -135,7 +189,7 @@ function WithdrawPasscodeContent() {
                   type="password"
                   inputMode="numeric"
                   maxLength={6}
-                  placeholder="Enter passcode again"
+                  placeholder="Enter new passcode again"
                   autoComplete="new-password"
                   className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
                 />
@@ -144,21 +198,21 @@ function WithdrawPasscodeContent() {
 
             {successText && (
               <div className="flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4 shrink-0" />
                 {successText}
               </div>
             )}
 
             {errorText && (
               <div className="flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 {errorText}
               </div>
             )}
 
             <button
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 px-5 py-4 font-black text-black shadow-[0_12px_32px_rgba(234,179,8,0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ShieldCheck className="h-5 w-5" />
               {loading ? "Saving..." : "Change Withdraw Passcode"}
