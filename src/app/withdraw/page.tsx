@@ -51,6 +51,7 @@ function WithdrawContent({ profile }: { profile: Profile }) {
   const [network, setNetwork] = useState<WalletNetwork>("TRC20");
   const [receivingAddress, setReceivingAddress] = useState("");
   const [note, setNote] = useState("");
+  const [withdrawPasscode, setWithdrawPasscode] = useState("");
 
   const [generatedTotal, setGeneratedTotal] = useState(0);
   const [completedGeneratedCount, setCompletedGeneratedCount] = useState(0);
@@ -188,7 +189,23 @@ const mainBalance = availableBalance;
       return;
     }
 
+    if (!/^[0-9]{6}$/.test(withdrawPasscode)) {
+      setErrorText("Please enter your 6-digit withdraw passcode.");
+      return;
+    }
+
     setLoading(true);
+
+    const { data: isPasscodeValid, error: verifyError } = await supabase.rpc(
+      "verify_withdraw_passcode",
+      { p_passcode: withdrawPasscode }
+    );
+
+    if (verifyError || !isPasscodeValid) {
+      setErrorText("Incorrect withdraw passcode.");
+      setLoading(false);
+      return;
+    }
 
     const finalNote = [
       `Asset: ${asset}`,
@@ -462,6 +479,25 @@ return (
               <MessageCircle className="h-4 w-4" />
               Need help? Contact Support
             </button>
+          </div>
+
+          <div className="mb-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black">
+                4
+              </span>
+              <p className="font-black">Security Passcode</p>
+            </div>
+
+            <input
+              value={withdrawPasscode}
+              onChange={(e) => setWithdrawPasscode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              disabled={!completedAllGeneratedOrders}
+              type="password"
+              inputMode="numeric"
+              placeholder="Enter 6-digit withdraw passcode"
+              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-yellow-400/50 disabled:cursor-not-allowed disabled:opacity-60"
+            />
           </div>
 
           {successText && (
