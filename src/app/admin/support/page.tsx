@@ -238,11 +238,11 @@ async function loadTickets() {
 
   let memberRows: AdminTicket[] = [];
 
-  if (visibleUserIds.length > 0) {
-    const { data: memberData, error: memberError } = await supabase
+  // FIX: Bypass the massive .in() filter if the user is an admin
+  if (profile.role === "admin" || visibleUserIds.length > 0) {
+    let query = supabase
       .from("support_messages")
-      .select(
-        `
+      .select(`
         *,
         profiles (
           member_id,
@@ -250,11 +250,16 @@ async function loadTickets() {
           email,
           phone
         )
-      `
-      )
-      .in("user_id", visibleUserIds)
+      `);
+
+    // Only apply the array filter if the user is a leader/support staff
+    if (profile.role !== "admin") {
+      query = query.in("user_id", visibleUserIds);
+    }
+
+    const { data: memberData, error: memberError } = await query
       .order("created_at", { ascending: false })
-      .limit(100); // <-- ADD THIS LINE
+      .limit(100);
 
     if (memberError) {
       setErrorText(memberError.message);
@@ -267,8 +272,7 @@ async function loadTickets() {
 
   const { data: guestData, error: guestError } = await supabase
     .from("support_messages")
-    .select(
-      `
+    .select(`
       *,
       profiles (
         member_id,
@@ -276,11 +280,10 @@ async function loadTickets() {
         email,
         phone
       )
-    `
-    )
+    `)
     .eq("source", "guest")
     .order("created_at", { ascending: false })
-    .limit(100); // <-- ADD THIS LINE
+    .limit(100);
 
   if (guestError) {
     setErrorText(guestError.message);
