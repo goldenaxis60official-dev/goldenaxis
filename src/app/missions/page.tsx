@@ -210,9 +210,7 @@ useEffect(() => {
     null;
 
   const allGeneratedCompleted = totalOrders > 0 && completedCount >= totalOrders;
-
-  const progressBase = totalOrders || 1;
-  const progressPercent = Math.min((completedCount / progressBase) * 100, 100);
+  const progressPercent = totalOrders > 0 ? Math.min((completedCount / totalOrders) * 100, 100) : 0;
 
 const totalProfitAmount = useMemo(() => {
   return orders.reduce((sum, order) => {
@@ -604,7 +602,7 @@ const insufficientProfitPreview = calculateDisplayReward(activeOrder);
   statusLabel={missionStatusLabel}
   stepLabel={t.missions.step}
   currentStep={allGeneratedCompleted ? maxStep || "-" : profile.current_step}
-  totalOrders={totalOrders || "-"}
+  totalOrders={totalOrders > 0 ? totalOrders : "-"}
   craftGradeLabel={lang === "zh" ? "工艺评级" : "Craft Grade"}
   grade={activeCraftProfile.grade}
   scoreLabel={lang === "zh" ? "评分" : "Score"}
@@ -679,7 +677,7 @@ const insufficientProfitPreview = calculateDisplayReward(activeOrder);
   <CampaignCompletedCard
     lang={lang}
     completedCount={completedCount}
-    totalOrders={totalOrders}
+    totalOrders={totalOrders > 0 ? totalOrders : 0}
     totalProfitAmount={totalProfitAmount}
     onViewHistory={() => router.push("/history")}
     onOpenSupport={() => router.push("/support")}
