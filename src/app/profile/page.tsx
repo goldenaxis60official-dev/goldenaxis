@@ -137,10 +137,9 @@ const [hasUnreadSupport, setHasUnreadSupport] = useState(false);
   useEffect(() => {
     async function loadAssignedCount() {
       const { count } = await supabase
-        .from("user_task_assignments")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", profile.id)
-        .eq("is_active", true);
+        .from("user_generated_orders")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", profile.id);
 
       setAssignedTotal(count || 0);
     }
