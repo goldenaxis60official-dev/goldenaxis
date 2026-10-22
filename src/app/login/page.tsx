@@ -58,6 +58,21 @@ function isValidPhoneNumber(phone: string) {
   return /^\+[1-9]\d{7,14}$/.test(phone);
 }
 
+function isNetworkFailure(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : String(error).toLowerCase();
+
+  return [
+    "networkerror",
+    "failed to fetch",
+    "fetch failed",
+    "network request failed",
+    "load failed",
+  ].some((phrase) => message.includes(phrase));
+}
+
 function phoneToHiddenEmail(phone: string) {
   const digits = phone.replace(/\D/g, "");
   return `${digits}@goldenaxis60.member`;
@@ -211,6 +226,11 @@ useEffect(() => {
 
       router.replace(getRoleRedirectPath(profileData.role));
     } catch (err) {
+      if (isNetworkFailure(err)) {
+        setErrorText(t.login.errors.serviceUnavailable);
+        return;
+      }
+
       const message =
         err instanceof Error ? err.message : t.login.errors.unknown;
 

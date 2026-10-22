@@ -52,6 +52,9 @@ export const guestAuth = {
         notActivated:
           "This account is not fully activated. Please register again with a valid referral code.",
         unknown: "Something went wrong.",
+
+serviceUnavailable:
+  "Member services are temporarily unavailable. We are restoring access. Please try again shortly. If the issue continues, contact our support team.",
       },
     },
 
@@ -108,6 +111,9 @@ export const guestAuth = {
     emailConfirmEnabled:
       "Email confirmation is still enabled in Supabase. Turn off email confirmation first.",
     unknown: "Something went wrong.",
+
+serviceUnavailable:
+  "Member services are temporarily unavailable. We are restoring access. Please try again shortly. If the issue continues, contact our support team.",
   },
 }
   },
@@ -155,6 +161,9 @@ export const guestAuth = {
         controlOnly: "此控制链接仅限授权控制账户使用。普通会员请使用会员网站。",
         notActivated: "此账户尚未完全激活。请使用有效推荐码重新注册。",
         unknown: "出现错误，请稍后再试。",
+
+serviceUnavailable:
+  "会员服务暂时无法使用。我们正在恢复服务，请稍后重试。如问题持续，请联系客服团队。",
       },
     },
 
@@ -210,6 +219,9 @@ export const guestAuth = {
     emailConfirmEnabled:
       "Supabase 邮箱确认仍然开启。请先关闭邮箱确认。",
     unknown: "出现错误，请稍后再试。",
+
+serviceUnavailable:
+  "会员服务暂时无法使用。我们正在恢复服务，请稍后重试。如问题持续，请联系客服团队。",
   },
 }
   },
